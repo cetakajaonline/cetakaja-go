@@ -16,4 +16,19 @@ model User {
   photo     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Relasi ke token yang dibuat user ini
+  createdTokens ApiToken[] @relation("CreatedTokens")
+}
+
+model ApiToken {
+  id        Int      @id @default(autoincrement())
+  name      String
+  token     String   @unique
+  createdAt DateTime @default(now())
+  revoked   Boolean  @default(false)
+
+  // Foreign key & relasi ke User
+  createdBy Int
+  creator   User @relation("CreatedTokens", fields: [createdBy], references: [id])
 }

@@ -1,7 +1,7 @@
 <script lang="ts">
   import DefaultLayout from '$lib/layouts/DefaultLayout.svelte';
   import UserTable from '$lib/components/UserTable.svelte';
-  import UserToolbar from '$lib/components/UserToolbar.svelte';
+  import TableToolbar from '$lib/components/TableToolbar.svelte';
   import UserFormModal from '$lib/components/UserFormModal.svelte';
   import PageHeader from '$lib/components/PageHeader.svelte';
   import UserDrawer from '$lib/components/UserDrawer.svelte';
@@ -208,7 +208,7 @@
     onAdd={openAddModal}
   />
 
-  <UserToolbar on:search={(e) => handleSearch(e.detail)} />
+  <TableToolbar on:search={(e) => handleSearch(e.detail)} />
 
   <!-- Pakai // onRowClick={(user) => openDrawer(user)} Buat Detail-->
   <UserTable

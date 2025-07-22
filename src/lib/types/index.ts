@@ -10,6 +10,22 @@ export interface User {
   updatedAt: string;
 }
 
+// ✅ Token
+export type Token = {
+  id: number;
+  name: string;
+  token: string;
+  createdBy: number;
+  createdAt: string;
+  revoked: boolean;
+  creator?: {
+    id: number;
+    name: string;
+    email: string;
+    photo?: string;
+  };
+};
+
 // ✅ Form data untuk Login dan Register
 export interface LoginFormData {
   email: string;
