@@ -29,7 +29,7 @@
   }
 </script>
 
-<div class="max-w-sm mx-auto mt-4 p-4 bg-white rounded shadow">
+<div class="max-w-sm mx-auto mt-4 p-4 bg-base-100 rounded shadow">
   {#if error}
     <p class="text-red-500 mb-2 text-center">{error}</p>
   {/if}
