@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "seed": "node prisma/seed.cjs",
     "reset": "rm -rf node_modules && rm -rf .svelte-kit && pnpm install",
+    "mulai": "pnpm install && pnpm prisma generate && pnpm prisma db push && pnpm seed",
     "db:reset": "npx prisma migrate reset --force",
     "start": "pnpm dev",
     "prepare": "svelte-kit sync || echo ''",
