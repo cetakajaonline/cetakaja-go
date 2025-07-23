@@ -22,8 +22,8 @@ async function main() {
     update: {},
     create: {
       id: 1,
-      name: "WMX",
-      description: "Aplikasi Billing Rental PS",
+      name: "BITS Project",
+      description: "Aplikasi Startup untuk mengelola proyek dan tim.",
       logo: "/uploads/placeholder.png",
     },
   });
