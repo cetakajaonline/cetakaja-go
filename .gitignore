@@ -22,6 +22,22 @@ Thumbs.db
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
+# VSCode
+.vscode
+.vscode/*
+.vscode-test
+
+# Node
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+pnpm-debug.log
+lerna-debug.log
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+lerna-lock.json
+
 /../generated/prisma
 
 # SvelteKit

@@ -8,6 +8,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "seed": "node prisma/seed.cjs",
+    "reset": "rm -rf node_modules && rm -rf .svelte-kit && pnpm install",
+    "db:reset": "npx prisma migrate reset --force",
+    "start": "pnpm dev",
     "prepare": "svelte-kit sync || echo ''",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
