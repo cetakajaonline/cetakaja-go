@@ -1,12 +1,12 @@
 import { json, error } from "@sveltejs/kit";
 import { updateKey, deleteKey, getKeyById } from "$lib/server/tokenService";
+import { requireAdmin, requireRoleOrSelf } from "$lib/server/auth";
 import type { RequestHandler } from "./$types";
 
 // GET /api/token/:id
-export const GET: RequestHandler = async ({ params, locals }) => {
-  if (!locals.user) throw error(401, "Unauthorized");
-
-  const id = Number(params.id);
+export const GET: RequestHandler = async (event) => {
+  const id = Number(event.params.id);
+  requireRoleOrSelf(event, id);
   if (isNaN(id)) throw error(400, "Invalid token ID");
 
   try {
@@ -14,7 +14,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
     if (!token) throw error(404, "Token not found");
 
     // Optional: validasi hanya bisa akses token miliknya
-    if (token.createdBy !== locals.user.id) {
+    if (token.createdBy !== event.locals.user.id) {
       throw error(403, "Forbidden");
     }
 
@@ -26,19 +26,18 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 };
 
 // PUT /api/token/:id
-export const PUT: RequestHandler = async ({ params, request, locals }) => {
-  if (!locals.user) throw error(401, "Unauthorized");
-
-  const id = Number(params.id);
+export const PUT: RequestHandler = async (event) => {
+  const id = Number(event.params.id);
+  requireRoleOrSelf(event, id);
   if (isNaN(id)) throw error(400, "Invalid token ID");
 
-  const body = await request.json();
+  const body = await event.request.json();
 
   try {
     const existing = await getKeyById(id);
     if (!existing) throw error(404, "Token not found");
 
-    if (existing.createdBy !== locals.user.id) {
+    if (existing.createdBy !== event.locals.user.id) {
       throw error(403, "Forbidden");
     }
 
@@ -55,17 +54,17 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 };
 
 // DELETE /api/token/:id
-export const DELETE: RequestHandler = async ({ params, locals }) => {
-  if (!locals.user) throw error(401, "Unauthorized");
+export const DELETE: RequestHandler = async (event) => {
+  requireAdmin(event); // ⬅️ hanya admin yang bisa delete
 
-  const id = Number(params.id);
+  const id = Number(event.params.id);
   if (isNaN(id)) throw error(400, "Invalid token ID");
 
   try {
     const existing = await getKeyById(id);
     if (!existing) throw error(404, "Token not found");
 
-    if (existing.createdBy !== locals.user.id) {
+    if (existing.createdBy !== event.locals.user.id) {
       throw error(403, "Forbidden");
     }
 

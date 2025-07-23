@@ -1,11 +1,12 @@
 import { json, error } from "@sveltejs/kit";
 import { updateUser, deleteUser, getUserById } from "$lib/server/userService";
+import { requireAdmin, requireRoleOrSelf } from "$lib/server/auth";
 import type { RequestHandler } from "./$types";
 
-export const PUT: RequestHandler = async ({ params, request, locals }) => {
-  if (!locals.user) throw error(401, "Unauthorized");
-  const id = Number(params.id);
-  const body = await request.json();
+export const PUT: RequestHandler = async (event) => {
+  const id = Number(event.params.id);
+  const body = await event.request.json();
+  requireRoleOrSelf(event, id);
 
   try {
     const updated = await updateUser(id, body);
@@ -16,9 +17,10 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
   }
 };
 
-export const DELETE: RequestHandler = async ({ params, locals }) => {
-  if (!locals.user) throw error(401, "Unauthorized");
-  const id = Number(params.id);
+export const DELETE: RequestHandler = async (event) => {
+  requireAdmin(event); // ⬅️ hanya admin yang bisa delete
+
+  const id = Number(event.params.id);
   try {
     await deleteUser(id);
     return json({ success: true });
@@ -28,9 +30,10 @@ export const DELETE: RequestHandler = async ({ params, locals }) => {
   }
 };
 
-export const GET: RequestHandler = async ({ params, locals }) => {
-  if (!locals.user) throw error(401, "Unauthorized");
-  const id = Number(params.id);
+export const GET: RequestHandler = async (event) => {
+  const id = Number(event.params.id);
+  requireRoleOrSelf(event, id);
+
   try {
     const user = await getUserById(id);
     if (!user) throw error(404, "User not found");

@@ -1,20 +1,23 @@
-import { json, error } from "@sveltejs/kit";
+import { json } from "@sveltejs/kit";
 import { getAllItems, createItem } from "$lib/server/itemService";
+import { requireAnyRole } from "$lib/server/auth";
 import type { RequestHandler } from "./$types";
 
-export const GET: RequestHandler = async ({ locals }) => {
-  if (!locals.user) throw error(401, "Unauthorized");
+// GET /api/items
+// Hanya user login yang memiliki role (admin/user/dll) yang diizinkan
+export const GET: RequestHandler = async (event) => {
+  requireAnyRole(event);
 
   const items = await getAllItems();
   return json(items);
 };
 
-export const POST: RequestHandler = async ({ request, locals }) => {
-  if (!locals.user) {
-    return json({ error: "Unauthorized" }, { status: 401 });
-  }
+// POST /api/items
+// Hanya user login yang memiliki role yang diizinkan
+export const POST: RequestHandler = async (event) => {
+  requireAnyRole(event);
 
-  const body = await request.json();
+  const body = await event.request.json();
 
   try {
     const newItem = await createItem({

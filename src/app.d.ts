@@ -3,6 +3,7 @@ declare global {
     interface Locals {
       user?: User;
       token?: ApiToken;
+      item?: Item;
     }
   }
 }

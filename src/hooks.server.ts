@@ -15,7 +15,16 @@ export const handle: Handle = async ({ event, resolve }) => {
 
     const tokenRecord = await prisma.apiToken.findUnique({
       where: { token: apiToken },
-      include: { creator: true },
+      include: {
+        creator: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true, // ✅ Ambil role dari creator
+          },
+        },
+      },
     });
 
     if (tokenRecord && !tokenRecord.revoked) {
@@ -23,7 +32,6 @@ export const handle: Handle = async ({ event, resolve }) => {
       event.locals.user = tokenRecord.creator;
       return resolve(event);
     } else {
-      // Bisa log jika ingin
       console.warn("Invalid or revoked API token");
     }
   }
@@ -35,7 +43,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 
       const user = await prisma.user.findUnique({
         where: { id: decoded.id },
-        select: { id: true, email: true, name: true }, // aman, tanpa password
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true, // ✅ Ambil juga role di sini
+        },
       });
 
       if (user) {

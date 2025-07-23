@@ -1,0 +1,62 @@
+import type { RequestEvent } from "@sveltejs/kit";
+import { error } from "@sveltejs/kit";
+
+/**
+ * Pastikan user sudah login
+ */
+export function requireAuth(event: RequestEvent) {
+  if (!event.locals.user) {
+    throw error(401, "Unauthorized : user tidak ditemukan");
+  }
+}
+
+/**
+ * Pastikan user memiliki peran tertentu
+ */
+export function requireRole(event: RequestEvent, role: string) {
+  requireAuth(event);
+  const userRole = event.locals.user?.role;
+
+  if (userRole !== role) {
+    throw error(
+      403,
+      `Forbidden : hanya role ${role} yang diperbolehkan (saat ini: ${userRole})`
+    );
+  }
+}
+
+/**
+ * Hanya untuk admin
+ */
+export function requireAdmin(event: RequestEvent) {
+  requireRole(event, "admin");
+}
+
+/**
+ * Hanya boleh akses jika admin, atau jika id milik dirinya sendiri
+ */
+export function requireRoleOrSelf(
+  event: RequestEvent,
+  userId: number,
+  role: string = "admin"
+) {
+  requireAuth(event);
+
+  const currentUser = event.locals.user;
+  if (currentUser?.role === role) return;
+
+  if (currentUser?.id !== userId) {
+    throw error(403, "Forbidden: Anda tidak boleh mengakses data user lain");
+  }
+}
+
+/**
+ * Pastikan user memiliki role apapun
+ * Digunakan untuk endpoint yang tidak memerlukan role khusus
+ */
+export function requireAnyRole(event: { locals: App.Locals }) {
+  const user = event.locals.user;
+  if (!user || !user.role) {
+    throw error(403, "Role is required");
+  }
+}

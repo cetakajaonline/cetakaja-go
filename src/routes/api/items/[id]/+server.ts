@@ -1,12 +1,13 @@
 import { json, error } from "@sveltejs/kit";
 import { updateItem, deleteItem, getItemById } from "$lib/server/itemService";
+import { requireAnyRole } from "$lib/server/auth";
 import type { RequestHandler } from "./$types";
 
 // GET /api/items/:id
-export const GET: RequestHandler = async ({ params, locals }) => {
-  if (!locals.user) throw error(401, "Unauthorized");
+export const GET: RequestHandler = async (event) => {
+  requireAnyRole(event);
 
-  const id = Number(params.id);
+  const id = Number(event.params.id);
   if (isNaN(id)) throw error(400, "Invalid item ID");
 
   const item = await getItemById(id);
@@ -16,13 +17,13 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 };
 
 // PUT /api/items/:id
-export const PUT: RequestHandler = async ({ params, request, locals }) => {
-  if (!locals.user) throw error(401, "Unauthorized");
+export const PUT: RequestHandler = async (event) => {
+  requireAnyRole(event);
 
-  const id = Number(params.id);
+  const id = Number(event.params.id);
   if (isNaN(id)) throw error(400, "Invalid item ID");
 
-  const body = (await request.json()) as { name?: string; desc?: string };
+  const body = (await event.request.json()) as { name?: string; desc?: string };
 
   if (!body.name?.trim() || !body.desc?.trim()) {
     throw error(400, "Name and description are required");
@@ -40,10 +41,10 @@ export const PUT: RequestHandler = async ({ params, request, locals }) => {
 };
 
 // DELETE /api/items/:id
-export const DELETE: RequestHandler = async ({ params, locals }) => {
-  if (!locals.user) throw error(401, "Unauthorized");
+export const DELETE: RequestHandler = async (event) => {
+  requireAnyRole(event);
 
-  const id = Number(params.id);
+  const id = Number(event.params.id);
   if (isNaN(id)) throw error(400, "Invalid item ID");
 
   const existing = await getItemById(id);
