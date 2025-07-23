@@ -38,6 +38,14 @@ export async function getKeyById(id: number) {
       createdBy: true,
       createdAt: true,
       revoked: true,
+      creator: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          photo: true,
+        },
+      },
     },
   });
 }
@@ -55,6 +63,14 @@ export async function getKeysByUserId(userId: number) {
       token: true,
       createdAt: true,
       revoked: true,
+      creator: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          photo: true,
+        },
+      },
     },
   });
 }
