@@ -44,3 +44,12 @@ export interface ApiResponse<T = any> {
   message: string;
   data?: T;
 }
+
+// ✅ Item
+export interface Item {
+  id: number;
+  name: string;
+  desc: string;
+  createdAt: string;
+  updatedAt: string;
+}

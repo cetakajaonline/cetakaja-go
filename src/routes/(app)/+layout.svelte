@@ -6,6 +6,7 @@
 
 	const menuItems = [
 		{ href: '/dashboard', label: 'Dashboard', icon: '🏠' },
+		{ href: '/items', label: 'Items', icon: '📦' },
 		{ href: '/users', label: 'Users', icon: '👤' },
 		{ href: '/token', label: 'API Keys', icon: '🔑' },
 		{ href: '/settings', label: 'Settings', icon: '⚙️' }
