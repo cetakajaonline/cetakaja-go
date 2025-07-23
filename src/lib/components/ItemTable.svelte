@@ -61,9 +61,14 @@
           <td class="font-medium text-base-content">{item.name}</td>
           <td class="break-all text-base-content/80">{item.desc}</td>
           <td class="text-xs text-base-content/70">
+            {new Date(item.createdAt).toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false
+            })} •
             {new Date(item.createdAt).toLocaleDateString('id-ID', {
               day: '2-digit',
-              month: 'short',
+              month: 'long',
               year: 'numeric'
             })}
           </td>
