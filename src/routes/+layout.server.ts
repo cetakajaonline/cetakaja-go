@@ -1,18 +1,26 @@
 // src/routes/+layout.server.ts
-export const load = async ({ url, locals }) => {
-  let title = "Billing App";
+import type { LayoutServerLoad } from "./$types";
+import prisma from "$lib/server/prisma";
 
-  if (url.pathname === "/dashboard") {
-    title = "Dashboard | Billing App";
-  } else if (url.pathname === "/login") {
-    title = "Login | Billing App";
-  } else if (url.pathname === "/users") {
-    title = "Users | Billing App";
-  } else if (url.pathname === "/") {
-    title = "Home | Billing App";
-  } else if (url.pathname === "/settings") {
-    title = "Settings | Billing App";
-  }
+export const load: LayoutServerLoad = async ({ url, locals }) => {
+  const setting = await prisma.setting.findFirst();
+  const appName = setting?.name ?? "Nama Aplikasi";
+  const appDesc = setting?.name ?? "Deskripsi Aplikasi";
+  const logo = setting?.logo ?? null;
 
-  return { title, user: locals.user ?? null };
+  // Mapping pathname ke judul halaman
+  const titles: Record<string, string> = {
+    "/": "Home",
+    "/login": "Login",
+    "/dashboard": "Dashboard",
+    "/items": "Items",
+    "/users": "Users",
+    "/token": "API Keys",
+    "/settings": "Settings",
+  };
+
+  const pageTitle = titles[url.pathname] ?? "";
+  const title = pageTitle ? `${pageTitle} | ${appName}` : appName;
+
+  return { title, appName, appDesc, logo, user: locals.user ?? null };
 };

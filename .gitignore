@@ -23,3 +23,14 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 
 /../generated/prisma
+
+# SvelteKit
+.svelte-kit
+.svelte-kit/*
+.svelte-kit/output
+.svelte-kit/output/**
+.svelte-kit/output/client
+.svelte-kit/output/server
+.svelte-kit/output/server/**
+.svelte-kit/output/server/manifest.json
+/static/uploads

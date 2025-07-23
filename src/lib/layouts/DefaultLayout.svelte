@@ -1,5 +1,8 @@
 <script lang="ts">
+  import { page } from '$app/stores';
   export let title: string = 'Dashboard';
+
+  $: appName = $page.data.appName || 'Nama Aplikasi';
 </script>
 
 <div class="min-h-screen flex flex-col bg-base-100">
@@ -8,7 +11,7 @@
     <div class="w-full p-4">
       <div class="text-sm breadcrumbs text-base-content">
         <ul class="flex gap-1">
-          <li><a href="/admin">🏠 Beranda</a></li>
+          <li><a href="/dashboard">🏠 Beranda</a></li>
           {#if title && title !== 'Dashboard'}
             <li class="font-semibold text-base-content">{title}</li>
           {/if}
@@ -26,6 +29,6 @@
 
   <!-- Footer -->
   <footer class="text-center text-xs text-base-content/60 py-2 border-t border-base-200">
-    © {new Date().getFullYear()} Billing App — All rights reserved.
+    © {new Date().getFullYear()} {appName} — All rights reserved. Made with ❤ by Banten IT Solutions
   </footer>
 </div>

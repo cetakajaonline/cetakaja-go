@@ -175,12 +175,12 @@
   $: paginatedUsers = paginate(sortedUsers, currentPage, pageSize);
 </script>
 
-<DefaultLayout title="Pengguna">
+<DefaultLayout title="Users">
   <PageHeader
-    title="Pengguna"
+    title="Users"
     icon="👤"
     showAddButton={isAdmin}
-    addLabel="Tambah Pengguna"
+    addLabel="Tambah User"
     onAdd={openAddModal}
   />
 
@@ -219,7 +219,7 @@
   {#if isAdmin}
     <ConfirmModal
       id={confirmModalId}
-      title="Hapus Pengguna"
+      title="Hapus User"
       message={`Yakin ingin menghapus ${userToDelete?.name}?`}
       confirmText="Hapus"
       confirmClass="btn-outline btn-error"

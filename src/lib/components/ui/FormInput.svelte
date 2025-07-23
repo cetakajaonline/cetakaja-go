@@ -7,6 +7,7 @@
   export let required = false;
   export let name = '';
   export let className = '';
+  export let readonly = false;
 
   import Input from '$lib/components/ui/Input.svelte';
   import { createEventDispatcher } from 'svelte';
@@ -24,6 +25,7 @@
     {placeholder}
     {required}
     {name}
+    {readonly}
     className={`input input-bordered w-full ${className}`}
     bind:value
     on:input={(e) => dispatch('input', e.detail)}

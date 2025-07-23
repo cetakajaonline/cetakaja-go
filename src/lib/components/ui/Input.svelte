@@ -1,22 +1,43 @@
 <!-- src/lib/components/ui/Input.svelte -->
 <script lang="ts">
-  export let type: string = 'text';
+  export let type: string = 'text'; // bisa 'text', 'email', dll — abaikan jika textarea
   export let placeholder: string = '';
   export let value: string = '';
   export let className: string = '';
   export let required: boolean = false;
   export let name: string = '';
+  export let readonly: boolean = false;
+  export let disabled: boolean = false;
+  export let multiline: boolean = false; // ✅ textarea jika true
+  export let rows: number = 3;
 
   import { createEventDispatcher } from 'svelte';
   const dispatch = createEventDispatcher();
 </script>
 
-<input
-  type={type}
-  name={name}
-  class={`input input-bordered w-full ${className}`}
-  placeholder={placeholder}
-  bind:value
-  required={required}
-  on:input={() => dispatch('input', value)}
-/>
+{#if multiline}
+  <!-- svelte-ignore element_invalid_self_closing_tag -->
+  <textarea
+    name={name}
+    class={`textarea textarea-bordered w-full ${className}`}
+    placeholder={placeholder}
+    bind:value
+    required={required}
+    readonly={readonly}
+    disabled={disabled}
+    rows={rows}
+    on:input={() => dispatch('input', value)}
+  />
+{:else}
+  <input
+    type={type}
+    name={name}
+    class={`input input-bordered w-full ${className}`}
+    placeholder={placeholder}
+    bind:value
+    required={required}
+    readonly={readonly}
+    disabled={disabled}
+    on:input={() => dispatch('input', value)}
+  />
+{/if}

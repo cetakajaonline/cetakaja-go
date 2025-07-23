@@ -17,9 +17,9 @@
 <nav class="navbar bg-base-100 shadow px-4 backdrop-blur-sm border-b border-base-300/60">
 	<div class="navbar-start">
 		<!-- Mobile Dropdown -->
-		<!-- svelte-ignore a11y_label_has_associated_control -->
 		<div class="dropdown sm:hidden">
 			<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+			<!-- svelte-ignore a11y_label_has_associated_control -->
 			<label tabindex="0" class="btn btn-ghost btn-square">
 				<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none"
 					viewBox="0 0 24 24" stroke="currentColor">
@@ -43,9 +43,13 @@
 			</ul>
 		</div>
 
-		<!-- Logo -->
-		<!-- svelte-ignore a11y_missing_attribute -->
-		<a class="btn btn-ghost normal-case text-lg">🧃 BITS</a>
+		<!-- Logo dari database -->
+		<a href="/" class="btn btn-ghost normal-case text-lg flex items-center gap-2">
+			{#if data?.appLogo}
+				<img src={data.appLogo} alt="Logo" class="h-6 w-auto" />
+			{/if}
+			<span>{data?.appName || 'Nama Aplikasi'}</span>
+		</a>
 	</div>
 
 	<div class="navbar-center hidden sm:flex">
