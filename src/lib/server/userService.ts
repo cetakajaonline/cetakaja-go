@@ -2,16 +2,18 @@ import { error } from "@sveltejs/kit";
 import bcrypt from "bcryptjs";
 import prisma from "$lib/server/prisma";
 
+const userSelect = {
+  id: true,
+  name: true,
+  email: true,
+  photo: true,
+  role: true,
+  createdAt: true,
+};
+
 export async function getAllUsers() {
   return prisma.user.findMany({
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      photo: true,
-      role: true, // ⬅️ tambahkan ini
-      createdAt: true,
-    },
+    select: userSelect,
     orderBy: { createdAt: "desc" },
   });
 }
@@ -19,14 +21,7 @@ export async function getAllUsers() {
 export async function getUserById(id: number) {
   return prisma.user.findUnique({
     where: { id },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      photo: true,
-      role: true, // ⬅️ tambahkan ini
-      createdAt: true,
-    },
+    select: userSelect,
   });
 }
 
@@ -41,11 +36,13 @@ export async function createUser({
   email,
   password,
   photo,
+  role, // ⬅️ tambahkan ini
 }: {
   name: string;
   email: string;
   password: string;
   photo?: string;
+  role?: "user" | "admin";
 }) {
   const existing = await getUserByEmail(email);
   if (existing) {
@@ -60,15 +57,9 @@ export async function createUser({
       email,
       password: hashed,
       photo,
+      role: role ?? "user", // default 'user' jika tidak ditentukan
     },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      photo: true,
-      role: true, // ⬅️ tambahkan ini
-      createdAt: true,
-    },
+    select: userSelect,
   });
 }
 
@@ -79,11 +70,13 @@ export async function updateUser(
     email,
     password,
     photo,
+    role, // ⬅️ tambahkan ini
   }: {
     name?: string;
     email?: string;
     password?: string;
     photo?: string;
+    role?: "user" | "admin";
   }
 ) {
   const data: Partial<{
@@ -91,6 +84,7 @@ export async function updateUser(
     email: string;
     password: string;
     photo: string;
+    role: "user" | "admin";
   }> = {};
 
   if (name) data.name = name;
@@ -105,18 +99,14 @@ export async function updateUser(
   if (password) {
     data.password = await bcrypt.hash(password, 10);
   }
+  if (role) {
+    data.role = role;
+  }
 
   return prisma.user.update({
     where: { id },
     data,
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      photo: true,
-      role: true, // ⬅️ tambahkan ini
-      createdAt: true,
-    },
+    select: userSelect,
   });
 }
 
@@ -138,6 +128,6 @@ export async function validatePassword(email: string, plainPassword: string) {
     name: user.name,
     email: user.email,
     photo: user.photo,
-    role: user.role, // ⬅️ tambahkan ini
+    role: user.role,
   };
 }

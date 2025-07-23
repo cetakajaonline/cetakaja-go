@@ -7,11 +7,13 @@
   export let show = false;
   export let isEditMode = false;
   export let loading = false;
+  export let isAdmin = false;
   export let initial = {
     name: '',
     email: '',
     password: '',
-    photo: ''
+    photo: '',
+    role: 'user'
   };
 
   const dispatch = createEventDispatcher();
@@ -21,14 +23,16 @@
   let password = '';
   let file: File | null = null;
   let previewUrl: string | null = null;
+  let role = 'user';
 
-  // Reset data saat modal dibuka
+  // Reset saat modal dibuka
   $: if (show) {
     name = initial.name;
     email = initial.email;
     password = '';
     file = null;
     previewUrl = initial.photo || null;
+    role = initial.role || 'user';
   }
 
   function handleFileChange(e: Event) {
@@ -64,7 +68,8 @@
       name,
       email,
       password,
-      photo: photoUrl
+      photo: photoUrl,
+      role // ⬅️ kirim role apapun yg dipilih, filtering di +page.svelte
     });
   }
 </script>
@@ -85,6 +90,19 @@
       placeholder={isEditMode ? '(Biarkan kosong jika tidak diubah)' : ''}
     />
 
+    {#if isAdmin}
+      <div class="form-control">
+        <!-- svelte-ignore a11y_label_has_associated_control -->
+        <label class="label py-2">
+          <span class="label-text font-medium">Role</span>
+        </label>
+        <select bind:value={role} class="select select-bordered w-full">
+          <option value="user">User</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+    {/if}
+
     <div class="form-control">
       <!-- svelte-ignore a11y_label_has_associated_control -->
       <label class="label py-2">
@@ -96,7 +114,6 @@
         class="file-input file-input-bordered w-full"
         on:change={handleFileChange}
       />
-
       {#if previewUrl}
         <div class="mt-3">
           <p class="text-sm mb-1 text-gray-500">Preview Foto:</p>

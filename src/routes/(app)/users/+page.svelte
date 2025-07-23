@@ -15,7 +15,7 @@
     currentUserId: number;
   };
 
-  const { users: initialUsers, isAdmin } = data;
+  const { users: initialUsers, isAdmin, currentUserId } = data;
 
   let users: User[] = [...initialUsers];
   let userToDelete: User | null = null;
@@ -34,14 +34,15 @@
     name: '',
     email: '',
     password: '',
-    photo: ''
+    photo: '',
+    role: 'user'
   };
   let file: File | null = null;
 
   function openAddModal() {
     isEditMode = false;
     selectedUser = null;
-    userForm = { name: '', email: '', password: '', photo: '' };
+    userForm = { name: '', email: '', password: '', photo: '', role: 'user' };
     file = null;
     showUserModal = true;
   }
@@ -53,7 +54,8 @@
       name: user.name,
       email: user.email,
       password: '',
-      photo: user.photo ?? ''
+      photo: user.photo ?? '',
+      role: user.role ?? 'user'
     };
     file = null;
     showUserModal = true;
@@ -68,10 +70,16 @@
     email: string;
     password: string;
     photo: string;
+    role: string;
   }) {
     loading = true;
 
     try {
+      const { name, email, password, photo, role } = payload;
+      const finalPayload = isAdmin
+        ? { name, email, password, photo, role }
+        : { name, email, password, photo };
+
       const res = await fetch(
         isEditMode && selectedUser
           ? `/api/users/${selectedUser.id}`
@@ -79,7 +87,7 @@
         {
           method: isEditMode ? 'PUT' : 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(finalPayload),
         }
       );
 
@@ -88,7 +96,9 @@
 
       if (res.ok) {
         if (isEditMode && selectedId) {
-          users = users.map(u => u.id === selectedId ? { ...u, ...result } : u);
+          users = users.map(u =>
+            u.id === selectedId ? { ...u, ...result } : u
+          );
         } else {
           users = [...users, result];
         }
@@ -178,13 +188,15 @@
 
   <UserTable
     users={paginatedUsers}
-    onEdit={(user) => (isAdmin || user.id === data.currentUserId) && openEditModal(user)}
+    onEdit={(user) => {
+      if (isAdmin || user.id === currentUserId) openEditModal(user);
+    }}
     onDelete={(user) => isAdmin && askDelete(user)}
     onSort={toggleSort}
     sortKey={sortKey}
     sortDirection={sortDirection}
     isAdmin={isAdmin}
-    currentUserId={data.currentUserId}
+    currentUserId={currentUserId}
   />
 
   <Pagination
@@ -194,14 +206,15 @@
     onPageChange={(p) => currentPage = p}
   />
 
-    <UserFormModal
-      show={showUserModal}
-      {isEditMode}
-      {loading}
-      initial={userForm}
-      on:submit={(e) => onSubmit(e.detail)}
-      on:close={onClose}
-    />
+  <UserFormModal
+    show={showUserModal}
+    {isEditMode}
+    {loading}
+    initial={userForm}
+    isAdmin={isAdmin}
+    on:submit={(e) => onSubmit(e.detail)}
+    on:close={onClose}
+  />
 
   {#if isAdmin}
     <ConfirmModal
