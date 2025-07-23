@@ -9,6 +9,7 @@ export async function getAllUsers() {
       name: true,
       email: true,
       photo: true,
+      role: true, // ⬅️ tambahkan ini
       createdAt: true,
     },
     orderBy: { createdAt: "desc" },
@@ -23,13 +24,16 @@ export async function getUserById(id: number) {
       name: true,
       email: true,
       photo: true,
+      role: true, // ⬅️ tambahkan ini
       createdAt: true,
     },
   });
 }
 
 export async function getUserByEmail(email: string) {
-  return prisma.user.findUnique({ where: { email } });
+  return prisma.user.findUnique({
+    where: { email },
+  });
 }
 
 export async function createUser({
@@ -62,6 +66,7 @@ export async function createUser({
       name: true,
       email: true,
       photo: true,
+      role: true, // ⬅️ tambahkan ini
       createdAt: true,
     },
   });
@@ -109,6 +114,7 @@ export async function updateUser(
       name: true,
       email: true,
       photo: true,
+      role: true, // ⬅️ tambahkan ini
       createdAt: true,
     },
   });
@@ -132,5 +138,6 @@ export async function validatePassword(email: string, plainPassword: string) {
     name: user.name,
     email: user.email,
     photo: user.photo,
+    role: user.role, // ⬅️ tambahkan ini
   };
 }

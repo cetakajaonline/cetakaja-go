@@ -11,6 +11,9 @@
   export let sortKey: keyof User = 'name';
   export let sortDirection: 'asc' | 'desc' = 'asc';
   export let onSort: (key: keyof User) => void;
+
+  export let isAdmin: boolean = false;
+  export let currentUserId: number = 0;
 </script>
 
 <div class="overflow-x-auto rounded-xl shadow border border-base-200 bg-base-100">
@@ -42,6 +45,9 @@
             {/if}
           </div>
         </th>
+
+        <th>Role</th>
+
         <th class="text-right pr-4">Aksi</th>
       </tr>
     </thead>
@@ -49,9 +55,7 @@
       {#each users as user}
         <!-- Pakai 
           on:click={() => onRowClick(user)} Buat Detail-->
-        <tr
-          class="hover:bg-base-100 transition cursor-pointer"
-        >
+        <tr class="hover:bg-base-100 transition cursor-pointer">
           <td>
             <div class="flex items-center gap-3">
               <div class="avatar">
@@ -64,11 +68,28 @@
               </div>
             </div>
           </td>
+
           <td>{user.email}</td>
-          <td class="text-right space-x-2">
-            <IconButton icon={Pencil} color="btn-circle btn-outline btn-success" onClick={() => onEdit(user)} />
-            <IconButton icon={Trash2} color="btn-circle btn-outline btn-error" onClick={() => onDelete(user)} />
+
+          <td>
+            <div
+              class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize
+                bg-base-200 text-base-content border border-base-300"
+            >
+              {user.role}
+            </div>
           </td>
+
+          <td class="text-right space-x-2">
+            {#if isAdmin || user.id === currentUserId}
+              <IconButton icon={Pencil} color="btn-circle btn-outline btn-success" onClick={() => onEdit(user)} />
+            {/if}
+
+            {#if isAdmin}
+              <IconButton icon={Trash2} color="btn-circle btn-outline btn-error" onClick={() => onDelete(user)} />
+            {/if}
+          </td>
+
         </tr>
       {/each}
     </tbody>

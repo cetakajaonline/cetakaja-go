@@ -5,9 +5,9 @@ export interface User {
   id: number;
   name: string;
   email: string;
-  photo?: string;
+  photo?: string | null;
+  role?: string;
   createdAt: string;
-  updatedAt: string;
 }
 
 // ✅ Token
