@@ -1,25 +1,38 @@
 import { json } from "@sveltejs/kit";
-import { getAllKeys, createKey } from "$lib/server/tokenService";
-import { requireAdmin } from "$lib/server/auth";
+import {
+  getAllKeys,
+  createKey,
+  getKeysByUserId,
+} from "$lib/server/tokenService";
+import { requireAnyRole, isAdmin } from "$lib/server/auth";
 import type { RequestHandler } from "./$types";
 
 export const GET: RequestHandler = async (event) => {
-  requireAdmin(event); // hanya admin yang boleh akses
+  requireAnyRole(event);
 
-  const tokens = await getAllKeys();
+  const user = event.locals.user!;
+  let tokens;
+
+  if (isAdmin(event)) {
+    tokens = await getAllKeys();
+  } else {
+    tokens = await getKeysByUserId(user.id);
+  }
+
   return json(tokens);
 };
 
 export const POST: RequestHandler = async (event) => {
-  requireAdmin(event); // hanya admin yang boleh akses
+  requireAnyRole(event);
 
+  const user = event.locals.user!;
   const body = await event.request.json();
 
   try {
     const newKey = await createKey({
       name: body.name,
       token: body.token,
-      createdBy: event.locals.user.id,
+      createdBy: user.id,
     });
 
     return json(newKey);

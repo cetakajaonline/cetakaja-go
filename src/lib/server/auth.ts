@@ -60,3 +60,11 @@ export function requireAnyRole(event: { locals: App.Locals }) {
     throw error(403, "Role is required");
   }
 }
+
+/**
+ * Cek apakah user adalah admin
+ * Digunakan untuk endpoint yang hanya boleh diakses oleh admin
+ */
+export function isAdmin(event: RequestEvent): boolean {
+  return event.locals.user?.role === "admin";
+}
