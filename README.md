@@ -1,4 +1,6 @@
-# SvelteKit Starter Kit
+# SvelteKit Starter Kit - Sveltekit Prisma Postgres Jwt Tailwind DaisyUI
+
+![CI](https://github.com/bitscoid/starter/actions/workflows/ci.yml/badge.svg)
 
 Starter kit dengan:
 
