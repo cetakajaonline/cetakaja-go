@@ -1,4 +1,3 @@
-import { error } from "@sveltejs/kit";
 import bcrypt from "bcryptjs";
 import prisma from "$lib/server/prisma";
 
@@ -46,7 +45,7 @@ export async function createUser({
 }) {
   const existing = await getUserByEmail(email);
   if (existing) {
-    throw error(400, "Email sudah terdaftar");
+    throw new Error("Email sudah terdaftar");
   }
 
   const hashed = await bcrypt.hash(password, 10);
@@ -91,7 +90,7 @@ export async function updateUser(
   if (email) {
     const existing = await getUserByEmail(email);
     if (existing && existing.id !== id) {
-      throw error(400, "Email sudah digunakan oleh user lain");
+      throw new Error("Email sudah digunakan oleh user lain");
     }
     data.email = email;
   }

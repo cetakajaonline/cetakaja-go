@@ -1,8 +1,10 @@
+import type { Token } from "$lib/types";
+
 export async function createKey(data: {
   name: string;
   token: string;
   createdBy: number;
-}) {
+}): Promise<Token> {
   const res = await fetch("/api/token", {
     method: "POST",
     headers: {
@@ -15,7 +17,7 @@ export async function createKey(data: {
     throw new Error("Gagal membuat token");
   }
 
-  return await res.json();
+  return (await res.json()) as Token;
 }
 
 export async function updateKey(
@@ -24,7 +26,7 @@ export async function updateKey(
     name?: string;
     revoked?: boolean;
   }
-) {
+): Promise<Token> {
   const res = await fetch(`/api/token/${id}`, {
     method: "PUT",
     headers: {
@@ -37,10 +39,10 @@ export async function updateKey(
     throw new Error("Gagal memperbarui token");
   }
 
-  return await res.json();
+  return (await res.json()) as Token;
 }
 
-export async function deleteKey(id: number) {
+export async function deleteKey(id: number): Promise<boolean> {
   const res = await fetch(`/api/token/${id}`, {
     method: "DELETE",
   });
@@ -52,12 +54,12 @@ export async function deleteKey(id: number) {
   return true;
 }
 
-export async function getKey(id: number) {
+export async function getKey(id: number): Promise<Token> {
   const res = await fetch(`/api/token/${id}`);
 
   if (!res.ok) {
     throw new Error("Gagal mengambil token");
   }
 
-  return await res.json();
+  return (await res.json()) as Token;
 }

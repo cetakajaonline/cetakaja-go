@@ -1,4 +1,4 @@
-import { json, error } from "@sveltejs/kit";
+import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
 import { requireAdmin } from "$lib/server/auth";
 import { randomUUID } from "crypto";
@@ -6,13 +6,13 @@ import fs from "fs";
 import path from "path";
 
 export const POST: RequestHandler = async (event) => {
-  requireAdmin(event); // Akan throw error 403 jika bukan admin
+  requireAdmin(event); // Akan throw new Error 403 jika bukan admin
 
   const formData = await event.request.formData();
   const file = formData.get("file");
 
   if (!(file instanceof File)) {
-    throw error(400, "Invalid file upload");
+    throw new Error("Invalid file upload");
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
@@ -21,7 +21,7 @@ export const POST: RequestHandler = async (event) => {
   const ext = path.extname(file.name).toLowerCase().replace(".", "") || "bin";
   const allowedExt = ["jpg", "jpeg", "png", "gif", "pdf"];
   if (!allowedExt.includes(ext)) {
-    throw error(400, `Ekstensi file .${ext} tidak diperbolehkan`);
+    throw new Error(`Ekstensi file .${ext} tidak diperbolehkan`);
   }
 
   const filename = `${randomUUID()}.${ext}`;

@@ -1,11 +1,12 @@
 import prisma from "$lib/server/prisma";
+import type { Prisma } from "@prisma/client";
 
 const itemSelect = {
   id: true,
   name: true,
   desc: true,
   createdAt: true,
-};
+} satisfies Prisma.ItemSelect;
 
 export async function getAllItems() {
   return prisma.item.findMany({
@@ -21,34 +22,17 @@ export async function getItemById(id: number) {
   });
 }
 
-export async function createItem({
-  name,
-  desc,
-}: {
-  name: string;
-  desc: string;
-}) {
+export async function createItem(data: Prisma.ItemCreateInput) {
   return prisma.item.create({
-    data: { name, desc },
+    data,
     select: itemSelect,
   });
 }
 
-export async function updateItem(
-  id: number,
-  data: {
-    name?: string;
-    desc?: string;
-  }
-) {
-  const updateData: Record<string, any> = {};
-
-  if (typeof data.name !== "undefined") updateData.name = data.name;
-  if (typeof data.desc !== "undefined") updateData.desc = data.desc;
-
+export async function updateItem(id: number, data: Prisma.ItemUpdateInput) {
   return prisma.item.update({
     where: { id },
-    data: updateData,
+    data,
     select: itemSelect,
   });
 }

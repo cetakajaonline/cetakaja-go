@@ -10,7 +10,7 @@ import type { RequestHandler } from "./$types";
 export const GET: RequestHandler = async (event) => {
   requireAnyRole(event);
 
-  const user = event.locals.user!;
+  const user = event.locals.user;
   let tokens;
 
   if (isAdmin(event)) {
@@ -25,7 +25,7 @@ export const GET: RequestHandler = async (event) => {
 export const POST: RequestHandler = async (event) => {
   requireAnyRole(event);
 
-  const user = event.locals.user!;
+  const user = event.locals.user;
   const body = await event.request.json();
 
   try {

@@ -7,6 +7,7 @@ export const load: PageServerLoad = async (event) => {
   const user = event.locals.user;
 
   if (!user) {
+    // eslint-disable-next-line @typescript-eslint/only-throw-error
     throw redirect(302, "/login");
   }
 

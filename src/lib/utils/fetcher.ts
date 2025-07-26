@@ -14,5 +14,6 @@ export async function fetcher<T>(
     throw new Error(error.message || "Terjadi kesalahan saat memuat data");
   }
 
-  return res.json();
+  const data = await res.json();
+  return data as T;
 }

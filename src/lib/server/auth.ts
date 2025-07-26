@@ -1,12 +1,11 @@
 import type { RequestEvent } from "@sveltejs/kit";
-import { error } from "@sveltejs/kit";
 
 /**
  * Pastikan user sudah login
  */
 export function requireAuth(event: RequestEvent) {
   if (!event.locals.user) {
-    throw error(401, "Unauthorized : user tidak ditemukan");
+    throw new Error("Unauthorized : user tidak ditemukan");
   }
 }
 
@@ -18,8 +17,7 @@ export function requireRole(event: RequestEvent, role: string) {
   const userRole = event.locals.user?.role;
 
   if (userRole !== role) {
-    throw error(
-      403,
+    throw new Error(
       `Forbidden : hanya role ${role} yang diperbolehkan (saat ini: ${userRole})`
     );
   }
@@ -46,7 +44,7 @@ export function requireRoleOrSelf(
   if (currentUser?.role === role) return;
 
   if (currentUser?.id !== userId) {
-    throw error(403, "Forbidden: Anda tidak boleh mengakses data user lain");
+    throw new Error("Forbidden: Anda tidak boleh mengakses data user lain");
   }
 }
 
@@ -57,7 +55,7 @@ export function requireRoleOrSelf(
 export function requireAnyRole(event: { locals: App.Locals }) {
   const user = event.locals.user;
   if (!user || !user.role) {
-    throw error(403, "Role is required");
+    throw new Error("Role is required");
   }
 }
 

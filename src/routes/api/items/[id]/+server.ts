@@ -1,4 +1,4 @@
-import { json, error } from "@sveltejs/kit";
+import { json } from "@sveltejs/kit";
 import { updateItem, deleteItem, getItemById } from "$lib/server/itemService";
 import { requireAnyRole } from "$lib/server/auth";
 import type { RequestHandler } from "./$types";
@@ -8,10 +8,10 @@ export const GET: RequestHandler = async (event) => {
   requireAnyRole(event);
 
   const id = Number(event.params.id);
-  if (isNaN(id)) throw error(400, "Invalid item ID");
+  if (isNaN(id)) throw new Error("Invalid item ID");
 
   const item = await getItemById(id);
-  if (!item) throw error(404, "Item not found");
+  if (!item) throw new Error("Item not found");
 
   return json(item);
 };
@@ -21,16 +21,16 @@ export const PUT: RequestHandler = async (event) => {
   requireAnyRole(event);
 
   const id = Number(event.params.id);
-  if (isNaN(id)) throw error(400, "Invalid item ID");
+  if (isNaN(id)) throw new Error("Invalid item ID");
 
   const body = (await event.request.json()) as { name?: string; desc?: string };
 
   if (!body.name?.trim() || !body.desc?.trim()) {
-    throw error(400, "Name and description are required");
+    throw new Error("Name and description are required");
   }
 
   const existing = await getItemById(id);
-  if (!existing) throw error(404, "Item not found");
+  if (!existing) throw new Error("Item not found");
 
   const updated = await updateItem(id, {
     name: body.name,
@@ -45,10 +45,10 @@ export const DELETE: RequestHandler = async (event) => {
   requireAnyRole(event);
 
   const id = Number(event.params.id);
-  if (isNaN(id)) throw error(400, "Invalid item ID");
+  if (isNaN(id)) throw new Error("Invalid item ID");
 
   const existing = await getItemById(id);
-  if (!existing) throw error(404, "Item not found");
+  if (!existing) throw new Error("Item not found");
 
   await deleteItem(id);
 

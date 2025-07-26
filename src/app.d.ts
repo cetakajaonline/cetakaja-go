@@ -1,11 +1,14 @@
+import type { User, ApiToken, Item } from "$lib/types";
+
 declare global {
   namespace App {
     interface Locals {
-      user?: User;
-      token?: ApiToken;
-      item?: Item;
+      user: User;
+    }
+    interface PageData {
+      tokens: ApiToken[];
+      items: Item[];
     }
   }
 }
-
 export {};
