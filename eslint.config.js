@@ -1,13 +1,21 @@
 // eslint.config.js
 import js from "@eslint/js";
-import tseslint from "typescript-eslint";
+import ts from "typescript-eslint";
 import svelte from "eslint-plugin-svelte";
 
 export default [
-  ...tseslint.configs.recommended,
-  ...tseslint.configs.recommendedTypeChecked,
+  js.configs.recommended,
+  ...ts.configs.recommended,
+  ...ts.configs.recommendedTypeChecked,
   {
     files: ["**/*.ts", "**/*.js"],
+    languageOptions: {
+      parser: ts.parser,
+      parserOptions: {
+        project: ["./tsconfig.json"], // ✅ enable type-aware rules
+        tsconfigRootDir: process.cwd(),
+      },
+    },
     rules: {
       "no-console": "warn",
       "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
@@ -16,14 +24,15 @@ export default [
   {
     files: ["**/*.svelte"],
     languageOptions: {
-      parser: tseslint.parser,
+      parser: ts.parser,
       parserOptions: {
         project: ["./tsconfig.json"],
+        tsconfigRootDir: process.cwd(),
         extraFileExtensions: [".svelte"],
       },
     },
     plugins: {
-      svelte: svelte,
+      svelte,
     },
     processor: svelte.processors.svelte,
   },
