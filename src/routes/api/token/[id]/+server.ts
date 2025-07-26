@@ -1,4 +1,4 @@
-import { json, error } from "@sveltejs/kit";
+import { json } from "@sveltejs/kit";
 import { updateKey, deleteKey, getKeyById } from "$lib/server/tokenService";
 import { isAdmin, requireAnyRole } from "$lib/server/auth";
 import type { RequestHandler } from "./$types";
@@ -8,15 +8,15 @@ export const GET: RequestHandler = async (event) => {
   requireAnyRole(event);
 
   const id = Number(event.params.id);
-  if (isNaN(id)) throw error(400, "Invalid token ID");
+  if (isNaN(id)) throw new Error("Invalid token ID");
 
   const token = await getKeyById(id);
-  if (!token) throw error(404, "Token not found");
+  if (!token) throw new Error("Token not found");
 
   // Hanya admin atau pemilik token yang boleh akses
-  const user = event.locals.user!;
+  const user = event.locals.user;
   if (!isAdmin(event) && token.createdBy !== user.id) {
-    throw error(403, "Forbidden");
+    throw new Error("Forbidden");
   }
 
   return json(token);
@@ -27,14 +27,14 @@ export const PUT: RequestHandler = async (event) => {
   requireAnyRole(event);
 
   const id = Number(event.params.id);
-  if (isNaN(id)) throw error(400, "Invalid token ID");
+  if (isNaN(id)) throw new Error("Invalid token ID");
 
   const token = await getKeyById(id);
-  if (!token) throw error(404, "Token not found");
+  if (!token) throw new Error("Token not found");
 
-  const user = event.locals.user!;
+  const user = event.locals.user;
   if (!isAdmin(event) && token.createdBy !== user.id) {
-    throw error(403, "Forbidden");
+    throw new Error("Forbidden");
   }
 
   const body = await event.request.json();
@@ -51,15 +51,15 @@ export const DELETE: RequestHandler = async (event) => {
   requireAnyRole(event);
 
   const id = Number(event.params.id);
-  if (isNaN(id)) throw error(400, "Invalid token ID");
+  if (isNaN(id)) throw new Error("Invalid token ID");
 
   const token = await getKeyById(id);
-  if (!token) throw error(404, "Token not found");
+  if (!token) throw new Error("Token not found");
 
-  const user = event.locals.user!;
+  const user = event.locals.user;
   // Hanya admin atau pemilik token yang boleh menghapus
   if (!isAdmin(event) && token.createdBy !== user.id) {
-    throw error(403, "Forbidden");
+    throw new Error("Forbidden");
   }
 
   await deleteKey(id);

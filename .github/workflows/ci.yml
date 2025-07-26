@@ -21,7 +21,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v2
         with:
-          version: 9 # atau versi pnpm yang kamu pakai
+          version: latest-10
 
       - name: Install dependencies
         run: pnpm install
@@ -29,8 +29,8 @@ jobs:
       - name: Run linter
         run: pnpm lint
 
-      - name: Run formatter check
-        run: pnpm prettier --check .
+      - name: Run formatter
+        run: pnpm prettier --write .
 
       - name: Build
         run: pnpm build

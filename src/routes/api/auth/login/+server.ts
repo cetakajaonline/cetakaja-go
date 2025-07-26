@@ -1,21 +1,23 @@
-// src/routes/api/login/+server.ts
+// src/routes/api/auth/login/+server.ts
 import prisma from "$lib/server/prisma";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { json } from "@sveltejs/kit";
+import type { RequestHandler } from "./$types";
 
 const JWT_SECRET = process.env.JWT_SECRET || "changeme";
 
-export async function POST({ request, cookies }) {
+export const POST: RequestHandler = async ({ request, cookies }) => {
   try {
-    const { email, password } = await request.json();
+    const body = await request.json();
+    const { email, password } = body;
 
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return json(
         { success: false, message: "Email atau password salah" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -25,7 +27,7 @@ export async function POST({ request, cookies }) {
       path: "/",
       httpOnly: true,
       sameSite: "strict",
-      secure: false, // ubah ke `true` jika pakai HTTPS di production
+      secure: false, // set to true in production (HTTPS)
       maxAge: 60 * 60 * 24 * 7,
     });
 
@@ -34,7 +36,7 @@ export async function POST({ request, cookies }) {
     console.error("Login Error:", error);
     return json(
       { success: false, message: "Terjadi kesalahan saat login" },
-      { status: 500 }
+      { status: 500 },
     );
   }
-}
+};

@@ -1,4 +1,4 @@
-import { json, error } from "@sveltejs/kit";
+import { json } from "@sveltejs/kit";
 import { updateUser, deleteUser, getUserById } from "$lib/server/userService";
 import { requireAdmin, requireRoleOrSelf } from "$lib/server/auth";
 import type { RequestHandler } from "./$types";
@@ -13,7 +13,7 @@ export const PUT: RequestHandler = async (event) => {
     return json(updated);
   } catch (err) {
     console.error(err);
-    throw error(500, "Failed to update user");
+    throw new Error("Failed to update user");
   }
 };
 
@@ -26,7 +26,7 @@ export const DELETE: RequestHandler = async (event) => {
     return json({ success: true });
   } catch (err) {
     console.error(err);
-    throw error(500, "Failed to delete user");
+    throw new Error("Failed to delete user");
   }
 };
 
@@ -36,10 +36,10 @@ export const GET: RequestHandler = async (event) => {
 
   try {
     const user = await getUserById(id);
-    if (!user) throw error(404, "User not found");
+    if (!user) throw new Error("User not found");
     return json(user);
   } catch (err) {
     console.error(err);
-    throw error(500, "Failed to fetch user");
+    throw new Error("Failed to fetch user");
   }
 };

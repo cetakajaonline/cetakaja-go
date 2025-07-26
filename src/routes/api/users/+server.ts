@@ -1,5 +1,5 @@
 // src/routes/api/users/+server.ts
-import { json, error } from "@sveltejs/kit";
+import { json } from "@sveltejs/kit";
 import { requireAdmin } from "$lib/server/auth";
 import {
   getAllUsers,
@@ -23,7 +23,7 @@ export const POST: RequestHandler = async (event) => {
 
   const existing = await getUserByEmail(body.email);
   if (existing) {
-    throw error(400, "Email sudah terdaftar");
+    throw new Error("Email sudah terdaftar");
   }
 
   try {
@@ -31,6 +31,6 @@ export const POST: RequestHandler = async (event) => {
     return json(newUser);
   } catch (err) {
     console.error(err);
-    throw error(500, "Gagal membuat user");
+    throw new Error("Gagal membuat user");
   }
 };

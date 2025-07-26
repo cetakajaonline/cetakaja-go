@@ -122,7 +122,7 @@ export async function updateKey(
   }: {
     name?: string;
     revoked?: boolean;
-  }
+  },
 ) {
   const data: Partial<{ name: string; revoked: boolean }> = {};
   if (name !== undefined) data.name = name;

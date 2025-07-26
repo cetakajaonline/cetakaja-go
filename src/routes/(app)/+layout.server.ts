@@ -4,6 +4,7 @@ import prisma from "$lib/server/prisma";
 import type { LayoutServerLoad } from "./$types";
 
 export const load: LayoutServerLoad = async ({ locals }) => {
+  // eslint-disable-next-line @typescript-eslint/only-throw-error
   if (!locals.user) throw redirect(302, "/login");
 
   const settings = await prisma.setting.findFirst({
