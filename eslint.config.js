@@ -1,39 +1,46 @@
 // eslint.config.js
 import js from "@eslint/js";
-import ts from "typescript-eslint";
+import tseslint from "typescript-eslint";
 import svelte from "eslint-plugin-svelte";
+import prettier from "eslint-plugin-prettier";
 
 export default [
-  js.configs.recommended,
-  ...ts.configs.recommended,
-  ...ts.configs.recommendedTypeChecked,
+  // 1. Ignore rules
   {
-    files: ["**/*.ts", "**/*.js"],
-    languageOptions: {
-      parser: ts.parser,
-      parserOptions: {
-        project: ["./tsconfig.json"], // ✅ enable type-aware rules
-        tsconfigRootDir: process.cwd(),
-      },
-    },
-    rules: {
-      "no-console": "warn",
-      "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
-    },
+    ignores: ["**/node_modules/**", "**/.svelte-kit/**", "**/build/**"],
   },
+
+  // 2. Base config
+  js.configs.recommended,
+
+  // 3. TypeScript-aware config
+  ...tseslint.configs.recommendedTypeChecked,
   {
-    files: ["**/*.svelte"],
+    files: ["**/*.ts", "**/*.svelte"],
     languageOptions: {
-      parser: ts.parser,
       parserOptions: {
         project: ["./tsconfig.json"],
-        tsconfigRootDir: process.cwd(),
-        extraFileExtensions: [".svelte"],
       },
     },
+  },
+
+  // 4. Svelte support
+  {
+    files: ["**/*.svelte"],
     plugins: {
-      svelte,
+      svelte: svelte,
     },
-    processor: svelte.processors.svelte,
+    languageOptions: {
+      parser: svelte.parser,
+    },
+    processor: svelte.processor,
+  },
+
+  // 5. Prettier integration
+  {
+    plugins: { prettier },
+    rules: {
+      "prettier/prettier": "error",
+    },
   },
 ];
