@@ -13,7 +13,6 @@ export async function POST({ request, cookies }) {
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
-      // Balikkan status 401 agar bisa di-handle di client
       return json(
         { success: false, message: "Email atau password salah" },
         { status: 401 }
@@ -26,7 +25,7 @@ export async function POST({ request, cookies }) {
       path: "/",
       httpOnly: true,
       sameSite: "strict",
-      secure: false,
+      secure: false, // ubah ke `true` jika pakai HTTPS di production
       maxAge: 60 * 60 * 24 * 7,
     });
 
