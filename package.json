@@ -1,7 +1,22 @@
 {
-  "name": "billing",
+  "name": "@bitscoid/starter",
   "private": true,
-  "version": "0.0.1",
+  "version": "1.0.1",
+  "description": "SvelteKit Starter Kit - Sveltekit Prisma Postgres Jwt Tailwind DaisyUI",
+  "author": {
+    "name": "Nurul Imam",
+    "email": "admin@bits.co.id",
+    "url": "https://github.com/bitscoid"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bitscoid/starter.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bitscoid/starter/issues"
+  },
+  "homepage": "https://bits.co.id",
   "type": "module",
   "scripts": {
     "dev": "vite dev",
@@ -9,10 +24,11 @@
     "preview": "vite preview",
     "seed": "node prisma/seed.cjs",
     "reset": "rm -rf node_modules && rm -rf .svelte-kit && pnpm install",
-    "mulai": "pnpm install && pnpm prisma generate && pnpm prisma db push && pnpm seed",
+    "start": "pnpm install && pnpm prisma generate && pnpm prisma db push && pnpm seed",
     "db:reset": "npx prisma migrate reset --force",
-    "start": "pnpm dev",
     "prepare": "svelte-kit sync || echo ''",
+    "lint": "eslint . --ext .ts,.svelte",
+    "format": "prettier --write .",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
   },
@@ -23,10 +39,13 @@
     "@sveltejs/adapter-auto": "^6.0.0",
     "@sveltejs/kit": "^2.22.0",
     "@sveltejs/vite-plugin-svelte": "^6.0.0",
-    "@types/bcrypt": "^6.0.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.1.0",
+    "@typescript-eslint/eslint-plugin": "^8.38.0",
+    "@typescript-eslint/parser": "^8.38.0",
+    "eslint": "^9.31.0",
+    "eslint-plugin-svelte3": "^4.0.0",
     "prisma": "^6.12.0",
     "svelte": "^5.0.0",
     "svelte-check": "^4.0.0",
@@ -39,7 +58,6 @@
       "@prisma/client",
       "@prisma/engines",
       "@tailwindcss/oxide",
-      "bcrypt",
       "esbuild",
       "prisma"
     ]
@@ -47,7 +65,6 @@
   "dependencies": {
     "@prisma/client": "^6.12.0",
     "@tailwindcss/vite": "^4.1.11",
-    "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.2",
     "cookie": "^1.0.2",
     "daisyui": "^5.0.46",

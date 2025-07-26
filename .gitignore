@@ -41,6 +41,7 @@ lerna-lock.json
 .npmignore
 .eslintrc.json
 .eslintrc.js
+.eslintrc.cjs
 .prettierrc
 .prettierrc.json
 .prettierrc.js
@@ -85,3 +86,4 @@ lerna-lock.json
 .svelte-kit/output/server/**
 .svelte-kit/output/server/manifest.json
 /static/uploads
+build
