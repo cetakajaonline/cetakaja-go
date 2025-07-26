@@ -25,7 +25,7 @@ export async function updateKey(
   data: {
     name?: string;
     revoked?: boolean;
-  }
+  },
 ): Promise<Token> {
   const res = await fetch(`/api/token/${id}`, {
     method: "PUT",

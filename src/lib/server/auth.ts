@@ -18,7 +18,7 @@ export function requireRole(event: RequestEvent, role: string) {
 
   if (userRole !== role) {
     throw new Error(
-      `Forbidden : hanya role ${role} yang diperbolehkan (saat ini: ${userRole})`
+      `Forbidden : hanya role ${role} yang diperbolehkan (saat ini: ${userRole})`,
     );
   }
 }
@@ -36,7 +36,7 @@ export function requireAdmin(event: RequestEvent) {
 export function requireRoleOrSelf(
   event: RequestEvent,
   userId: number,
-  role: string = "admin"
+  role: string = "admin",
 ) {
   requireAuth(event);
 

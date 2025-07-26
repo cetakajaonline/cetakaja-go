@@ -76,7 +76,7 @@ export async function updateUser(
     password?: string;
     photo?: string;
     role?: "user" | "admin";
-  }
+  },
 ) {
   const data: Partial<{
     name: string;

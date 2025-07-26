@@ -6,7 +6,7 @@ const uploadDir = path.resolve("static/uploads");
 
 export async function saveFile(
   buffer: Buffer,
-  originalName: string
+  originalName: string,
 ): Promise<string> {
   // pastikan folder static/uploads ada
   if (!fs.existsSync(uploadDir)) {

@@ -2,7 +2,7 @@
 
 export async function fetcher<T>(
   url: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
 ): Promise<T> {
   const res = await fetch(url, {
     headers: { "Content-Type": "application/json" },
