@@ -1,6 +1,6 @@
 // src/routes/api/login/+server.ts
 import prisma from "$lib/server/prisma";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { json } from "@sveltejs/kit";
 
