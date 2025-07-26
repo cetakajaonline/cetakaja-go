@@ -4,7 +4,6 @@ import tseslint from "typescript-eslint";
 import svelte from "eslint-plugin-svelte";
 
 export default [
-  ...js.configs.recommended,
   ...tseslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   {
