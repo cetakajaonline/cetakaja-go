@@ -62,6 +62,8 @@
   "devDependencies": {
     "@eslint/js": "^9.32.0",
     "@sveltejs/adapter-auto": "^6.0.0",
+    "@sveltejs/adapter-cloudflare": "^7.1.1",
+    "@sveltejs/adapter-node": "^5.2.13",
     "@sveltejs/kit": "^2.22.0",
     "@sveltejs/vite-plugin-svelte": "^6.0.0",
     "@types/bcryptjs": "^2.4.6",
@@ -89,7 +91,9 @@
       "@prisma/engines",
       "@tailwindcss/oxide",
       "esbuild",
-      "prisma"
+      "prisma",
+      "sharp",
+      "workerd"
     ]
   },
   "dependencies": {
