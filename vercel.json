@@ -1,0 +1,7 @@
+{
+  "buildCommand": "pnpm prisma generate && pnpm build",
+  "outputDirectory": ".vercel/output",
+  "env": {
+    "DATABASE_URL": "@database_url"
+  }
+}

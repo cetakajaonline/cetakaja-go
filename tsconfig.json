@@ -21,21 +21,6 @@
     "moduleResolution": "Bundler",
     "esModuleInterop": true,
     "strict": true,
-    "skipLibCheck": true,
-    "baseUrl": ".",
-    "paths": {
-      "$lib/*": ["src/lib/*"],
-      "$lib": ["src/lib"],
-      "$lib/server/*": ["src/lib/server/*"],
-      "$lib/server": ["src/lib/server"],
-      "$lib/stores/*": ["src/lib/stores/*"],
-      "$lib/stores": ["src/lib/stores"],
-      "$lib/types/*": ["src/lib/types/*"],
-      "$lib/types": ["src/lib/types"],
-      "$stores/*": ["src/stores/*"],
-      "$stores": ["src/stores"],
-      "$types/*": ["src/types/*"],
-      "$types": ["src/types"]
-    }
+    "skipLibCheck": true
   }
 }
