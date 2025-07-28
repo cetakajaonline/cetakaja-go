@@ -5,7 +5,13 @@ export const userSchema = z.object({
     email: z.string().email('Email tidak valid'),
     password: z.string().min(6, 'Minimal 6 karakter'),
     role: z.enum(['admin', 'user']),
-    photo: z.union([z.string().url(), z.literal('')]).optional(),
+    photo: z
+        .union([
+            z.string().url(),
+            z.string().startsWith("/uploads/"),
+            z.literal(""),
+        ])
+        .optional(),
 })
 
 export const userUpdateSchema = userSchema.partial();
