@@ -7,30 +7,45 @@ import {
   getUserByEmail,
 } from "$lib/server/userService";
 import type { RequestHandler } from "./$types";
+import { userSchema } from "$lib/validations/userSchema";
 
 // GET: hanya admin yang boleh akses
 export const GET: RequestHandler = async (event) => {
-  requireAdmin(event); // akan throw error kalau bukan admin
+  requireAdmin(event);
   const users = await getAllUsers();
   return json(users);
 };
 
 // POST: hanya admin yang boleh buat user baru
 export const POST: RequestHandler = async (event) => {
-  requireAdmin(event); // validasi admin lebih awal
+  requireAdmin(event);
 
   const body = await event.request.json();
 
-  const existing = await getUserByEmail(body.email);
+  // ✅ Validasi Zod
+  const parsed = userSchema.safeParse(body);
+  if (!parsed.success) {
+    return json(
+      {
+        message: "Validasi gagal",
+        errors: parsed.error.flatten().fieldErrors,
+      },
+      { status: 400 }
+    );
+  }
+
+  const data = parsed.data;
+
+  const existing = await getUserByEmail(data.email);
   if (existing) {
-    throw new Error("Email sudah terdaftar");
+    return json({ message: "Email sudah terdaftar" }, { status: 400 });
   }
 
   try {
-    const newUser = await createUser(body);
+    const newUser = await createUser(data);
     return json(newUser);
   } catch (err) {
     console.error(err);
-    throw new Error("Gagal membuat user");
+    return json({ message: "Gagal membuat user" }, { status: 500 });
   }
 };

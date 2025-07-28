@@ -6,6 +6,7 @@ import {
 } from "$lib/server/tokenService";
 import { requireAnyRole, isAdmin } from "$lib/server/auth";
 import type { RequestHandler } from "./$types";
+import { tokenSchema } from "$lib/validations/tokenSchema";
 
 export const GET: RequestHandler = async (event) => {
   requireAnyRole(event);
@@ -28,13 +29,24 @@ export const POST: RequestHandler = async (event) => {
   const user = event.locals.user;
   const body = await event.request.json();
 
-  try {
-    const newKey = await createKey({
-      name: body.name,
-      token: body.token,
-      createdBy: user.id,
-    });
+  // ✅ Validasi dengan Zod
+  const parsed = tokenSchema.safeParse({
+    ...body,
+    createdBy: user.id, // tambahkan relasi user
+  });
 
+  if (!parsed.success) {
+    return json(
+      {
+        message: "Validasi gagal",
+        errors: parsed.error.flatten().fieldErrors,
+      },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const newKey = await createKey(parsed.data);
     return json(newKey);
   } catch (err) {
     console.error(err);

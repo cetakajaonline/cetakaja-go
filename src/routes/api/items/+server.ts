@@ -2,9 +2,8 @@ import { json } from "@sveltejs/kit";
 import { getAllItems, createItem } from "$lib/server/itemService";
 import { requireAnyRole } from "$lib/server/auth";
 import type { RequestHandler } from "./$types";
+import { itemSchema } from "$lib/validations/itemSchema";
 
-// GET /api/items
-// Hanya user login yang memiliki role (admin/user/dll) yang diizinkan
 export const GET: RequestHandler = async (event) => {
   requireAnyRole(event);
 
@@ -12,19 +11,24 @@ export const GET: RequestHandler = async (event) => {
   return json(items);
 };
 
-// POST /api/items
-// Hanya user login yang memiliki role yang diizinkan
 export const POST: RequestHandler = async (event) => {
   requireAnyRole(event);
 
   const body = await event.request.json();
+  const parsed = itemSchema.safeParse(body);
+
+  if (!parsed.success) {
+    return json(
+      {
+        message: "Validasi gagal",
+        errors: parsed.error.flatten().fieldErrors,
+      },
+      { status: 400 }
+    );
+  }
 
   try {
-    const newItem = await createItem({
-      name: body.name,
-      desc: body.desc,
-    });
-
+    const newItem = await createItem(parsed.data);
     return json(newItem);
   } catch (err) {
     console.error(err);

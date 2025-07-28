@@ -3,6 +3,7 @@ import prisma from "$lib/server/prisma";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { json } from "@sveltejs/kit";
+import { loginSchema } from "$lib/validations/authSchema";
 import type { RequestHandler } from "./$types";
 
 const JWT_SECRET = process.env.JWT_SECRET || "changeme";
@@ -10,14 +11,27 @@ const JWT_SECRET = process.env.JWT_SECRET || "changeme";
 export const POST: RequestHandler = async ({ request, cookies }) => {
   try {
     const body = await request.json();
-    const { email, password } = body;
+
+    const parsed = loginSchema.safeParse(body);
+    if (!parsed.success) {
+      return json(
+        {
+          success: false,
+          message: "Validasi gagal",
+          errors: parsed.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
+    }
+
+    const { email, password } = parsed.data;
 
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return json(
         { success: false, message: "Email atau password salah" },
-        { status: 401 },
+        { status: 401 }
       );
     }
 
@@ -27,7 +41,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
       path: "/",
       httpOnly: true,
       sameSite: "strict",
-      secure: false, // set to true in production (HTTPS)
+      secure: process.env.NODE_ENV === "production",
       maxAge: 60 * 60 * 24 * 7,
     });
 
@@ -36,7 +50,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
     console.error("Login Error:", error);
     return json(
       { success: false, message: "Terjadi kesalahan saat login" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 };

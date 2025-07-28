@@ -7,7 +7,7 @@ export const POST: RequestHandler = ({ cookies }) => {
     path: "/",
     httpOnly: true,
     sameSite: "strict",
-    secure: false,
+    secure: process.env.NODE_ENV === "production", // ✅ auto aman di production
   });
 
   return json({ success: true, message: "Logout berhasil" });

@@ -2,21 +2,21 @@ import { json } from "@sveltejs/kit";
 import { updateKey, deleteKey, getKeyById } from "$lib/server/tokenService";
 import { isAdmin, requireAnyRole } from "$lib/server/auth";
 import type { RequestHandler } from "./$types";
+import { tokenUpdateSchema } from "$lib/validations/tokenSchema";
 
 // GET /api/token/:id
 export const GET: RequestHandler = async (event) => {
   requireAnyRole(event);
 
   const id = Number(event.params.id);
-  if (isNaN(id)) throw new Error("Invalid token ID");
+  if (isNaN(id)) throw new Error("ID token tidak valid");
 
   const token = await getKeyById(id);
-  if (!token) throw new Error("Token not found");
+  if (!token) throw new Error("Token tidak ditemukan");
 
-  // Hanya admin atau pemilik token yang boleh akses
   const user = event.locals.user;
   if (!isAdmin(event) && token.createdBy !== user.id) {
-    throw new Error("Forbidden");
+    throw new Error("Tidak diizinkan");
   }
 
   return json(token);
@@ -27,22 +27,30 @@ export const PUT: RequestHandler = async (event) => {
   requireAnyRole(event);
 
   const id = Number(event.params.id);
-  if (isNaN(id)) throw new Error("Invalid token ID");
+  if (isNaN(id)) throw new Error("ID token tidak valid");
 
   const token = await getKeyById(id);
-  if (!token) throw new Error("Token not found");
+  if (!token) throw new Error("Token tidak ditemukan");
 
   const user = event.locals.user;
   if (!isAdmin(event) && token.createdBy !== user.id) {
-    throw new Error("Forbidden");
+    throw new Error("Tidak diizinkan");
   }
 
   const body = await event.request.json();
-  const updated = await updateKey(id, {
-    name: body.name,
-    revoked: body.revoked,
-  });
+  const parsed = tokenUpdateSchema.safeParse(body);
 
+  if (!parsed.success) {
+    return json(
+      {
+        message: "Validasi gagal",
+        errors: parsed.error.flatten().fieldErrors,
+      },
+      { status: 400 }
+    );
+  }
+
+  const updated = await updateKey(id, parsed.data);
   return json(updated);
 };
 
@@ -51,15 +59,14 @@ export const DELETE: RequestHandler = async (event) => {
   requireAnyRole(event);
 
   const id = Number(event.params.id);
-  if (isNaN(id)) throw new Error("Invalid token ID");
+  if (isNaN(id)) throw new Error("ID token tidak valid");
 
   const token = await getKeyById(id);
-  if (!token) throw new Error("Token not found");
+  if (!token) throw new Error("Token tidak ditemukan");
 
   const user = event.locals.user;
-  // Hanya admin atau pemilik token yang boleh menghapus
   if (!isAdmin(event) && token.createdBy !== user.id) {
-    throw new Error("Forbidden");
+    throw new Error("Tidak diizinkan");
   }
 
   await deleteKey(id);
