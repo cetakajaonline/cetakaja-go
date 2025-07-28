@@ -1,19 +1,30 @@
 // utils/fetcher.ts
+import type { z } from 'zod';
 
 export async function fetcher<T>(
   url: string,
   options: RequestInit = {},
+  validator?: z.ZodSchema<T>
 ): Promise<T> {
   const res = await fetch(url, {
     headers: { "Content-Type": "application/json" },
     ...options,
   });
 
+  const json = await res.json().catch(() => ({}));
+
   if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.message || "Terjadi kesalahan saat memuat data");
+    throw new Error(json.message || "Terjadi kesalahan saat memuat data");
   }
 
-  const data = await res.json();
-  return data as T;
+  if (validator) {
+    const parsed = validator.safeParse(json);
+    if (!parsed.success) {
+      throw new Error("Data response tidak valid");
+    }
+    return parsed.data;
+  }
+
+  // fallback, dianggap unsafe jika tanpa validator
+  return json as T;
 }
