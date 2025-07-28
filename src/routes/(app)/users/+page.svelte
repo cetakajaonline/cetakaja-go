@@ -6,7 +6,11 @@
   import PageHeader from '$lib/components/PageHeader.svelte';
   import Pagination from '$lib/components/Pagination.svelte';
   import ConfirmModal from '$lib/components/ConfirmModal.svelte';
+  import ValidationModal from '$lib/components/ValidationModal.svelte';
 
+  import { userSchema, userUpdateSchema } from '$lib/validations/userSchema';
+  import { z } from 'zod';
+  import { tick } from 'svelte';
   import type { User } from '$lib/types';
 
   export let data: {
@@ -17,7 +21,7 @@
 
   const { users: initialUsers, isAdmin, currentUserId } = data;
 
-  let users: User[] = [...initialUsers];
+  let users = [...initialUsers];
   let userToDelete: User | null = null;
   let selectedUser: User | null = null;
   let showUserModal = false;
@@ -37,13 +41,14 @@
     photo: '',
     role: 'user'
   };
-  let file: File | null = null;
+
+  let validationMessages: string[] = [];
+  let showValidationModal = false;
 
   function openAddModal() {
     isEditMode = false;
     selectedUser = null;
     userForm = { name: '', email: '', password: '', photo: '', role: 'user' };
-    file = null;
     showUserModal = true;
   }
 
@@ -57,57 +62,64 @@
       photo: user.photo ?? '',
       role: user.role ?? 'user'
     };
-    file = null;
     showUserModal = true;
   }
 
-  function onClose() {
+  function closeFormModal() {
     showUserModal = false;
   }
 
-  async function onSubmit(payload: {
-    name: string;
-    email: string;
-    password: string;
-    photo: string;
-    role: string;
-  }) {
+  function closeValidationModal() {
+    showValidationModal = false;
+    validationMessages = [];
+  }
+
+  async function onSubmit(payload: typeof userForm) {
     loading = true;
+    validationMessages = [];
 
     try {
-      const { name, email, password, photo, role } = payload;
-      const finalPayload = isAdmin
-        ? { name, email, password, photo, role }
-        : { name, email, password, photo };
+      const schema = isEditMode ? userUpdateSchema : userSchema;
+      const validated = schema.parse(payload);
 
-      const res = await fetch(
-        isEditMode && selectedUser
-          ? `/api/users/${selectedUser.id}`
-          : '/api/users',
-        {
-          method: isEditMode ? 'PUT' : 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(finalPayload),
-        }
-      );
+      const endpoint = isEditMode && selectedUser
+        ? `/api/users/${selectedUser.id}`
+        : '/api/users';
+
+      const method = isEditMode ? 'PUT' : 'POST';
+
+      const res = await fetch(endpoint, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(validated),
+      });
 
       const result = await res.json().catch(() => ({}));
-      const selectedId = selectedUser?.id;
 
       if (res.ok) {
-        if (isEditMode && selectedId) {
-          users = users.map(u =>
-            u.id === selectedId ? { ...u, ...result } : u
+        if (isEditMode && selectedUser) {
+          users = users.map((u) =>
+            u.id === selectedUser!.id ? { ...u, ...result } : u
           );
         } else {
           users = [...users, result];
         }
-        onClose();
+        closeFormModal();
       } else {
-        alert(result?.message || result?.error || 'Gagal menyimpan data');
+        closeFormModal();
+        await tick(); // pastikan modal form sudah keluar sebelum tampilkan validation modal
+        validationMessages = [result?.message || result?.error || 'Gagal menyimpan data'];
+        showValidationModal = true;
       }
-    } catch {
-      alert('Terjadi kesalahan saat mengirim data');
+    } catch (err) {
+      closeFormModal();
+      await tick();
+      if (err instanceof z.ZodError) {
+        validationMessages = err.issues.map((e) => e.message);
+      } else {
+        validationMessages = ['Terjadi kesalahan saat mengirim data'];
+      }
+      showValidationModal = true;
     } finally {
       loading = false;
     }
@@ -115,17 +127,12 @@
 
   async function onConfirmDelete() {
     if (!userToDelete) return;
-
     const res = await fetch(`/api/users/${userToDelete.id}`, {
       method: 'DELETE'
     });
-
     if (res.ok) {
-      users = users.filter(u => u.id !== userToDelete?.id);
-    } else {
-      alert('Gagal menghapus user');
+      users = users.filter((u) => u.id !== userToDelete?.id);
     }
-
     userToDelete = null;
   }
 
@@ -155,8 +162,7 @@
     }
   }
 
-  // Reactive values
-  $: filteredUsers = users.filter(u =>
+  $: filteredUsers = users.filter((u) =>
     u.name.toLowerCase().includes(searchKeyword) ||
     u.email.toLowerCase().includes(searchKeyword)
   );
@@ -213,8 +219,15 @@
     initial={userForm}
     isAdmin={isAdmin}
     on:submit={(e) => onSubmit(e.detail)}
-    on:close={onClose}
+    on:close={closeFormModal}
   />
+
+  <ValidationModal
+  show={showValidationModal}
+  title="Validasi Gagal"
+  messages={validationMessages}
+  onClose={closeValidationModal}
+/>
 
   {#if isAdmin}
     <ConfirmModal

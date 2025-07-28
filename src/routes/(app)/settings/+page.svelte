@@ -3,6 +3,16 @@
   import FormInput from '$lib/components/ui/FormInput.svelte';
   import Button from '$lib/components/ui/Button.svelte';
   import { onMount } from 'svelte';
+  import NotificationModal from '$lib/components/NotificationModal.svelte';
+
+  let showNotifModal = false;
+  let notifTitle = '';
+  let notifMessage = '';
+  let notifType: 'success' | 'error' = 'success';
+
+  function closeNotifModal() {
+    showNotifModal = false;
+  }
 
   export let data;
   let name = '';
@@ -43,10 +53,16 @@
     });
 
     if (res.ok) {
-      alert('Konfigurasi disimpan');
+      notifTitle = 'Berhasil';
+      notifMessage = 'Konfigurasi berhasil disimpan.';
+      notifType = 'success';
+      showNotifModal = true;
     } else {
       const err = await res.text();
-      alert('Gagal menyimpan konfigurasi: ' + err);
+      notifTitle = 'Gagal';
+      notifMessage = 'Gagal menyimpan konfigurasi: ' + err;
+      notifType = 'error';
+      showNotifModal = true;
     }
   }
 </script>
@@ -79,4 +95,12 @@
       {/if}
     </form>
   </div>
+
+  <NotificationModal
+    show={showNotifModal}
+    title={notifTitle}
+    message={notifMessage}
+    type={notifType}
+    onClose={closeNotifModal}
+  />
 </DefaultLayout>

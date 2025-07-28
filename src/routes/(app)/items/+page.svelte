@@ -6,6 +6,11 @@
   import PageHeader from '$lib/components/PageHeader.svelte';
   import Pagination from '$lib/components/Pagination.svelte';
   import ConfirmModal from '$lib/components/ConfirmModal.svelte';
+  import ValidationModal from '$lib/components/ValidationModal.svelte';
+
+  import { z } from 'zod';
+  import { tick } from 'svelte';
+  import { itemSchema } from '$lib/validations/itemSchema';
   import type { Item } from '$lib/types';
 
   export let data: { items: Item[] };
@@ -20,10 +25,9 @@
   let isEditMode = false;
   let loading = false;
 
-  let itemForm = {
-    name: '',
-    desc: ''
-  };
+  let itemForm = { name: '', desc: '' };
+  let validationMessages: string[] = [];
+  let showValidationModal = false;
 
   function openAddModal() {
     isEditMode = false;
@@ -42,21 +46,29 @@
     showItemModal = true;
   }
 
-  function onClose() {
+  function closeFormModal() {
     showItemModal = false;
+  }
+
+  function closeValidationModal() {
+    showValidationModal = false;
+    validationMessages = [];
   }
 
   async function onSubmit(payload: { name: string; desc: string }) {
     loading = true;
-    const isEdit = isEditMode && selectedItem;
+    validationMessages = [];
 
     try {
+      const validated = itemSchema.parse(payload);
+
+      const isEdit = isEditMode && selectedItem;
       const res = await fetch(
         isEdit ? `/api/items/${selectedItem!.id}` : '/api/items',
         {
           method: isEdit ? 'PUT' : 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(validated),
         }
       );
 
@@ -64,16 +76,26 @@
 
       if (res.ok) {
         if (isEdit) {
-          items = items.map(k => k.id === selectedItem!.id ? { ...k, ...result } : k);
+          items = items.map(i => i.id === selectedItem!.id ? { ...i, ...result } : i);
         } else {
           items = [...items, result];
         }
-        onClose();
+        closeFormModal();
       } else {
-        alert((result as any)?.message ?? 'Gagal menyimpan item');
+        closeFormModal();
+        await tick();
+        validationMessages = [result?.message || result?.error || 'Gagal menyimpan item'];
+        showValidationModal = true;
       }
-    } catch {
-      alert('Terjadi kesalahan saat mengirim data');
+    } catch (err) {
+      closeFormModal();
+      await tick();
+      if (err instanceof z.ZodError) {
+        validationMessages = err.issues.map(e => e.message);
+      } else {
+        validationMessages = ['Terjadi kesalahan saat mengirim data'];
+      }
+      showValidationModal = true;
     } finally {
       loading = false;
     }
@@ -87,9 +109,10 @@
     });
 
     if (res.ok) {
-      items = items.filter(k => k.id !== itemToDelete!.id);
+      items = items.filter(i => i.id !== itemToDelete!.id);
     } else {
-      alert('Gagal menghapus item');
+      validationMessages = ['Gagal menghapus item'];
+      showValidationModal = true;
     }
 
     itemToDelete = null;
@@ -109,11 +132,11 @@
   let sortKey: keyof Item = 'name';
   let sortDirection: 'asc' | 'desc' = 'asc';
 
-  $: filteredItems = items.filter(k => {
+  $: filteredItems = items.filter(i => {
     const keyword = searchKeyword.toLowerCase();
     return (
-      (k.name?.toLowerCase() ?? '').includes(keyword) ||
-      (k.desc?.toLowerCase() ?? '').includes(keyword)
+      (i.name?.toLowerCase() ?? '').includes(keyword) ||
+      (i.desc?.toLowerCase() ?? '').includes(keyword)
     );
   });
 
@@ -186,7 +209,14 @@
     {loading}
     initial={itemForm}
     on:submit={(e) => onSubmit(e.detail)}
-    on:close={onClose}
+    on:close={closeFormModal}
+  />
+
+  <ValidationModal
+    show={showValidationModal}
+    title="Validasi Gagal"
+    messages={validationMessages}
+    onClose={closeValidationModal}
   />
 
   <ConfirmModal

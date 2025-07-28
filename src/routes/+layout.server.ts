@@ -22,5 +22,9 @@ export const load: LayoutServerLoad = async ({ url, locals }) => {
   const pageTitle = titles[url.pathname] ?? "";
   const title = pageTitle ? `${pageTitle} | ${appName}` : appName;
 
-  return { title, appName, appDesc, logo, user: locals.user ?? null };
+  return {
+    title, appName, appDesc, logo, user: locals.user ?? null,
+    tokens: [],
+    items: [],
+  };
 };

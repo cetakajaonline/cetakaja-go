@@ -1,42 +1,57 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import ValidationModal from '$lib/components/ValidationModal.svelte';
 
   let email = '';
   let password = '';
   let isLoading = false;
-  let error = '';
+  let showErrorModal = false;
+  let errorMessages: string[] = [];
 
   const dispatch = createEventDispatcher();
 
-  async function login() {
-    isLoading = true;
-    error = '';
+  async function handleLogin() {
+    errorMessages = [];
 
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-      headers: { 'Content-Type': 'application/json' }
-    });
+    // Basic client-side validation
+    if (!email || !password) {
+      errorMessages.push('Email dan password wajib diisi');
+      showErrorModal = true;
+      return;
+    }
 
-    const data = await res.json();
-    isLoading = false;
+    try {
+      isLoading = true;
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+        headers: { 'Content-Type': 'application/json' }
+      });
 
-    if (res.ok) {
-      dispatch('success'); // bisa pakai router.push jika SSR
-    } else {
-      error = data.message ?? 'Terjadi kesalahan saat login';
+      const data = await res.json();
+      isLoading = false;
+
+      if (res.ok && data.success) {
+        dispatch('success');
+      } else {
+        errorMessages = [data?.message ?? 'Email atau password salah'];
+        showErrorModal = true;
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      isLoading = false;
+      errorMessages = ['Terjadi kesalahan jaringan.'];
+      showErrorModal = true;
     }
   }
 </script>
 
-<div class="max-w-sm mx-auto mt-4 p-4 bg-base-100 rounded shadow">
-  {#if error}
-    <p class="text-red-500 mb-2 text-center">{error}</p>
-  {/if}
+<form on:submit|preventDefault={handleLogin} class="max-w-sm mx-auto mt-4 p-4 bg-base-100 rounded shadow space-y-3">
   <input
     bind:value={email}
     placeholder="Email"
-    class="input input-bordered w-full mb-2"
+    class="input input-bordered w-full"
+    type="email"
     autocomplete="email"
     required
   />
@@ -44,12 +59,23 @@
     bind:value={password}
     type="password"
     placeholder="Password"
-    class="input input-bordered w-full mb-2"
+    class="input input-bordered w-full"
     autocomplete="current-password"
     required
   />
-  <button on:click={login} class="btn btn-primary w-full" disabled={isLoading}>
-    {#if isLoading}Loading...{/if}
-    {#if !isLoading}Login{/if}
+  <button class="btn btn-primary w-full" type="submit" disabled={isLoading}>
+    {#if isLoading}
+      <!-- svelte-ignore element_invalid_self_closing_tag -->
+      <span class="loading loading-spinner" /> Loading...
+    {:else}
+      Login
+    {/if}
   </button>
-</div>
+</form>
+
+<ValidationModal
+  show={showErrorModal}
+  title="Login Gagal"
+  messages={errorMessages}
+  onClose={() => (showErrorModal = false)}
+/>
