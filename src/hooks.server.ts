@@ -9,6 +9,11 @@ if (!JWT_SECRET) {
 }
 
 export const handle: Handle = async ({ event, resolve }) => {
+  // 🌡️ Pastikan Prisma siap sebelum lanjut
+  if (process.env.NODE_ENV !== 'production') {
+    await prisma.$connect(); // hanya warm-up saat dev
+  }
+
   const authHeader = event.request.headers.get("authorization");
   const cookieToken = event.cookies.get("token");
 
