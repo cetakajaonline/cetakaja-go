@@ -3,7 +3,8 @@ import type { User, ApiToken, Item } from "$lib/types";
 declare global {
   namespace App {
     interface Locals {
-      user: User;
+      user?: User;
+      token?: ApiToken;
     }
     interface PageData {
       tokens: ApiToken[];
@@ -11,4 +12,4 @@ declare global {
     }
   }
 }
-export {};
+export { };

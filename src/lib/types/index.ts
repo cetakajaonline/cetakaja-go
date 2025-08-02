@@ -7,7 +7,7 @@ export interface User {
   email: string;
   photo?: string | null;
   role?: string;
-  createdAt: string;
+  createdAt: Date;
 }
 
 // ✅ Token
@@ -16,7 +16,7 @@ export type Token = {
   name: string;
   token: string;
   createdBy: number;
-  createdAt: string;
+  createdAt: Date;
   revoked: boolean;
   creator?: {
     id: number;
@@ -50,6 +50,6 @@ export interface Item {
   id: number;
   name: string;
   desc: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: Date;
+  updatedAt: Date;
 }

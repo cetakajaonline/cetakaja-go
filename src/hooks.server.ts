@@ -3,7 +3,10 @@ import type { Handle } from "@sveltejs/kit";
 import jwt from "jsonwebtoken";
 import prisma from "$lib/server/prisma";
 
-const JWT_SECRET = process.env.JWT_SECRET || "changeme";
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error("JWT_SECRET is not defined in environment variables");
+}
 
 export const handle: Handle = async ({ event, resolve }) => {
   const authHeader = event.request.headers.get("authorization");
@@ -13,26 +16,32 @@ export const handle: Handle = async ({ event, resolve }) => {
   if (authHeader?.startsWith("Bearer ")) {
     const apiToken = authHeader.split(" ")[1];
 
-    const tokenRecord = await prisma.apiToken.findUnique({
-      where: { token: apiToken },
-      include: {
-        creator: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true, // ✅ Ambil role dari creator
+    try {
+      const tokenRecord = await prisma.apiToken.findUnique({
+        where: { token: apiToken },
+        include: {
+          creator: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true,
+              createdAt: true,
+              photo: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    if (tokenRecord && !tokenRecord.revoked) {
-      event.locals.token = tokenRecord;
-      event.locals.user = tokenRecord.creator;
-      return resolve(event);
-    } else {
-      console.warn("Invalid or revoked API token");
+      if (tokenRecord && !tokenRecord.revoked) {
+        event.locals.token = tokenRecord;
+        event.locals.user = tokenRecord.creator;
+        return resolve(event);
+      } else {
+        console.warn("Invalid or revoked API token");
+      }
+    } catch (err) {
+      console.error("Error verifying API token:", err);
     }
   }
 
@@ -47,15 +56,21 @@ export const handle: Handle = async ({ event, resolve }) => {
           id: true,
           name: true,
           email: true,
-          role: true, // ✅ Ambil juga role di sini
+          role: true,
+          createdAt: true,
+          photo: true
         },
       });
 
       if (user) {
         event.locals.user = user;
+      } else {
+        console.warn("User not found for decoded token ID");
+        event.cookies.delete("token", { path: "/" });
       }
     } catch (err) {
       console.error("Invalid JWT cookie:", err);
+      event.cookies.delete("token", { path: "/" }); // 🔥 Hapus token rusak
       event.locals.user = undefined;
     }
   }
