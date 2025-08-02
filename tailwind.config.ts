@@ -5,7 +5,7 @@ const config: Config = {
   theme: {
     extend: {},
   },
-  plugins: [], // jangan isi dengan daisyui kalau sudah pakai @plugin di CSS
+  plugins: [],
 };
 
 export default config;

@@ -1,4 +1,4 @@
-# SvelteKit Starter Kit - Sveltekit Prisma Postgres Jwt Tailwind DaisyUI
+# BITS Starter Kit - SvelteKit Prisma Postgres Jwt Tailwind DaisyUI
 
 ![CI](https://github.com/bitscoid/starter/actions/workflows/ci.yml/badge.svg)
 
@@ -15,7 +15,7 @@ Starter kit dengan:
 
 1. Clone project ini:
    ```bash
-   npx degit rizaputrait/sveltekit-starter my-app
+   npx degit bitscoid/bits-starter my-app
    cd my-app
    npm install
    ```

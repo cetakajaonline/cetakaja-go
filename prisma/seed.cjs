@@ -1,11 +1,11 @@
-const { PrismaClient } = require("@prisma/client");
-const bcrypt = require("bcryptjs");
+const { PrismaClient } = require( "@prisma/client" );
+const bcrypt = require( "bcryptjs" );
 const prisma = new PrismaClient();
 
-async function main() {
-  const hashedPassword = await bcrypt.hash("admin123", 10); // sama seperti sebelumnya
+async function main () {
+  const hashedPassword = await bcrypt.hash( "admin123", 10 );
 
-  await prisma.user.upsert({
+  await prisma.user.upsert( {
     where: { email: "admin@example.com" },
     update: {},
     create: {
@@ -14,9 +14,9 @@ async function main() {
       password: hashedPassword,
       role: "admin",
     },
-  });
+  } );
 
-  await prisma.setting.upsert({
+  await prisma.setting.upsert( {
     where: { id: 1 },
     update: {},
     create: {
@@ -25,14 +25,14 @@ async function main() {
       description: "Aplikasi Startup untuk mengelola proyek dan tim.",
       logo: "/uploads/placeholder.png",
     },
-  });
+  } );
 
-  console.log("✅ Seed selesai");
+  console.log( "✅ Seed selesai" );
 }
 
 main()
-  .catch((e) => {
-    console.error("❌ Gagal:", e);
-    process.exit(1);
-  })
-  .finally(() => prisma.$disconnect());
+  .catch( ( e ) => {
+    console.error( "❌ Gagal:", e );
+    process.exit( 1 );
+  } )
+  .finally( () => prisma.$disconnect() );

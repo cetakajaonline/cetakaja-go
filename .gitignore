@@ -87,3 +87,4 @@ lerna-lock.json
 .svelte-kit/output/server/manifest.json
 /static/uploads
 build
+.eslintcache
