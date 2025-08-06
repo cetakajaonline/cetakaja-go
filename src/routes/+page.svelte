@@ -1,3 +1,12 @@
-<div class="p-6">
-  <h1 class="text-2xl font-bold mb-2">Home</h1>
-</div>
+<script lang="ts">
+  import AuthLayout from '$lib/layouts/AuthLayout.svelte';
+  import LoginForm from '$lib/components/LoginForm.svelte';
+
+  function handleSuccess() {
+    window.location.href = '/dashboard';
+  }
+</script>
+
+<AuthLayout title="Login">
+  <LoginForm on:success={handleSuccess} />
+</AuthLayout>

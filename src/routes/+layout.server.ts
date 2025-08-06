@@ -6,7 +6,7 @@ export const load: LayoutServerLoad = async ({ url, locals }) => {
   const setting = await prisma.setting.findFirst();
   const appName = setting?.name ?? "Nama Aplikasi";
   const appDesc = setting?.name ?? "Deskripsi Aplikasi";
-  const logo = setting?.logo ?? null;
+  const appLogo = setting?.logo ?? null;
 
   // Mapping pathname ke judul halaman
   const titles: Record<string, string> = {
@@ -23,7 +23,7 @@ export const load: LayoutServerLoad = async ({ url, locals }) => {
   const title = pageTitle ? `${pageTitle} | ${appName}` : appName;
 
   return {
-    title, appName, appDesc, logo, user: locals.user ?? null,
+    title, appName, appDesc, appLogo, user: locals.user ?? null,
     tokens: [],
     items: [],
   };
