@@ -2,9 +2,9 @@
 import { writable } from "svelte/store";
 
 export type Setting = {
-    appName: string;
-    appDesc: string;
-    appLogo: string;
+    name: string;
+    description: string;
+    logo: string | null;
 };
 
 export const setting = writable<Setting | null>(null);
