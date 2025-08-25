@@ -106,7 +106,7 @@ APP_URL="http://localhost:5173"
 
 # Setup database, jalankan migrations, dan seed data
 
-pnpm setup
+pnpm bits
 
 # Jalankan development server
 
@@ -194,11 +194,11 @@ sveltekit-prisma-postgres-jwt-tailwind-daisyui/
 
 |---------|-------------|
 
-| `pnpm setup` | Full setup: install + database migration + seed |
+| `pnpm bits` | Full setup: install + database migration + seed |
 
-| `pnpm setup:reset` | Reset database + fresh setup |
+| `pnpm bits:reset` | Reset database + fresh setup |
 
-| `pnpm setup:prod` | Production deployment setup |
+| `pnpm bits:prod` | Production deployment setup |
 
 | `pnpm db:reset` | Reset database saja |
 
@@ -226,7 +226,7 @@ sveltekit-prisma-postgres-jwt-tailwind-daisyui/
 
 # Setup awal database (migration + seeding)
 
-pnpm setup
+pnpm bits
 
 # atau step-by-step:
 
