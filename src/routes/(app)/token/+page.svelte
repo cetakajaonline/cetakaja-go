@@ -1,19 +1,19 @@
 <script lang="ts">
-  import DefaultLayout from '$lib/layouts/DefaultLayout.svelte';
-  import TokenTable from '$lib/components/TokenTable.svelte';
-  import TableToolbar from '$lib/components/TableToolbar.svelte';
-  import TokenFormModal from '$lib/components/TokenFormModal.svelte';
-  import PageHeader from '$lib/components/PageHeader.svelte';
-  import Pagination from '$lib/components/Pagination.svelte';
-  import ConfirmModal from '$lib/components/ConfirmModal.svelte';
-  import type { Token } from '$lib/types';
+  import DefaultLayout from "$lib/layouts/DefaultLayout.svelte";
+  import TokenTable from "$lib/components/TokenTable.svelte";
+  import TableToolbar from "$lib/components/TableToolbar.svelte";
+  import TokenFormModal from "$lib/components/TokenFormModal.svelte";
+  import PageHeader from "$lib/components/PageHeader.svelte";
+  import Pagination from "$lib/components/Pagination.svelte";
+  import ConfirmModal from "$lib/components/ConfirmModal.svelte";
+  import type { Token } from "$lib/types";
 
   export let data: { keys: Token[] };
 
   let keys: Token[] = Array.isArray(data?.keys) ? data.keys : [];
 
   let keyToDelete: Token | null = null;
-  const confirmModalId = 'delete-key-confirm';
+  const confirmModalId = "delete-key-confirm";
 
   let selectedToken: Token | null = null;
   let showTokenModal = false;
@@ -21,16 +21,16 @@
   let loading = false;
 
   let keyForm = {
-    name: '',
-    token: ''
+    name: "",
+    token: "",
   };
 
   function openAddModal() {
     isEditMode = false;
     selectedToken = null;
     keyForm = {
-      name: '',
-      token: ''
+      name: "",
+      token: "",
     };
     showTokenModal = true;
   }
@@ -40,7 +40,7 @@
     selectedToken = key;
     keyForm = {
       name: key.name,
-      token: key.token
+      token: key.token,
     };
     showTokenModal = true;
   }
@@ -55,10 +55,10 @@
 
     try {
       const res = await fetch(
-        isEdit ? `/api/token/${selectedToken!.id}` : '/api/token',
+        isEdit ? `/api/token/${selectedToken!.id}` : "/api/token",
         {
-          method: isEdit ? 'PUT' : 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: isEdit ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         }
       );
@@ -72,16 +72,18 @@
 
       if (res.ok) {
         if (isEdit) {
-          keys = keys.map(k => (k.id === selectedToken!.id ? { ...k, ...result } : k));
+          keys = keys.map((k) =>
+            k.id === selectedToken!.id ? { ...k, ...result } : k
+          );
         } else {
           keys = [...keys, result];
         }
         onClose();
       } else {
-        alert(result?.message || result?.error || 'Gagal menyimpan token');
+        alert(result?.message || result?.error || "Gagal menyimpan token");
       }
     } catch {
-      alert('Terjadi kesalahan saat mengirim data');
+      alert("Terjadi kesalahan saat mengirim data");
     } finally {
       loading = false;
     }
@@ -91,13 +93,13 @@
     if (!keyToDelete) return;
 
     const res = await fetch(`/api/token/${keyToDelete.id}`, {
-      method: 'DELETE'
+      method: "DELETE",
     });
 
     if (res.ok) {
-      keys = keys.filter(k => k.id !== keyToDelete?.id);
+      keys = keys.filter((k) => k.id !== keyToDelete?.id);
     } else {
-      alert('Gagal menghapus token');
+      alert("Gagal menghapus token");
     }
 
     keyToDelete = null;
@@ -111,30 +113,31 @@
   }
 
   // Search, Sort, Pagination
-  let searchKeyword = '';
+  let searchKeyword = "";
   let currentPage = 1;
   const pageSize = 7;
-  let sortKey: keyof Token = 'name';
-  let sortDirection: 'asc' | 'desc' = 'asc';
+  let sortKey: keyof Token = "name";
+  let sortDirection: "asc" | "desc" = "asc";
 
-  $: filteredTokens = keys.filter(k =>
-    k.name.toLowerCase().includes(searchKeyword) ||
-    k.token.toLowerCase().includes(searchKeyword) ||
-    k.creator?.name?.toLowerCase()?.includes(searchKeyword) ||
-    k.creator?.email?.toLowerCase()?.includes(searchKeyword)
+  $: filteredTokens = keys.filter(
+    (k) =>
+      k.name.toLowerCase().includes(searchKeyword) ||
+      k.token.toLowerCase().includes(searchKeyword) ||
+      k.creator?.name?.toLowerCase()?.includes(searchKeyword) ||
+      k.creator?.email?.toLowerCase()?.includes(searchKeyword)
   );
 
   $: sortedTokens = [...filteredTokens].sort((a, b) => {
     let aVal: any = a[sortKey];
     let bVal: any = b[sortKey];
 
-    if (sortKey === 'creator') {
-      aVal = a.creator?.name || '';
-      bVal = b.creator?.name || '';
+    if (sortKey === "creator") {
+      aVal = a.creator?.name || "";
+      bVal = b.creator?.name || "";
     }
 
-    if (typeof aVal === 'string' && typeof bVal === 'string') {
-      return sortDirection === 'asc'
+    if (typeof aVal === "string" && typeof bVal === "string") {
+      return sortDirection === "asc"
         ? aVal.localeCompare(bVal)
         : bVal.localeCompare(aVal);
     }
@@ -152,10 +155,10 @@
 
   function toggleSort(key: keyof Token) {
     if (sortKey === key) {
-      sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+      sortDirection = sortDirection === "asc" ? "desc" : "asc";
     } else {
       sortKey = key;
-      sortDirection = 'asc';
+      sortDirection = "asc";
     }
   }
 
@@ -170,7 +173,7 @@
     title="API Keys"
     icon="🔑"
     showAddButton
-    addLabel="Generate API Key"
+    addLabel="Generate"
     onAdd={openAddModal}
   />
 
@@ -189,7 +192,7 @@
     totalItems={filteredTokens.length}
     {currentPage}
     {pageSize}
-    onPageChange={(p) => currentPage = p}
+    onPageChange={(p) => (currentPage = p)}
   />
 
   <TokenFormModal

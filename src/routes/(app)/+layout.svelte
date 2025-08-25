@@ -18,59 +18,42 @@
     { href: "/settings", label: "Settings", icon: "⚙️" },
   ];
 
-  function isActive(path: string) {
-    return currentPath === path || currentPath.startsWith(path + "/");
-  }
+  let showMobileMenu = false;
 </script>
 
-<svelte:head>
-  <title>{data?.setting?.name || "App"}</title>
-  <meta name="description" content={data?.setting?.description || "Aplikasi"} />
-</svelte:head>
-
-<!-- NAVBAR -->
 <nav
-  class="navbar bg-base-100 shadow px-4 backdrop-blur-sm border-b border-base-300/60"
+  class="navbar bg-base-100 shadow px-4 backdrop-blur-sm border-b border-base-300/60 relative z-50"
 >
   <div class="navbar-start">
-    <!-- Mobile Dropdown -->
-    <div class="dropdown sm:hidden">
-      <button type="button" class="btn btn-ghost btn-square" aria-label="Menu">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-5 w-5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M4 6h16M4 12h16M4 18h16"
-          />
-        </svg>
-      </button>
-      <ul
-        class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52"
+    <!-- Mobile Menu Toggle -->
+    <!-- svelte-ignore a11y_consider_explicit_label -->
+    <button
+      class="btn btn-ghost btn-square sm:hidden"
+      on:click={() => (showMobileMenu = !showMobileMenu)}
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-6 w-6"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
       >
-        {#each menuItems as item}
-          <li>
-            <a href={item.href} class:selected={isActive(item.href)}>
-              <span>{item.icon}</span>{item.label}
-            </a>
-          </li>
-        {/each}
-      </ul>
-    </div>
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M4 6h16M4 12h16M4 18h16"
+        />
+      </svg>
+    </button>
 
     <!-- Logo -->
     <a
-      href="/"
+      href="/dashboard"
       class="btn btn-ghost normal-case text-lg flex items-center gap-2"
     >
       {#if data?.setting?.logo}
-        <img src={data.setting.logo} alt="Logo" class="h-6 w-auto" />
+        <img src={data?.setting?.logo} alt="Logo" class="h-6 w-auto" />
       {/if}
       <span>{data?.setting?.name || "Nama Aplikasi"}</span>
     </a>
@@ -84,24 +67,28 @@
           <a
             href={item.href}
             class="flex items-center gap-2 px-3 py-2 rounded-md transition"
-            class:bg-primary={isActive(item.href)}
-            class:text-white={isActive(item.href)}
+            class:bg-primary={currentPath === item.href ||
+              currentPath.startsWith(item.href + "/")}
+            class:text-white={currentPath === item.href ||
+              currentPath.startsWith(item.href + "/")}
           >
-            <span>{item.icon}</span>{item.label}
+            <span>{item.icon}</span>
+            {item.label}
           </a>
         </li>
       {/each}
     </ul>
   </div>
 
-  <!-- Right Side -->
+  <!-- Theme and Auth Buttons -->
   <div class="navbar-end">
-    <!-- Theme switch -->
-    <label class="flex cursor-pointer gap-2 px-6">
+    <label class="flex cursor-pointer items-center gap-2 px-6">
+      <!-- Light Icon -->
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
         stroke-width="2"
@@ -114,17 +101,15 @@
         />
       </svg>
 
-      <input
-        type="checkbox"
-        value="dracula"
-        class="toggle theme-controller"
-        aria-label="Toggle dark mode"
-      />
+      <!-- Theme toggle -->
+      <input type="checkbox" value="dracula" class="toggle theme-controller" />
 
+      <!-- Dark Icon -->
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        width="24"
-        height="24"
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
         stroke-width="2"
@@ -135,49 +120,62 @@
       </svg>
     </label>
 
-    <!-- Auth -->
     {#if data.user}
       <a
         href="/logout"
-        class="btn btn-error btn-outline btn-sm hidden sm:inline-flex"
+        class="btn btn-outline btn-error btn-sm hidden sm:inline-flex">Logout</a
       >
-        Logout
-      </a>
     {:else}
       <a
         href="/login"
-        class="btn btn-success btn-outline btn-sm hidden sm:inline-flex"
+        class="btn btn-outline btn-success btn-sm hidden sm:inline-flex"
+        >Login</a
       >
-        Login
-      </a>
     {/if}
-
-    <!-- Mobile auth icon -->
-    <a
-      href={data.user ? "/logout" : "/login"}
-      class="btn btn-ghost btn-sm sm:hidden"
-      aria-label={data.user ? "Logout" : "Login"}
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        class="h-5 w-5"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1m0-10V5"
-        />
-      </svg>
-    </a>
   </div>
 </nav>
 
-<!-- MAIN CONTENT -->
-<main class="w-full min-h-screen bg-base-100 py-2 px-4">
+<!-- Mobile Dropdown Fullscreen -->
+{#if showMobileMenu}
+  <div
+    class="fixed top-0 left-0 w-full h-full bg-base-100 z-40 px-4 py-6 overflow-auto shadow-lg backdrop-blur-md"
+  >
+    <div class="flex justify-between items-center mb-6">
+      <span class="text-lg font-bold">{data?.appName || "Menu"}</span>
+      <button
+        class="btn btn-sm btn-ghost"
+        on:click={() => (showMobileMenu = false)}>✕</button
+      >
+    </div>
+    {#each menuItems as item}
+      <div class="flex justify-between items-center p-2">
+        <a
+          href={item.href}
+          on:click={() => (showMobileMenu = false)}
+          class="btn btn-block rounded-md transition font-medium"
+          class:bg-primary={currentPath === item.href ||
+            currentPath.startsWith(item.href + "/")}
+          class:text-white={currentPath === item.href ||
+            currentPath.startsWith(item.href + "/")}
+        >
+          <span class="text-xl">{item.icon}</span>
+          {item.label}
+        </a>
+      </div>
+    {/each}
+
+    <div class="flex justify-between items-center p-2">
+      {#if data.user}
+        <a href="/logout" class="btn btn-outline btn-error btn-block">Logout</a>
+      {:else}
+        <a href="/login" class="btn btn-outline btn-success btn-block">Login</a>
+      {/if}
+    </div>
+  </div>
+{/if}
+
+<!-- Page content -->
+<main class="w-full min-h-screen bg-base-100 py-2 px-4 relative z-0">
   <div class="w-full">
     <div class="bg-base-100 dark:bg-base-200 rounded-2xl shadow-lg p-1">
       <slot />

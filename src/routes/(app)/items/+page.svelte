@@ -1,38 +1,38 @@
 <script lang="ts">
-  import DefaultLayout from '$lib/layouts/DefaultLayout.svelte';
-  import ItemTable from '$lib/components/ItemTable.svelte';
-  import TableToolbar from '$lib/components/TableToolbar.svelte';
-  import ItemFormModal from '$lib/components/ItemFormModal.svelte';
-  import PageHeader from '$lib/components/PageHeader.svelte';
-  import Pagination from '$lib/components/Pagination.svelte';
-  import ConfirmModal from '$lib/components/ConfirmModal.svelte';
-  import ValidationModal from '$lib/components/ValidationModal.svelte';
+  import DefaultLayout from "$lib/layouts/DefaultLayout.svelte";
+  import ItemTable from "$lib/components/ItemTable.svelte";
+  import TableToolbar from "$lib/components/TableToolbar.svelte";
+  import ItemFormModal from "$lib/components/ItemFormModal.svelte";
+  import PageHeader from "$lib/components/PageHeader.svelte";
+  import Pagination from "$lib/components/Pagination.svelte";
+  import ConfirmModal from "$lib/components/ConfirmModal.svelte";
+  import ValidationModal from "$lib/components/ValidationModal.svelte";
 
-  import { z } from 'zod';
-  import { tick } from 'svelte';
-  import { itemSchema } from '$lib/validations/itemSchema';
-  import type { Item } from '$lib/types';
+  import { z } from "zod";
+  import { tick } from "svelte";
+  import { itemSchema } from "$lib/validations/itemSchema";
+  import type { Item } from "$lib/types";
 
   export let data: { items: Item[] };
 
   let items: Item[] = Array.isArray(data?.items) ? data.items : [];
 
   let itemToDelete: Item | null = null;
-  const confirmModalId = 'delete-item-confirm';
+  const confirmModalId = "delete-item-confirm";
 
   let selectedItem: Item | null = null;
   let showItemModal = false;
   let isEditMode = false;
   let loading = false;
 
-  let itemForm = { name: '', desc: '' };
+  let itemForm = { name: "", desc: "" };
   let validationMessages: string[] = [];
   let showValidationModal = false;
 
   function openAddModal() {
     isEditMode = false;
     selectedItem = null;
-    itemForm = { name: '', desc: '' };
+    itemForm = { name: "", desc: "" };
     showItemModal = true;
   }
 
@@ -41,7 +41,7 @@
     selectedItem = item;
     itemForm = {
       name: item.name,
-      desc: item.desc
+      desc: item.desc,
     };
     showItemModal = true;
   }
@@ -64,10 +64,10 @@
 
       const isEdit = isEditMode && selectedItem;
       const res = await fetch(
-        isEdit ? `/api/items/${selectedItem!.id}` : '/api/items',
+        isEdit ? `/api/items/${selectedItem!.id}` : "/api/items",
         {
-          method: isEdit ? 'PUT' : 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: isEdit ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(validated),
         }
       );
@@ -76,7 +76,9 @@
 
       if (res.ok) {
         if (isEdit) {
-          items = items.map(i => i.id === selectedItem!.id ? { ...i, ...result } : i);
+          items = items.map((i) =>
+            i.id === selectedItem!.id ? { ...i, ...result } : i
+          );
         } else {
           items = [...items, result];
         }
@@ -84,16 +86,18 @@
       } else {
         closeFormModal();
         await tick();
-        validationMessages = [result?.message || result?.error || 'Gagal menyimpan item'];
+        validationMessages = [
+          result?.message || result?.error || "Gagal menyimpan item",
+        ];
         showValidationModal = true;
       }
     } catch (err) {
       closeFormModal();
       await tick();
       if (err instanceof z.ZodError) {
-        validationMessages = err.issues.map(e => e.message);
+        validationMessages = err.issues.map((e) => e.message);
       } else {
-        validationMessages = ['Terjadi kesalahan saat mengirim data'];
+        validationMessages = ["Terjadi kesalahan saat mengirim data"];
       }
       showValidationModal = true;
     } finally {
@@ -105,13 +109,13 @@
     if (!itemToDelete) return;
 
     const res = await fetch(`/api/items/${itemToDelete.id}`, {
-      method: 'DELETE'
+      method: "DELETE",
     });
 
     if (res.ok) {
-      items = items.filter(i => i.id !== itemToDelete!.id);
+      items = items.filter((i) => i.id !== itemToDelete!.id);
     } else {
-      validationMessages = ['Gagal menghapus item'];
+      validationMessages = ["Gagal menghapus item"];
       showValidationModal = true;
     }
 
@@ -126,17 +130,17 @@
   }
 
   // Search, Sort, Pagination
-  let searchKeyword = '';
+  let searchKeyword = "";
   let currentPage = 1;
   const pageSize = 7;
-  let sortKey: keyof Item = 'name';
-  let sortDirection: 'asc' | 'desc' = 'asc';
+  let sortKey: keyof Item = "name";
+  let sortDirection: "asc" | "desc" = "asc";
 
-  $: filteredItems = items.filter(i => {
+  $: filteredItems = items.filter((i) => {
     const keyword = searchKeyword.toLowerCase();
     return (
-      (i.name?.toLowerCase() ?? '').includes(keyword) ||
-      (i.desc?.toLowerCase() ?? '').includes(keyword)
+      (i.name?.toLowerCase() ?? "").includes(keyword) ||
+      (i.desc?.toLowerCase() ?? "").includes(keyword)
     );
   });
 
@@ -144,8 +148,8 @@
     const aVal = a[sortKey];
     const bVal = b[sortKey];
 
-    if (typeof aVal === 'string' && typeof bVal === 'string') {
-      return sortDirection === 'asc'
+    if (typeof aVal === "string" && typeof bVal === "string") {
+      return sortDirection === "asc"
         ? aVal.localeCompare(bVal)
         : bVal.localeCompare(aVal);
     }
@@ -162,10 +166,10 @@
 
   function toggleSort(field: keyof Item) {
     if (sortKey === field) {
-      sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+      sortDirection = sortDirection === "asc" ? "desc" : "asc";
     } else {
       sortKey = field;
-      sortDirection = 'asc';
+      sortDirection = "asc";
     }
     currentPage = 1;
   }
@@ -181,7 +185,7 @@
     title="Items"
     icon="📦"
     showAddButton
-    addLabel="Tambah Item"
+    addLabel="Tambah"
     onAdd={openAddModal}
   />
 
@@ -200,7 +204,7 @@
     totalItems={filteredItems.length}
     {currentPage}
     {pageSize}
-    onPageChange={(p) => currentPage = p}
+    onPageChange={(p) => (currentPage = p)}
   />
 
   <ItemFormModal
@@ -222,7 +226,7 @@
   <ConfirmModal
     id={confirmModalId}
     title="Hapus Item"
-    message={`Yakin ingin menghapus item "${itemToDelete?.name ?? ''}"?`}
+    message={`Yakin ingin menghapus item "${itemToDelete?.name ?? ""}"?`}
     confirmText="Hapus"
     confirmClass="btn-outline btn-error"
     cancelText="Batal"

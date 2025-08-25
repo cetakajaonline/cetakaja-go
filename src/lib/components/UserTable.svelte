@@ -1,30 +1,32 @@
 <script lang="ts">
-  import type { User } from '$lib/types';
-  import IconButton from '$lib/components/ui/IconButton.svelte';
-  import { ChevronUp, ChevronDown, Pencil, Trash2 } from 'lucide-svelte';
+  import type { User } from "$lib/types";
+  import IconButton from "$lib/components/ui/IconButton.svelte";
+  import { ChevronUp, ChevronDown, Pencil, Trash2 } from "lucide-svelte";
 
   export let users: User[] = [];
   // export let onRowClick: (user: User) => void; Pakai Buat Detail
   export let onEdit: (user: User) => void;
   export let onDelete: (user: User) => void;
 
-  export let sortKey: keyof User = 'name';
-  export let sortDirection: 'asc' | 'desc' = 'asc';
+  export let sortKey: keyof User = "name";
+  export let sortDirection: "asc" | "desc" = "asc";
   export let onSort: (key: keyof User) => void;
 
   export let isAdmin: boolean = false;
   export let currentUserId: number = 0;
 </script>
 
-<div class="overflow-x-auto rounded-xl shadow border border-base-200 bg-base-100">
-  <table class="table w-full text-sm">
+<div
+  class="overflow-x-auto rounded-xl shadow border border-base-200 bg-base-100"
+>
+  <table class="table w-full min-w-[700px] text-sm">
     <thead class="bg-base-100 text-base-content">
       <tr>
-        <th class="cursor-pointer" on:click={() => onSort('name')}>
+        <th class="cursor-pointer" on:click={() => onSort("name")}>
           <div class="flex items-center gap-1">
             Nama
-            {#if sortKey === 'name'}
-              {#if sortDirection === 'asc'}
+            {#if sortKey === "name"}
+              {#if sortDirection === "asc"}
                 <ChevronUp class="w-4 h-4 text-base-content/70" />
               {:else}
                 <ChevronDown class="w-4 h-4 text-base-content/70" />
@@ -33,11 +35,11 @@
           </div>
         </th>
 
-        <th class="cursor-pointer" on:click={() => onSort('email')}>
+        <th class="cursor-pointer" on:click={() => onSort("email")}>
           <div class="flex items-center gap-1">
             Email
-            {#if sortKey === 'email'}
-              {#if sortDirection === 'asc'}
+            {#if sortKey === "email"}
+              {#if sortDirection === "asc"}
                 <ChevronUp class="w-4 h-4 text-base-content/70" />
               {:else}
                 <ChevronDown class="w-4 h-4 text-base-content/70" />
@@ -59,8 +61,13 @@
           <td>
             <div class="flex items-center gap-3">
               <div class="avatar">
-                <div class="w-10 h-10 rounded-full ring ring-base-300 ring-offset-1">
-                  <img src={user.photo || '/uploads/placeholder.png'} alt={user.name} />
+                <div
+                  class="w-10 h-10 rounded-full ring ring-base-300 ring-offset-1"
+                >
+                  <img
+                    src={user.photo || "/uploads/placeholder.png"}
+                    alt={user.name}
+                  />
                 </div>
               </div>
               <div>
@@ -80,16 +87,23 @@
             </div>
           </td>
 
-          <td class="text-right space-x-2">
+          <td class="text-right space-x-2 whitespace-nowrap">
             {#if isAdmin || user.id === currentUserId}
-              <IconButton icon={Pencil} color="btn-circle btn-outline btn-success" onClick={() => onEdit(user)} />
+              <IconButton
+                icon={Pencil}
+                color="btn-circle btn-outline btn-success"
+                onClick={() => onEdit(user)}
+              />
             {/if}
 
             {#if isAdmin}
-              <IconButton icon={Trash2} color="btn-circle btn-outline btn-error" onClick={() => onDelete(user)} />
+              <IconButton
+                icon={Trash2}
+                color="btn-circle btn-outline btn-error"
+                onClick={() => onDelete(user)}
+              />
             {/if}
           </td>
-
         </tr>
       {/each}
     </tbody>

@@ -1,17 +1,17 @@
 <script lang="ts">
-  import DefaultLayout from '$lib/layouts/DefaultLayout.svelte';
-  import UserTable from '$lib/components/UserTable.svelte';
-  import TableToolbar from '$lib/components/TableToolbar.svelte';
-  import UserFormModal from '$lib/components/UserFormModal.svelte';
-  import PageHeader from '$lib/components/PageHeader.svelte';
-  import Pagination from '$lib/components/Pagination.svelte';
-  import ConfirmModal from '$lib/components/ConfirmModal.svelte';
-  import ValidationModal from '$lib/components/ValidationModal.svelte';
+  import DefaultLayout from "$lib/layouts/DefaultLayout.svelte";
+  import UserTable from "$lib/components/UserTable.svelte";
+  import TableToolbar from "$lib/components/TableToolbar.svelte";
+  import UserFormModal from "$lib/components/UserFormModal.svelte";
+  import PageHeader from "$lib/components/PageHeader.svelte";
+  import Pagination from "$lib/components/Pagination.svelte";
+  import ConfirmModal from "$lib/components/ConfirmModal.svelte";
+  import ValidationModal from "$lib/components/ValidationModal.svelte";
 
-  import { userSchema, userUpdateSchema } from '$lib/validations/userSchema';
-  import { z } from 'zod';
-  import { tick } from 'svelte';
-  import type { User } from '$lib/types';
+  import { userSchema, userUpdateSchema } from "$lib/validations/userSchema";
+  import { z } from "zod";
+  import { tick } from "svelte";
+  import type { User } from "$lib/types";
 
   export let data: {
     users: User[];
@@ -29,17 +29,17 @@
   let loading = false;
   let currentPage = 1;
   const pageSize = 7;
-  const confirmModalId = 'delete-user-confirm';
-  let searchKeyword = '';
-  let sortKey: keyof User = 'name';
-  let sortDirection: 'asc' | 'desc' = 'asc';
+  const confirmModalId = "delete-user-confirm";
+  let searchKeyword = "";
+  let sortKey: keyof User = "name";
+  let sortDirection: "asc" | "desc" = "asc";
 
   let userForm = {
-    name: '',
-    email: '',
-    password: '',
-    photo: '',
-    role: 'user'
+    name: "",
+    email: "",
+    password: "",
+    photo: "",
+    role: "user",
   };
 
   let validationMessages: string[] = [];
@@ -48,7 +48,7 @@
   function openAddModal() {
     isEditMode = false;
     selectedUser = null;
-    userForm = { name: '', email: '', password: '', photo: '', role: 'user' };
+    userForm = { name: "", email: "", password: "", photo: "", role: "user" };
     showUserModal = true;
   }
 
@@ -58,9 +58,9 @@
     userForm = {
       name: user.name,
       email: user.email,
-      password: '',
-      photo: user.photo ?? '',
-      role: user.role ?? 'user'
+      password: "",
+      photo: user.photo ?? "",
+      role: user.role ?? "user",
     };
     showUserModal = true;
   }
@@ -82,15 +82,16 @@
       const schema = isEditMode ? userUpdateSchema : userSchema;
       const validated = schema.parse(payload);
 
-      const endpoint = isEditMode && selectedUser
-        ? `/api/users/${selectedUser.id}`
-        : '/api/users';
+      const endpoint =
+        isEditMode && selectedUser
+          ? `/api/users/${selectedUser.id}`
+          : "/api/users";
 
-      const method = isEditMode ? 'PUT' : 'POST';
+      const method = isEditMode ? "PUT" : "POST";
 
       const res = await fetch(endpoint, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(validated),
       });
 
@@ -108,7 +109,9 @@
       } else {
         closeFormModal();
         await tick(); // pastikan modal form sudah keluar sebelum tampilkan validation modal
-        validationMessages = [result?.message || result?.error || 'Gagal menyimpan data'];
+        validationMessages = [
+          result?.message || result?.error || "Gagal menyimpan data",
+        ];
         showValidationModal = true;
       }
     } catch (err) {
@@ -117,7 +120,7 @@
       if (err instanceof z.ZodError) {
         validationMessages = err.issues.map((e) => e.message);
       } else {
-        validationMessages = ['Terjadi kesalahan saat mengirim data'];
+        validationMessages = ["Terjadi kesalahan saat mengirim data"];
       }
       showValidationModal = true;
     } finally {
@@ -128,7 +131,7 @@
   async function onConfirmDelete() {
     if (!userToDelete) return;
     const res = await fetch(`/api/users/${userToDelete.id}`, {
-      method: 'DELETE'
+      method: "DELETE",
     });
     if (res.ok) {
       users = users.filter((u) => u.id !== userToDelete?.id);
@@ -155,23 +158,24 @@
 
   function toggleSort(key: keyof User) {
     if (sortKey === key) {
-      sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+      sortDirection = sortDirection === "asc" ? "desc" : "asc";
     } else {
       sortKey = key;
-      sortDirection = 'asc';
+      sortDirection = "asc";
     }
   }
 
-  $: filteredUsers = users.filter((u) =>
-    u.name.toLowerCase().includes(searchKeyword) ||
-    u.email.toLowerCase().includes(searchKeyword)
+  $: filteredUsers = users.filter(
+    (u) =>
+      u.name.toLowerCase().includes(searchKeyword) ||
+      u.email.toLowerCase().includes(searchKeyword)
   );
 
   $: sortedUsers = [...filteredUsers].sort((a, b) => {
-    const aVal = a[sortKey] ?? '';
-    const bVal = b[sortKey] ?? '';
-    if (typeof aVal === 'string' && typeof bVal === 'string') {
-      return sortDirection === 'asc'
+    const aVal = a[sortKey] ?? "";
+    const bVal = b[sortKey] ?? "";
+    if (typeof aVal === "string" && typeof bVal === "string") {
+      return sortDirection === "asc"
         ? aVal.localeCompare(bVal)
         : bVal.localeCompare(aVal);
     }
@@ -186,7 +190,7 @@
     title="Users"
     icon="👤"
     showAddButton={isAdmin}
-    addLabel="Tambah User"
+    addLabel="Tambah"
     onAdd={openAddModal}
   />
 
@@ -199,17 +203,17 @@
     }}
     onDelete={(user) => isAdmin && askDelete(user)}
     onSort={toggleSort}
-    sortKey={sortKey}
-    sortDirection={sortDirection}
-    isAdmin={isAdmin}
-    currentUserId={currentUserId}
+    {sortKey}
+    {sortDirection}
+    {isAdmin}
+    {currentUserId}
   />
 
   <Pagination
     totalItems={filteredUsers.length}
     {currentPage}
     {pageSize}
-    onPageChange={(p) => currentPage = p}
+    onPageChange={(p) => (currentPage = p)}
   />
 
   <UserFormModal
@@ -217,17 +221,17 @@
     {isEditMode}
     {loading}
     initial={userForm}
-    isAdmin={isAdmin}
+    {isAdmin}
     on:submit={(e) => onSubmit(e.detail)}
     on:close={closeFormModal}
   />
 
   <ValidationModal
-  show={showValidationModal}
-  title="Validasi Gagal"
-  messages={validationMessages}
-  onClose={closeValidationModal}
-/>
+    show={showValidationModal}
+    title="Validasi Gagal"
+    messages={validationMessages}
+    onClose={closeValidationModal}
+  />
 
   {#if isAdmin}
     <ConfirmModal
