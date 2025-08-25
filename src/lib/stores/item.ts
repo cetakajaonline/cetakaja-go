@@ -1,4 +1,4 @@
-// src/stores/item.ts
+// src/lib/stores/item.ts
 import { writable } from "svelte/store";
 
 export type Item = {

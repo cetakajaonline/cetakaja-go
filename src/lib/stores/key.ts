@@ -1,4 +1,4 @@
-// src/stores/key.ts
+// src/lib/stores/key.ts
 import { writable } from "svelte/store";
 
 export type Key = {

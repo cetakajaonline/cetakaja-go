@@ -1,4 +1,4 @@
-// src/stores/user.ts
+// src/lib/stores/user.ts
 import { writable } from "svelte/store";
 
 export type User = {
