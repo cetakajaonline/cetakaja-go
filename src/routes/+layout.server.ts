@@ -13,9 +13,9 @@ export const load: LayoutServerLoad = async ({ url, locals }) => {
     "/": "Home",
     "/login": "Login",
     "/dashboard": "Dashboard",
-    "/items": "Items",
     "/users": "Users",
-    "/token": "API Keys",
+    "/orders": "Orders",
+    "/products": "Products",
     "/settings": "Settings",
   };
 
@@ -24,7 +24,5 @@ export const load: LayoutServerLoad = async ({ url, locals }) => {
 
   return {
     title, appName, appDesc, appLogo, user: locals.user ?? null,
-    tokens: [],
-    items: [],
   };
 };

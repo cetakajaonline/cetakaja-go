@@ -4,7 +4,7 @@ import { requireAdmin } from "$lib/server/auth";
 import {
   getAllUsers,
   createUser,
-  getUserByEmail,
+  getUserByUsername,
 } from "$lib/server/userService";
 import type { RequestHandler } from "./$types";
 import { userSchema } from "$lib/validations/userSchema";
@@ -36,13 +36,20 @@ export const POST: RequestHandler = async (event) => {
 
   const data = parsed.data;
 
-  const existing = await getUserByEmail(data.email);
+  const existing = await getUserByUsername(data.username);
   if (existing) {
-    return json({ message: "Email sudah terdaftar" }, { status: 400 });
+    return json({ message: "Username sudah terdaftar" }, { status: 400 });
   }
 
   try {
-    const newUser = await createUser(data);
+    const newUser = await createUser({
+      name: data.name,
+      username: data.username,
+      password: data.password,
+      phone: data.phone,
+      address: data.address,
+      role: data.role,
+    });
     return json(newUser);
   } catch (err) {
     console.error(err);

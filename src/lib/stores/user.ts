@@ -4,8 +4,11 @@ import { writable } from "svelte/store";
 export type User = {
   id: number;
   name: string;
-  email: string;
-  photo?: string | null;
+  username: string;
+  phone: string;
+  address?: string;
+  role?: string;
+  createdAt: Date | string;  // Could be Date or ISO string from SvelteKit
 };
 
 export const user = writable<User | null>(null);

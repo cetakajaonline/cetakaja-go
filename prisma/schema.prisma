@@ -4,47 +4,215 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
+//
+// ENUMS
+//
+enum Role {
+  admin
+  staff
+  customer
+}
+
+enum OrderStatus {
+  pending
+  processing
+  finished
+  canceled
+}
+
+enum ShippingMethod {
+  pickup
+  delivery
+}
+
+enum PaymentMethod {
+  transfer
+  qris
+  cash
+}
+
+enum PaymentStatus {
+  pending
+  confirmed
+  failed
+  refunded
+}
+
+//
+// MODELS
+//
 model User {
   id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
+  name      String   @db.VarChar(100)
+  username  String   @unique @db.VarChar(50)
+  phone     String   @unique @db.VarChar(20)
   password  String
-  photo     String?
-  role      String   @default("user") // "admin" atau "user"
+  role      Role
+  address   String?  @db.VarChar(255)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relasi ke token yang dibuat user ini
-  createdTokens ApiToken[] @relation("CreatedTokens")
+  // Relations
+  orders          Order[]        @relation("UserOrders") // customer orders
+  createdOrders   Order[]        @relation("OrderCreatedBy") // staff/admin created orders
+  payments        Payment[]      @relation("UserPayments") // customer payments
+  createdPayments Payment[]      @relation("PaymentCreatedBy") // staff/admin created payments
+  notifications   Notification[]
 }
 
-model ApiToken {
-  id        Int      @id @default(autoincrement())
-  name      String
-  token     String   @unique
-  createdAt DateTime @default(now())
-  revoked   Boolean  @default(false)
+model Category {
+  id          Int      @id @default(autoincrement())
+  name        String   @db.VarChar(100)
+  code        String   @unique @db.VarChar(50)
+  description String?  @db.VarChar(255)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  // Foreign key & relasi ke User
-  createdBy Int
-  creator   User @relation("CreatedTokens", fields: [createdBy], references: [id])
+  products Product[]
 }
 
-model Item {
+model Product {
+  id          Int      @id @default(autoincrement())
+  categoryId  Int
+  name        String   @db.VarChar(150)
+  description String?  @db.Text
+  baseCode    String   @db.VarChar(50)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category   Category         @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  variants   ProductVariant[]
+  orderItems OrderItem[]
+
+  @@unique([baseCode, categoryId])
+  @@index([categoryId])
+}
+
+model ProductVariant {
+  id          Int      @id @default(autoincrement())
+  productId   Int
+  variantName String   @db.VarChar(100)
+  price       Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+}
+
+model Order {
+  id              Int            @id @default(autoincrement())
+  userId          Int // customer
+  createdById     Int? // admin/staff
+  orderNumber     String         @unique @db.VarChar(50)
+  status          OrderStatus    @default(pending)
+  shippingMethod  ShippingMethod
+  shippingAddress String?        @db.VarChar(255)
+  paymentMethod   PaymentMethod
+  paymentStatus   PaymentStatus  @default(pending)
+  totalAmount     Int
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  // Relations
+  user          User           @relation("UserOrders", fields: [userId], references: [id], onDelete: Cascade)
+  createdBy     User?          @relation("OrderCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  orderItems    OrderItem[]
+  payments      Payment[]
+  uploads       Upload[]
+  notifications Notification[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([paymentStatus])
+}
+
+model OrderItem {
   id        Int      @id @default(autoincrement())
-  name      String
-  desc      String   
+  orderId   Int
+  productId Int
+  variantId Int?
+  qty       Int
+  price     Int
+  subtotal  Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  order   Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model Upload {
+  id         Int      @id @default(autoincrement())
+  orderId    Int
+  fileName   String   @db.VarChar(255)
+  filePath   String   @db.VarChar(255)
+  fileType   String   @db.VarChar(50)
+  uploadedAt DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id             Int           @id @default(autoincrement())
+  orderId        Int
+  userId         Int // customer
+  createdById    Int? // admin/staff
+  method         PaymentMethod
+  amount         Int
+  status         PaymentStatus @default(pending)
+  transactionRef String?       @db.VarChar(100)
+  paidAt         DateTime?
+  createdAt      DateTime      @default(now())
+
+  // Relations
+  order     Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user      User           @relation("UserPayments", fields: [userId], references: [id], onDelete: Cascade)
+  createdBy User?          @relation("PaymentCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  proofs    PaymentProof[]
+
+  @@index([orderId])
+  @@index([status])
+}
+
+model PaymentProof {
+  id         Int      @id @default(autoincrement())
+  paymentId  Int
+  fileName   String   @db.VarChar(255)
+  filePath   String   @db.VarChar(255)
+  fileType   String   @db.VarChar(50)
+  uploadedAt DateTime @default(now())
+
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id       Int      @id @default(autoincrement())
+  userId   Int
+  orderId  Int?
+  toNumber String   @db.VarChar(20)
+  message  String   @db.Text
+  status   String   @db.VarChar(20)
+  sentAt   DateTime @default(now())
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([status])
 }
 
 model Setting {
-  id        Int    @id @default(1) // hanya 1 baris config
-  name      String
-  description String
-  logo      String? // bisa null
+  id          Int     @id @default(1)
+  name        String  @db.VarChar(100)
+  description String  @db.VarChar(255)
+  logo        String? @db.VarChar(255)
 }

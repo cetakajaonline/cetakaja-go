@@ -4,37 +4,22 @@
 export interface User {
   id: number;
   name: string;
-  email: string;
-  photo?: string | null;
+  username: string;
+  phone: string;
+  address?: string;
   role?: string;
   createdAt: Date;
 }
 
-// ✅ Token
-export type Token = {
-  id: number;
-  name: string;
-  token: string;
-  createdBy: number;
-  createdAt: Date;
-  revoked: boolean;
-  creator?: {
-    id: number;
-    name: string;
-    email: string;
-    photo?: string;
-  };
-};
-
 // ✅ Form data untuk Login dan Register
 export interface LoginFormData {
-  email: string;
+  username: string;
   password: string;
 }
 
 export interface RegisterFormData {
   name: string;
-  email: string;
+  username: string;
   password: string;
 }
 
@@ -45,11 +30,4 @@ export interface ApiResponse<T = unknown> {
   data?: T;
 }
 
-// ✅ Item
-export interface Item {
-  id: number;
-  name: string;
-  desc: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
+

@@ -1,22 +1,14 @@
 // src/routes/(app)/dashboard/+page.server.ts
-import { getAllItems } from "$lib/server/itemService";
 import { getAllUsers } from "$lib/server/userService";
-import { getAllKeys } from "$lib/server/tokenService";
 import { redirect } from "@sveltejs/kit";
 
 export async function load({ locals }) {
   if (!locals.user) throw redirect(302, "/login");
 
-  const [items, users, tokens] = await Promise.all([
-    getAllItems(),
-    getAllUsers(),
-    getAllKeys(),
-  ]);
+  const users = await getAllUsers();
 
   return {
     user: locals.user,
-    items,
     users,
-    tokens,
   };
 }

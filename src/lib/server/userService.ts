@@ -4,8 +4,9 @@ import prisma from "$lib/server/prisma";
 const userSelect = {
   id: true,
   name: true,
-  email: true,
-  photo: true,
+  username: true,
+  phone: true,
+  address: true,
   role: true,
   createdAt: true,
 };
@@ -24,28 +25,31 @@ export async function getUserById(id: number) {
   });
 }
 
-export async function getUserByEmail(email: string) {
+export async function getUserByUsername(username: string) {
   return prisma.user.findUnique({
-    where: { email },
+    where: { username },
+    select: userSelect,
   });
 }
 
 export async function createUser({
   name,
-  email,
+  username,
   password,
-  photo,
+  phone,
+  address,
   role, // ⬅️ tambahkan ini
 }: {
   name: string;
-  email: string;
+  username: string;
   password: string;
-  photo?: string;
-  role?: "user" | "admin";
+  phone?: string;
+  address?: string;
+  role?: "admin" | "staff" | "customer";
 }) {
-  const existing = await getUserByEmail(email);
+  const existing = await getUserByUsername(username);
   if (existing) {
-    throw new Error("Email sudah terdaftar");
+    throw new Error("Username sudah terdaftar");
   }
 
   const hashed = await bcrypt.hash(password, 10);
@@ -53,10 +57,11 @@ export async function createUser({
   return prisma.user.create({
     data: {
       name,
-      email,
+      username,
       password: hashed,
-      photo,
-      role: role ?? "user", // default 'user' jika tidak ditentukan
+      phone: phone ?? '',
+      address: address ?? '',
+      role: role ?? "customer", // default 'customer' jika tidak ditentukan
     },
     select: userSelect,
   });
@@ -66,38 +71,42 @@ export async function updateUser(
   id: number,
   {
     name,
-    email,
+    username,
     password,
-    photo,
+    phone,
+    address,
     role, // ⬅️ tambahkan ini
   }: {
     name?: string;
-    email?: string;
+    username?: string;
     password?: string;
-    photo?: string;
-    role?: "user" | "admin";
+    phone?: string;
+    address?: string;
+    role?: "admin" | "staff" | "customer";
   },
 ) {
   const data: Partial<{
     name: string;
-    email: string;
+    username: string;
     password: string;
-    photo: string;
-    role: "user" | "admin";
+    phone: string;
+    address: string;
+    role: "admin" | "staff" | "customer";
   }> = {};
 
   if (name) data.name = name;
-  if (email) {
-    const existing = await getUserByEmail(email);
+  if (username) {
+    const existing = await getUserByUsername(username);
     if (existing && existing.id !== id) {
-      throw new Error("Email sudah digunakan oleh user lain");
+      throw new Error("Username sudah digunakan oleh user lain");
     }
-    data.email = email;
+    data.username = username;
   }
-  if (photo) data.photo = photo;
   if (password) {
     data.password = await bcrypt.hash(password, 10);
   }
+  if (phone) data.phone = phone;
+  if (address) data.address = address;
   if (role) {
     data.role = role;
   }
@@ -115,8 +124,8 @@ export async function deleteUser(id: number) {
   });
 }
 
-export async function validatePassword(email: string, plainPassword: string) {
-  const user = await getUserByEmail(email);
+export async function validatePassword(username: string, plainPassword: string) {
+  const user = await getUserByUsername(username);
   if (!user) return null;
 
   const match = await bcrypt.compare(plainPassword, user.password);
@@ -125,8 +134,7 @@ export async function validatePassword(email: string, plainPassword: string) {
   return {
     id: user.id,
     name: user.name,
-    email: user.email,
-    photo: user.photo,
+    username: user.username,
     role: user.role,
   };
 }

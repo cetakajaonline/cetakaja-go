@@ -2,7 +2,7 @@
   import { createEventDispatcher } from 'svelte';
   import ValidationModal from '$lib/components/ValidationModal.svelte';
 
-  let email = '';
+  let username = '';
   let password = '';
   let isLoading = false;
   let showErrorModal = false;
@@ -14,8 +14,8 @@
     errorMessages = [];
 
     // Basic client-side validation
-    if (!email || !password) {
-      errorMessages.push('Email dan password wajib diisi');
+    if (!username || !password) {
+      errorMessages.push('Username dan password wajib diisi');
       showErrorModal = true;
       return;
     }
@@ -24,7 +24,7 @@
       isLoading = true;
       const res = await fetch('/api/auth/login', {
         method: 'POST',
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ username, password }),
         headers: { 'Content-Type': 'application/json' }
       });
 
@@ -34,7 +34,7 @@
       if (res.ok && data.success) {
         dispatch('success');
       } else {
-        errorMessages = [data?.message ?? 'Email atau password salah'];
+        errorMessages = [data?.message ?? 'Username atau password salah'];
         showErrorModal = true;
       }
     } catch (err) {
@@ -48,11 +48,11 @@
 
 <form on:submit|preventDefault={handleLogin} class="max-w-sm mx-auto mt-4 p-4 bg-base-100 rounded shadow space-y-3">
   <input
-    bind:value={email}
-    placeholder="Email"
+    bind:value={username}
+    placeholder="Username"
     class="input input-bordered w-full"
-    type="email"
-    autocomplete="email"
+    type="text"
+    autocomplete="username"
     required
   />
   <input

@@ -2,18 +2,13 @@ import { z } from "zod";
 
 export const userSchema = z.object({
     name: z.string().min(1, "Nama wajib diisi"),
-    email: z.string().email("Email tidak valid"),
+    username: z.string().min(3, "Username minimal 3 karakter"),
     password: z
         .string()
         .min(6, "Minimal 6 karakter"),
-    role: z.enum(["admin", "user"]),
-    photo: z
-        .union([
-            z.string().url(),
-            z.string().startsWith("/uploads/"),
-            z.literal(""),
-        ])
-        .optional(),
+    phone: z.string().min(10, "Nomor HP tidak valid"),
+    address: z.string().optional(),
+    role: z.enum(["admin", "staff", "customer"]),
 });
 
 // Ubah password agar "" diperlakukan sebagai undefined

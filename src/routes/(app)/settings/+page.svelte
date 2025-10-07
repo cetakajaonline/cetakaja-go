@@ -32,6 +32,8 @@
     logoPreview = data.setting.logo ?? null;
   }
 
+
+
   async function handleLogoChange(e: Event) {
     const target = e.target as HTMLInputElement;
     file = target.files?.[0] ?? null;

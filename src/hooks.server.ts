@@ -14,43 +14,9 @@ export const handle: Handle = async ({ event, resolve }) => {
     await prisma.$connect(); // hanya warm-up saat dev
   }
 
-  const authHeader = event.request.headers.get("authorization");
   const cookieToken = event.cookies.get("token");
 
-  // 1. Cek Authorization: Bearer <token> (akses API eksternal)
-  if (authHeader?.startsWith("Bearer ")) {
-    const apiToken = authHeader.split(" ")[1];
-
-    try {
-      const tokenRecord = await prisma.apiToken.findUnique({
-        where: { token: apiToken },
-        include: {
-          creator: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              role: true,
-              createdAt: true,
-              photo: true,
-            },
-          },
-        },
-      });
-
-      if (tokenRecord && !tokenRecord.revoked) {
-        event.locals.token = tokenRecord;
-        event.locals.user = tokenRecord.creator;
-        return resolve(event);
-      } else {
-        console.warn("Invalid or revoked API token");
-      }
-    } catch (err) {
-      console.error("Error verifying API token:", err);
-    }
-  }
-
-  // 2. Cek cookie JWT (login dari browser)
+  // Cek cookie JWT (login dari browser)
   if (cookieToken) {
     try {
       const decoded = jwt.verify(cookieToken, JWT_SECRET) as { id: number };
@@ -60,10 +26,11 @@ export const handle: Handle = async ({ event, resolve }) => {
         select: {
           id: true,
           name: true,
-          email: true,
+          username: true,
+          phone: true,
+          address: true,
           role: true,
           createdAt: true,
-          photo: true
         },
       });
 

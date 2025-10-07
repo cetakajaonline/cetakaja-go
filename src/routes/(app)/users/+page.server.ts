@@ -18,7 +18,6 @@ export const load: PageServerLoad = async (event) => {
     users = all.map((u) => ({
       ...u,
       createdAt: u.createdAt.toISOString(),
-      photo: u.photo ?? undefined,
     }));
   } else {
     const self = await getUserById(user.id);
@@ -26,7 +25,6 @@ export const load: PageServerLoad = async (event) => {
       users = [{
         ...self,
         createdAt: self.createdAt.toISOString(),
-        photo: self.photo ?? undefined,
       }];
     }
   }

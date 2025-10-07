@@ -36,10 +36,11 @@
 
   let userForm = {
     name: "",
-    email: "",
+    username: "",
     password: "",
-    photo: "",
-    role: "user",
+    phone: "",
+    address: "",
+    role: "customer",
   };
 
   let validationMessages: string[] = [];
@@ -48,7 +49,7 @@
   function openAddModal() {
     isEditMode = false;
     selectedUser = null;
-    userForm = { name: "", email: "", password: "", photo: "", role: "user" };
+    userForm = { name: "", username: "", password: "", phone: "", address: "", role: "customer" };
     showUserModal = true;
   }
 
@@ -57,10 +58,11 @@
     selectedUser = user;
     userForm = {
       name: user.name,
-      email: user.email,
+      username: user.username,
       password: "",
-      photo: user.photo ?? "",
-      role: user.role ?? "user",
+      phone: user.phone ?? "",
+      address: user.address ?? "",
+      role: user.role ?? "customer",
     };
     showUserModal = true;
   }
@@ -168,7 +170,7 @@
   $: filteredUsers = users.filter(
     (u) =>
       u.name.toLowerCase().includes(searchKeyword) ||
-      u.email.toLowerCase().includes(searchKeyword)
+      u.username.toLowerCase().includes(searchKeyword)
   );
 
   $: sortedUsers = [...filteredUsers].sort((a, b) => {

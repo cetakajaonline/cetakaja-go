@@ -35,6 +35,6 @@ export async function saveFile(
   // Simpan file ke disk
   await fs.promises.writeFile(filepath, buffer);
 
-  // Return path relatif untuk digunakan di <img src="/uploads/..." />
+  // Return path relatif untuk digunakan di <img src="/uploads/...\" />
   return `/uploads/${filename}`;
 }

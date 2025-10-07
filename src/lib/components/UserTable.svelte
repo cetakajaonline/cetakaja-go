@@ -35,10 +35,10 @@
           </div>
         </th>
 
-        <th class="cursor-pointer" on:click={() => onSort("email")}>
+        <th class="cursor-pointer" on:click={() => onSort("username")}>
           <div class="flex items-center gap-1">
-            Email
-            {#if sortKey === "email"}
+            Username
+            {#if sortKey === "username"}
               {#if sortDirection === "asc"}
                 <ChevronUp class="w-4 h-4 text-base-content/70" />
               {:else}
@@ -48,7 +48,44 @@
           </div>
         </th>
 
-        <th>Role</th>
+        <th class="cursor-pointer" on:click={() => onSort("phone")}>
+          <div class="flex items-center gap-1">
+            No. HP
+            {#if sortKey === "phone"}
+              {#if sortDirection === "asc"}
+                <ChevronUp class="w-4 h-4 text-base-content/70" />
+              {:else}
+                <ChevronDown class="w-4 h-4 text-base-content/70" />
+              {/if}
+            {/if}
+          </div>
+        </th>
+
+        <th class="cursor-pointer" on:click={() => onSort("address")}>
+          <div class="flex items-center gap-1">
+            Alamat
+            {#if sortKey === "address"}
+              {#if sortDirection === "asc"}
+                <ChevronUp class="w-4 h-4 text-base-content/70" />
+              {:else}
+                <ChevronDown class="w-4 h-4 text-base-content/70" />
+              {/if}
+            {/if}
+          </div>
+        </th>
+
+        <th class="cursor-pointer" on:click={() => onSort("role")}>
+          <div class="flex items-center gap-1">
+            Role
+            {#if sortKey === "role"}
+              {#if sortDirection === "asc"}
+                <ChevronUp class="w-4 h-4 text-base-content/70" />
+              {:else}
+                <ChevronDown class="w-4 h-4 text-base-content/70" />
+              {/if}
+            {/if}
+          </div>
+        </th>
 
         <th class="text-right pr-4">Aksi</th>
       </tr>
@@ -59,24 +96,20 @@
           on:click={() => onRowClick(user)} Buat Detail-->
         <tr class="hover:bg-base-100 transition cursor-pointer">
           <td>
-            <div class="flex items-center gap-3">
-              <div class="avatar">
-                <div
-                  class="w-10 h-10 rounded-full ring ring-base-300 ring-offset-1"
-                >
-                  <img
-                    src={user.photo || "/uploads/placeholder.png"}
-                    alt={user.name}
-                  />
-                </div>
-              </div>
-              <div>
-                <div class="font-medium text-base-content">{user.name}</div>
-              </div>
-            </div>
+            <div class="font-medium text-base-content">{user.name}</div>
           </td>
 
-          <td>{user.email}</td>
+          <td>@{user.username}</td>
+
+          <td>{user.phone}</td>
+
+          <td>
+            {#if user.address}
+              <div class="max-w-[150px] truncate" title={user.address}>{user.address}</div>
+            {:else}
+              <span class="text-gray-400">-</span>
+            {/if}
+          </td>
 
           <td>
             <div

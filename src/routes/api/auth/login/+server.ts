@@ -24,13 +24,13 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
       );
     }
 
-    const { email, password } = parsed.data;
+    const { username, password } = parsed.data;
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({ where: { username } });
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return json(
-        { success: false, message: "Email atau password salah" },
+        { success: false, message: "Username atau password salah" },
         { status: 401 }
       );
     }
