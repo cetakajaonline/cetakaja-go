@@ -1,26 +1,34 @@
 import type { User } from "$lib/types";
 
-export async function createUser(form: FormData): Promise<User> {
+export async function createUser(userData: Omit<User, 'id' | 'createdAt'> & { password: string }): Promise<User> {
   const res = await fetch("/api/users", {
     method: "POST",
-    body: form,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(userData),
   });
 
   if (!res.ok) {
-    throw new Error("Failed to create user");
+    const errorData = await res.json();
+    throw new Error(errorData.message || "Failed to create user");
   }
 
   return (await res.json()) as User;
 }
 
-export async function updateUser(id: number, form: FormData): Promise<User> {
+export async function updateUser(id: number, userData: Partial<User & { password?: string }>): Promise<User> {
   const res = await fetch(`/api/users/${id}`, {
     method: "PUT",
-    body: form,
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(userData),
   });
 
   if (!res.ok) {
-    throw new Error("Failed to update user");
+    const errorData = await res.json();
+    throw new Error(errorData.message || "Failed to update user");
   }
 
   return (await res.json()) as User;

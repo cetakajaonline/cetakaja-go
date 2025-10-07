@@ -81,6 +81,7 @@ model Product {
   name        String   @db.VarChar(150)
   description String?  @db.Text
   baseCode    String   @db.VarChar(50)
+  photo       String?  @db.VarChar(255)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

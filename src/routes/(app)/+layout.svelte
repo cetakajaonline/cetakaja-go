@@ -13,8 +13,9 @@
   const menuItems = [
     { href: "/dashboard", label: "Dashboard", icon: "🏠" },
     { href: "/users", label: "Users", icon: "👤" },
-    { href: "/orders", label: "Orders", icon: "📝" },
+    { href: "/categories", label: "Categories", icon: "🏷️" },
     { href: "/products", label: "Products", icon: "📦" },
+    { href: "/orders", label: "Orders", icon: "📝" },
     { href: "/settings", label: "Settings", icon: "⚙️" },
   ];
 

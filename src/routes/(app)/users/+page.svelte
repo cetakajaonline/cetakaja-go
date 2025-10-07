@@ -9,6 +9,7 @@
   import ValidationModal from "$lib/components/ValidationModal.svelte";
 
   import { userSchema, userUpdateSchema } from "$lib/validations/userSchema";
+  import { createUser, updateUser, deleteUser } from "$lib/services/userClient";
   import { z } from "zod";
   import { tick } from "svelte";
   import type { User } from "$lib/types";
@@ -84,43 +85,22 @@
       const schema = isEditMode ? userUpdateSchema : userSchema;
       const validated = schema.parse(payload);
 
-      const endpoint =
-        isEditMode && selectedUser
-          ? `/api/users/${selectedUser.id}`
-          : "/api/users";
-
-      const method = isEditMode ? "PUT" : "POST";
-
-      const res = await fetch(endpoint, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(validated),
-      });
-
-      const result = await res.json().catch(() => ({}));
-
-      if (res.ok) {
-        if (isEditMode && selectedUser) {
-          users = users.map((u) =>
-            u.id === selectedUser!.id ? { ...u, ...result } : u
-          );
-        } else {
-          users = [...users, result];
-        }
-        closeFormModal();
+      let result: User;
+      if (isEditMode && selectedUser) {
+        result = await updateUser(selectedUser.id, validated);
+        users = users.map((u) =>
+          u.id === selectedUser!.id ? { ...u, ...result } : u
+        );
       } else {
-        closeFormModal();
-        await tick(); // pastikan modal form sudah keluar sebelum tampilkan validation modal
-        validationMessages = [
-          result?.message || result?.error || "Gagal menyimpan data",
-        ];
-        showValidationModal = true;
+        result = await createUser({ ...validated, password: validated.password! });
+        users = [...users, result];
       }
+      closeFormModal();
     } catch (err) {
       closeFormModal();
       await tick();
-      if (err instanceof z.ZodError) {
-        validationMessages = err.issues.map((e) => e.message);
+      if (err instanceof Error) {
+        validationMessages = [err.message];
       } else {
         validationMessages = ["Terjadi kesalahan saat mengirim data"];
       }
@@ -132,13 +112,18 @@
 
   async function onConfirmDelete() {
     if (!userToDelete) return;
-    const res = await fetch(`/api/users/${userToDelete.id}`, {
-      method: "DELETE",
-    });
-    if (res.ok) {
-      users = users.filter((u) => u.id !== userToDelete?.id);
+    
+    try {
+      const success = await deleteUser(userToDelete.id);
+      if (success) {
+        users = users.filter((u) => u.id !== userToDelete?.id);
+      }
+    } catch (err) {
+      // Handle error silently or show in UI if needed
+      console.error("Failed to delete user:", err);
+    } finally {
+      userToDelete = null;
     }
-    userToDelete = null;
   }
 
   function askDelete(user: User) {

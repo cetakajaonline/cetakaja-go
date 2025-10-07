@@ -4,6 +4,7 @@
   import Button from '$lib/components/ui/Button.svelte';
   import NotificationModal from '$lib/components/NotificationModal.svelte';
   import { invalidateAll } from "$app/navigation";
+  import { updateSetting } from "$lib/services/settingClient";
   import { tick } from "svelte";
 
   let isSubmitting = false;
@@ -51,23 +52,10 @@
     try {
       isSubmitting = true;
 
-      const form = new FormData();
-      form.append("name", name);
-      form.append("description", description);
-      if (file) form.append("logo", file);
+      // Use the client-side service
+      const updated = await updateSetting(name, description, file);
 
-      const res = await fetch("/api/settings", {
-        method: "POST",
-        body: form
-      });
-
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(errText || "Gagal menyimpan konfigurasi");
-      }
-
-      // ambil setting terbaru dari response API
-      const updated = await res.json();
+      // Update local state with response
       name = updated.name;
       description = updated.description;
       logoPreview = updated.logo ?? null;
