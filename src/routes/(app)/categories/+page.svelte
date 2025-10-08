@@ -84,22 +84,33 @@
         categories = categories.map((c) =>
           c.id === selectedCategory!.id ? { ...c, ...result } : c
         );
+        // Reset to first page to ensure updated item is visible
+        currentPage = 1;
       } else {
         result = await createCategory(validated as Omit<Category, "id" | "createdAt">);
         categories = [...categories, result];
+        // Reset to first page to ensure new item is visible
+        currentPage = 1;
       }
       closeFormModal();
     } catch (err) {
       closeFormModal();
       await tick();
-      if (err instanceof z.ZodError) {
-        validationMessages = err.issues.map((e) => e.message);
-      } else if (err instanceof Error) {
-        validationMessages = [err.message];
-      } else {
-        validationMessages = ["Terjadi kesalahan saat mengirim data"];
+      try {
+        if (err instanceof z.ZodError) {
+          validationMessages = err.issues.map((e) => e.message);
+        } else if (err instanceof Error) {
+          validationMessages = [err.message];
+        } else {
+          validationMessages = ["Terjadi kesalahan saat mengirim data"];
+        }
+        showValidationModal = true;
+      } catch (uiErr) {
+        // If there's an error in the error handling itself, log it
+        console.error("UI Error handling failed:", uiErr);
+        validationMessages = ["Terjadi kesalahan yang tidak terduga"];
+        showValidationModal = true;
       }
-      showValidationModal = true;
     } finally {
       loading = false;
     }
@@ -111,6 +122,8 @@
     try {
       await deleteCategory(categoryToDelete.id);
       categories = categories.filter((c) => c.id !== categoryToDelete?.id);
+      // Reset to first page to ensure consistent view after deletion
+      currentPage = 1;
     } catch (err) {
       if (err instanceof Error) {
         validationMessages = [err.message];
@@ -206,7 +219,6 @@
     {isEditMode}
     {loading}
     initial={categoryForm}
-    {isAdmin}
     on:submit={(e) => onSubmit(e.detail)}
     on:close={closeFormModal}
   />

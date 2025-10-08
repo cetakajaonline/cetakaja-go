@@ -1,0 +1,278 @@
+<script lang="ts">
+  import DefaultLayout from "$lib/layouts/DefaultLayout.svelte";
+  import OrderTable from "$lib/components/OrderTable.svelte";
+  import TableToolbar from "$lib/components/TableToolbar.svelte";
+  import OrderFormModal from "$lib/components/OrderFormModal.svelte";
+  import PageHeader from "$lib/components/PageHeader.svelte";
+  import Pagination from "$lib/components/Pagination.svelte";
+  import ConfirmModal from "$lib/components/ConfirmModal.svelte";
+  import ValidationModal from "$lib/components/ValidationModal.svelte";
+
+  import { orderSchema, orderUpdateSchema } from "$lib/validations/orderSchema";
+  import { createOrder, updateOrder, deleteOrder } from "$lib/services/orderClient";
+  import { z } from "zod";
+  import { tick } from "svelte";
+  import type { Order, User, Product } from "$lib/types";
+
+  export let data: {
+    orders: Order[];
+    users: User[];
+    products: Product[];
+    isAdmin: boolean;
+    isStaff: boolean;
+  };
+
+  const { orders: initialOrders, users, products, isAdmin, isStaff } = data;
+
+  let orders = [...initialOrders];
+  let orderToDelete: Order | null = null;
+  let selectedOrder: Order | null = null;
+  let showOrderModal = false;
+  let isEditMode = false;
+  let loading = false;
+  let currentPage = 1;
+  const pageSize = 7;
+  const confirmModalId = "delete-order-confirm";
+  let searchKeyword = "";
+  let sortKey: keyof Order = "createdAt";
+  let sortDirection: "asc" | "desc" = "desc"; // Default to descending for latest orders
+
+  let orderForm = {
+    userId: users[0]?.id ?? 0,
+    orderNumber: "",
+    status: "pending",
+    shippingMethod: "pickup",
+    shippingAddress: "",
+    paymentMethod: "transfer",
+    paymentStatus: "pending",
+    totalAmount: 0,
+    orderItems: [] as {
+      productId: number;
+      variantId?: number;
+      qty: number;
+      price: number;
+      subtotal: number;
+    }[],
+  };
+
+  let validationMessages: string[] = [];
+  let showValidationModal = false;
+
+  function openAddModal() {
+    isEditMode = false;
+    selectedOrder = null;
+    // Generate initial order number for new order
+    const date = new Date();
+    const year = date.getFullYear().toString().slice(-2);
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    orderForm = {
+      userId: users[0]?.id ?? 0,
+      orderNumber: `ORD-${year}${month}${day}-${randomNum}`,
+      status: "pending",
+      shippingMethod: "pickup",
+      shippingAddress: "",
+      paymentMethod: "transfer",
+      paymentStatus: "pending",
+      totalAmount: 0,
+      orderItems: [],
+    };
+    showOrderModal = true;
+  }
+
+  function openEditModal(order: Order) {
+    isEditMode = true;
+    selectedOrder = order;
+    orderForm = {
+      userId: order.userId,
+      orderNumber: order.orderNumber,
+      status: order.status,
+      shippingMethod: order.shippingMethod,
+      shippingAddress: order.shippingAddress ?? "",
+      paymentMethod: order.paymentMethod,
+      paymentStatus: order.paymentStatus,
+      totalAmount: order.totalAmount,
+      orderItems: order.orderItems.map(item => ({
+        productId: item.productId,
+        variantId: item.variantId || undefined,
+        qty: item.qty,
+        price: item.price,
+        subtotal: item.subtotal,
+      })),
+    };
+    showOrderModal = true;
+  }
+
+  function closeFormModal() {
+    showOrderModal = false;
+  }
+
+  function closeValidationModal() {
+    showValidationModal = false;
+    validationMessages = [];
+  }
+
+  async function onSubmit(payload: typeof orderForm) {
+    loading = true;
+    validationMessages = [];
+
+    try {
+      let result: Order;
+      if (isEditMode && selectedOrder) {
+        const validated = orderUpdateSchema.parse(payload);
+        result = await updateOrder(selectedOrder.id, validated);
+        orders = orders.map((o) =>
+          o.id === selectedOrder!.id ? { ...o, ...result } : o
+        );
+      } else {
+        const validated = orderSchema.parse(payload);
+        result = await createOrder(validated);
+        orders = [...orders, result];
+      }
+      closeFormModal();
+    } catch (err) {
+      closeFormModal();
+      await tick();
+      if (err instanceof z.ZodError) {
+        validationMessages = err.issues.map((e: { message: string }) => e.message);
+      } else if (err instanceof Error) {
+        validationMessages = [err.message];
+      } else {
+        validationMessages = ["Terjadi kesalahan saat mengirim data"];
+      }
+      showValidationModal = true;
+    } finally {
+      loading = false;
+    }
+  }
+
+  async function onConfirmDelete() {
+    if (!orderToDelete) return;
+    
+    try {
+      const success = await deleteOrder(orderToDelete.id);
+      if (success) {
+        orders = orders.filter((o) => o.id !== orderToDelete?.id);
+      }
+    } catch (err) {
+      // Handle error silently or show in UI if needed
+      console.error("Failed to delete order:", err);
+    } finally {
+      orderToDelete = null;
+    }
+  }
+
+  function askDelete(order: Order) {
+    orderToDelete = order;
+    setTimeout(() => {
+      document.getElementById(confirmModalId)?.click();
+    }, 0);
+  }
+
+  function handleSearch(keyword: string) {
+    searchKeyword = keyword.toLowerCase();
+    currentPage = 1;
+  }
+
+  function paginate(array: Order[], page: number, size: number) {
+    const start = (page - 1) * size;
+    return array.slice(start, start + size);
+  }
+
+  function toggleSort(key: keyof Order) {
+    if (sortKey === key) {
+      sortDirection = sortDirection === "asc" ? "desc" : "asc";
+    } else {
+      sortKey = key;
+      sortDirection = "asc";
+    }
+  }
+
+  $: filteredOrders = orders.filter(
+    (o) =>
+      o.orderNumber.toLowerCase().includes(searchKeyword) ||
+      o.user.name.toLowerCase().includes(searchKeyword)
+  );
+
+  $: sortedOrders = [...filteredOrders].sort((a, b) => {
+    const aVal = a[sortKey] ?? "";
+    const bVal = b[sortKey] ?? "";
+    if (typeof aVal === "string" && typeof bVal === "string") {
+      return sortDirection === "asc"
+        ? aVal.localeCompare(bVal)
+        : bVal.localeCompare(aVal);
+    } else if (aVal instanceof Date && bVal instanceof Date) {
+      return sortDirection === "asc" 
+        ? (aVal as any) - (bVal as any) 
+        : (bVal as any) - (aVal as any);
+    } else if (typeof aVal === "number" && typeof bVal === "number") {
+      return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
+    }
+    return 0;
+  });
+
+  $: paginatedOrders = paginate(sortedOrders, currentPage, pageSize);
+</script>
+
+<DefaultLayout title="Orders">
+  <PageHeader
+    title="Orders"
+    icon="📦"
+    showAddButton={isAdmin || isStaff}
+    addLabel="Tambah"
+    onAdd={openAddModal}
+  />
+
+  <TableToolbar on:search={(e) => handleSearch(e.detail)} />
+
+  <OrderTable
+    orders={paginatedOrders}
+    onEdit={openEditModal}
+    onDelete={(order) => (isAdmin || isStaff) && askDelete(order)}
+    onSort={toggleSort}
+    {sortKey}
+    {sortDirection}
+    {isAdmin}
+    {isStaff}
+  />
+
+  <Pagination
+    totalItems={filteredOrders.length}
+    {currentPage}
+    {pageSize}
+    onPageChange={(p) => (currentPage = p)}
+  />
+
+  <OrderFormModal
+    show={showOrderModal}
+    {isEditMode}
+    {loading}
+    initial={orderForm}
+    {users}
+    {products}
+    {isAdmin}
+    on:submit={(e) => onSubmit(e.detail)}
+    on:close={closeFormModal}
+  />
+
+  <ValidationModal
+    show={showValidationModal}
+    title="Validasi Gagal"
+    messages={validationMessages}
+    onClose={closeValidationModal}
+  />
+
+  {#if isAdmin || isStaff}
+    <ConfirmModal
+      id={confirmModalId}
+      title="Hapus Order"
+      message={`Yakin ingin menghapus order ${orderToDelete?.orderNumber}?`}
+      confirmText="Hapus"
+      confirmClass="btn-outline btn-error"
+      cancelText="Batal"
+      cancelClass="btn-outline btn-warning"
+      onConfirm={onConfirmDelete}
+    />
+  {/if}
+</DefaultLayout>

@@ -1,72 +1,64 @@
-import type { Product, ApiResponse } from "$lib/types";
+import type { Product } from "$lib/types";
 
 export async function createProduct(
-  product: Omit<Product, "id" | "createdAt" | "category" | "variants"> & {
-    variants: { variantName: string; price: number }[];
-    photo?: string | null;
-  },
+  productData: Omit<Product, "id" | "createdAt">,
 ): Promise<Product> {
-  // Kirim data produk ke API
-  const response = await fetch("/api/products", {
+  const res = await fetch("/api/products", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      ...product,
-      photo: product.photo || undefined,
-    }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(productData),
   });
 
-  if (!response.ok) {
-    const errorData: ApiResponse = await response.json();
-    throw new Error(errorData.message || "Gagal membuat produk");
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.message || "Failed to create product");
   }
 
-  const result: ApiResponse<Product> = await response.json();
-  return result.data!;
+  return (await res.json()) as Product;
 }
 
 export async function updateProduct(
   id: number,
-  product: Partial<Omit<Product, "id" | "createdAt" | "category">> & {
-    variants?: {
-      id?: number;
-      variantName: string;
-      price: number;
-      delete?: boolean;
-    }[];
-    photo?: string | null;
-  },
+  productData: Partial<Product>,
 ): Promise<Product> {
-  // Kirim data produk ke API
-  const response = await fetch(`/api/products/${id}`, {
+  const res = await fetch(`/api/products/${id}`, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      ...product,
-      photo: product.photo || undefined,
-    }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(productData),
   });
 
-  if (!response.ok) {
-    const errorData: ApiResponse = await response.json();
-    throw new Error(errorData.message || "Gagal memperbarui produk");
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.message || "Failed to update product");
   }
 
-  const result: ApiResponse<Product> = await response.json();
-  return result.data!;
+  return (await res.json()) as Product;
 }
 
-export async function deleteProduct(id: number): Promise<void> {
-  const response = await fetch(`/api/products/${id}`, {
+export async function deleteProduct(id: number): Promise<boolean> {
+  const res = await fetch(`/api/products/${id}`, {
     method: "DELETE",
   });
 
-  if (!response.ok) {
-    const errorData: ApiResponse = await response.json();
-    throw new Error(errorData.message || "Gagal menghapus produk");
+  return res.ok;
+}
+
+export async function getProduct(id: number): Promise<Product> {
+  const res = await fetch(`/api/products/${id}`);
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch product");
   }
+
+  return (await res.json()) as Product;
+}
+
+export async function getAllProducts(): Promise<Product[]> {
+  const res = await fetch("/api/products");
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch products");
+  }
+
+  return (await res.json()) as Product[];
 }

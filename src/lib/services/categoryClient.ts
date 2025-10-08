@@ -8,7 +8,12 @@ export async function getAllCategories(): Promise<Category[]> {
     throw new Error("Gagal mengambil kategori");
   }
   const result: ApiResponse<Category[]> = await response.json();
-  return result.data || [];
+  // Convert string dates to Date objects, with null check
+  const categoriesData = result.data || [];
+  return categoriesData.map(category => ({
+    ...category,
+    createdAt: category.createdAt ? new Date(category.createdAt) : new Date()
+  })) as Category[];
 }
 
 // Get category by ID
@@ -18,7 +23,12 @@ export async function getCategoryById(id: number): Promise<Category> {
     throw new Error("Gagal mengambil kategori");
   }
   const result: ApiResponse<Category> = await response.json();
-  return result.data!;
+  // Convert string dates to Date objects, with null check
+  const categoryData = result.data!;
+  return {
+    ...categoryData,
+    createdAt: categoryData.createdAt ? new Date(categoryData.createdAt) : new Date()
+  } as Category;
 }
 
 // Create category
@@ -39,7 +49,17 @@ export async function createCategory(
   }
 
   const result: ApiResponse<Category> = await response.json();
-  return result.data!;
+  // Check if data exists before processing
+  if (!result.data) {
+    throw new Error("Response data is empty");
+  }
+  
+  // Convert string dates to Date objects, with null check
+  const categoryData = result.data;
+  return {
+    ...categoryData,
+    createdAt: categoryData.createdAt ? new Date(categoryData.createdAt) : new Date()
+  } as Category;
 }
 
 // Update category
@@ -61,7 +81,12 @@ export async function updateCategory(
   }
 
   const result: ApiResponse<Category> = await response.json();
-  return result.data!;
+  // Convert string dates to Date objects, with null check
+  const categoryData = result.data!;
+  return {
+    ...categoryData,
+    createdAt: categoryData.createdAt ? new Date(categoryData.createdAt) : new Date()
+  } as Category;
 }
 
 // Delete category

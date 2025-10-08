@@ -54,6 +54,54 @@ export interface Product {
   createdAt: Date;
 }
 
+// ✅ OrderItem
+export interface OrderItem {
+  id: number;
+  productId: number;
+  variantId: number | null | undefined;
+  qty: number;
+  price: number;
+  subtotal: number;
+  product: {
+    id: number;
+    name: string;
+  };
+  variant:
+    | {
+        id: number;
+        variantName: string;
+      }
+    | null
+    | undefined;
+}
+
+// ✅ Order
+export interface Order {
+  id: number;
+  orderNumber: string;
+  status: string; // OrderStatus enum
+  shippingMethod: string; // ShippingMethod enum
+  shippingAddress: string | null | undefined;
+  paymentMethod: string; // PaymentMethod enum
+  paymentStatus: string; // PaymentStatus enum
+  totalAmount: number;
+  createdAt: Date;
+  updatedAt: Date;
+  userId: number;
+  createdById: number | null | undefined;
+  user: {
+    id: number;
+    name: string;
+    username: string;
+  };
+  createdBy?: {
+    id: number;
+    name: string;
+    username: string;
+  } | null;
+  orderItems: OrderItem[];
+}
+
 // Sort keys for Product
 export type ProductSortKey = keyof Product | "category.name";
 

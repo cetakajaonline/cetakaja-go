@@ -1,6 +1,6 @@
 // utils/date.ts
 
-export function formatDate(dateStr: string): string {
+export function formatDate(dateStr: string | Date): string {
   const date = new Date(dateStr);
   return date.toLocaleDateString("id-ID", {
     day: "2-digit",
@@ -9,7 +9,7 @@ export function formatDate(dateStr: string): string {
   });
 }
 
-export function formatDateTime(dateStr: string): string {
+export function formatDateTime(dateStr: string | Date): string {
   const date = new Date(dateStr);
   return date.toLocaleString("id-ID", {
     day: "2-digit",
@@ -20,7 +20,7 @@ export function formatDateTime(dateStr: string): string {
   });
 }
 
-export function formatTime(dateStr: string): string {
+export function formatTime(dateStr: string | Date): string {
   const date = new Date(dateStr);
   return date.toLocaleTimeString("id-ID", {
     hour: "2-digit",

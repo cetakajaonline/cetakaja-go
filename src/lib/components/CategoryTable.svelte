@@ -92,7 +92,15 @@
             {/if}
           </td>
 
-          <td>{new Date(category.createdAt).toLocaleDateString()}</td>
+          <td>
+            {#if category.createdAt}
+              {#if typeof category.createdAt === 'string'}
+                {new Date(category.createdAt).toLocaleDateString()}
+              {:else if category.createdAt instanceof Date}
+                {category.createdAt.toLocaleDateString()}
+              {/if}
+            {/if}
+          </td>
 
           <td class="text-right space-x-2 whitespace-nowrap">
             {#if isAdmin}
