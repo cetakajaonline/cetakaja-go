@@ -38,7 +38,7 @@ export const DELETE: RequestHandler = async (event) => {
   const id = Number(event.params.id);
   try {
     await deleteUser(id);
-    return json({ success: true });
+    return json({ message: "User berhasil dihapus" });
   } catch (err) {
     console.error(err);
     return json({ message: "Gagal menghapus user" }, { status: 500 });

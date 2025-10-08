@@ -107,12 +107,21 @@
     } catch (err) {
       closeFormModal();
       await tick();
-      if (err instanceof Error) {
-        validationMessages = [err.message];
-      } else {
-        validationMessages = ["Terjadi kesalahan saat mengirim data"];
+      try {
+        if (err instanceof z.ZodError) {
+          validationMessages = err.issues.map((e) => e.message);
+        } else if (err instanceof Error) {
+          validationMessages = [err.message];
+        } else {
+          validationMessages = ["Terjadi kesalahan saat mengirim data"];
+        }
+        showValidationModal = true;
+      } catch (uiErr) {
+        // If there's an error in the error handling itself, log it
+        console.error("UI Error handling failed:", uiErr);
+        validationMessages = ["Terjadi kesalahan yang tidak terduga"];
+        showValidationModal = true;
       }
-      showValidationModal = true;
     } finally {
       loading = false;
     }

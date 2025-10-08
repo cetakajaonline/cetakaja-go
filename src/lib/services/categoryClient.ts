@@ -1,5 +1,5 @@
 // src/lib/services/categoryClient.ts
-import type { Category, ApiResponse } from "$lib/types";
+import type { Category } from "$lib/types";
 
 // Get all categories
 export async function getAllCategories(): Promise<Category[]> {
@@ -7,13 +7,11 @@ export async function getAllCategories(): Promise<Category[]> {
   if (!response.ok) {
     throw new Error("Gagal mengambil kategori");
   }
-  const result: ApiResponse<Category[]> = await response.json();
-  // Convert string dates to Date objects, with null check
-  const categoriesData = result.data || [];
-  return categoriesData.map(category => ({
+  const categories = await response.json();
+  return categories.map((category: Category) => ({
     ...category,
     createdAt: category.createdAt ? new Date(category.createdAt) : new Date()
-  })) as Category[];
+  }));
 }
 
 // Get category by ID
@@ -22,13 +20,11 @@ export async function getCategoryById(id: number): Promise<Category> {
   if (!response.ok) {
     throw new Error("Gagal mengambil kategori");
   }
-  const result: ApiResponse<Category> = await response.json();
-  // Convert string dates to Date objects, with null check
-  const categoryData = result.data!;
+  const category = await response.json();
   return {
-    ...categoryData,
-    createdAt: categoryData.createdAt ? new Date(categoryData.createdAt) : new Date()
-  } as Category;
+    ...category,
+    createdAt: category.createdAt ? new Date(category.createdAt) : new Date()
+  };
 }
 
 // Create category
@@ -44,22 +40,22 @@ export async function createCategory(
   });
 
   if (!response.ok) {
-    const errorData: ApiResponse = await response.json();
+    const errorData = await response.json();
+    
+    // If it's a validation error with detailed field errors, concatenate all messages
+    if (errorData.errors && Array.isArray(errorData.errors)) {
+      const validationMessages = errorData.errors.map((err: any) => err.message);
+      throw new Error(validationMessages.join(", "));
+    }
+    
     throw new Error(errorData.message || "Gagal membuat kategori");
   }
 
-  const result: ApiResponse<Category> = await response.json();
-  // Check if data exists before processing
-  if (!result.data) {
-    throw new Error("Response data is empty");
-  }
-  
-  // Convert string dates to Date objects, with null check
-  const categoryData = result.data;
+  const result = await response.json();
   return {
-    ...categoryData,
-    createdAt: categoryData.createdAt ? new Date(categoryData.createdAt) : new Date()
-  } as Category;
+    ...result,
+    createdAt: result.createdAt ? new Date(result.createdAt) : new Date()
+  };
 }
 
 // Update category
@@ -76,17 +72,22 @@ export async function updateCategory(
   });
 
   if (!response.ok) {
-    const errorData: ApiResponse = await response.json();
+    const errorData = await response.json();
+    
+    // If it's a validation error with detailed field errors, concatenate all messages
+    if (errorData.errors && Array.isArray(errorData.errors)) {
+      const validationMessages = errorData.errors.map((err: any) => err.message);
+      throw new Error(validationMessages.join(", "));
+    }
+    
     throw new Error(errorData.message || "Gagal mengupdate kategori");
   }
 
-  const result: ApiResponse<Category> = await response.json();
-  // Convert string dates to Date objects, with null check
-  const categoryData = result.data!;
+  const result = await response.json();
   return {
-    ...categoryData,
-    createdAt: categoryData.createdAt ? new Date(categoryData.createdAt) : new Date()
-  } as Category;
+    ...result,
+    createdAt: result.createdAt ? new Date(result.createdAt) : new Date()
+  };
 }
 
 // Delete category
@@ -96,7 +97,7 @@ export async function deleteCategory(id: number): Promise<void> {
   });
 
   if (!response.ok) {
-    const errorData: ApiResponse = await response.json();
+    const errorData = await response.json();
     throw new Error(errorData.message || "Gagal menghapus kategori");
   }
 }

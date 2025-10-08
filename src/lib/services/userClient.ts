@@ -13,6 +13,13 @@ export async function createUser(
 
   if (!res.ok) {
     const errorData = await res.json();
+    
+    // If it's a validation error with detailed field errors, concatenate all messages
+    if (errorData.errors && Array.isArray(errorData.errors)) {
+      const validationMessages = errorData.errors.map((err: any) => err.message);
+      throw new Error(validationMessages.join(", "));
+    }
+    
     throw new Error(errorData.message || "Failed to create user");
   }
 
@@ -33,6 +40,13 @@ export async function updateUser(
 
   if (!res.ok) {
     const errorData = await res.json();
+    
+    // If it's a validation error with detailed field errors, concatenate all messages
+    if (errorData.errors && Array.isArray(errorData.errors)) {
+      const validationMessages = errorData.errors.map((err: any) => err.message);
+      throw new Error(validationMessages.join(", "));
+    }
+    
     throw new Error(errorData.message || "Failed to update user");
   }
 
