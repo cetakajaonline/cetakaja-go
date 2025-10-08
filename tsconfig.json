@@ -4,6 +4,7 @@
     "src/**/*.ts",
     "src/**/*.js",
     "src/**/*.svelte",
+    "src/types/**/*.d.ts",
     "svelte.config.js",
     "vite.config.ts",
     "postcss.config.ts",

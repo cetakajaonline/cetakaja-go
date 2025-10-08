@@ -30,7 +30,7 @@ export const POST: RequestHandler = async (event) => {
         message: "Validasi gagal",
         errors: parsed.error.flatten().fieldErrors,
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 

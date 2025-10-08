@@ -1,6 +1,8 @@
 import type { User } from "$lib/types";
 
-export async function createUser(userData: Omit<User, 'id' | 'createdAt'> & { password: string }): Promise<User> {
+export async function createUser(
+  userData: Omit<User, "id" | "createdAt"> & { password: string },
+): Promise<User> {
   const res = await fetch("/api/users", {
     method: "POST",
     headers: {
@@ -17,7 +19,10 @@ export async function createUser(userData: Omit<User, 'id' | 'createdAt'> & { pa
   return (await res.json()) as User;
 }
 
-export async function updateUser(id: number, userData: Partial<User & { password?: string }>): Promise<User> {
+export async function updateUser(
+  id: number,
+  userData: Partial<User & { password?: string }>,
+): Promise<User> {
   const res = await fetch(`/api/users/${id}`, {
     method: "PUT",
     headers: {

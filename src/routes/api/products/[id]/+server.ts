@@ -1,5 +1,9 @@
 import { json } from "@sveltejs/kit";
-import { updateProduct, deleteProduct, getProductById } from "$lib/server/productService";
+import {
+  updateProduct,
+  deleteProduct,
+  getProductById,
+} from "$lib/server/productService";
 import { requireAdmin } from "$lib/server/auth";
 import type { RequestHandler } from "./$types";
 import { productUpdateSchema } from "$lib/validations/productSchema";
@@ -18,7 +22,7 @@ export const PUT: RequestHandler = async (event) => {
         message: "Validasi gagal",
         errors: parsed.error.flatten().fieldErrors,
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -27,7 +31,12 @@ export const PUT: RequestHandler = async (event) => {
     return json(updated);
   } catch (err) {
     console.error(err);
-    return json({ message: err instanceof Error ? err.message : "Gagal mengupdate produk" }, { status: 500 });
+    return json(
+      {
+        message: err instanceof Error ? err.message : "Gagal mengupdate produk",
+      },
+      { status: 500 },
+    );
   }
 };
 
@@ -41,7 +50,12 @@ export const DELETE: RequestHandler = async (event) => {
     return json({ success: true });
   } catch (err) {
     console.error(err);
-    return json({ message: err instanceof Error ? err.message : "Gagal menghapus produk" }, { status: 500 });
+    return json(
+      {
+        message: err instanceof Error ? err.message : "Gagal menghapus produk",
+      },
+      { status: 500 },
+    );
   }
 };
 

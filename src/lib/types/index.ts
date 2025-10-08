@@ -6,7 +6,7 @@ export interface User {
   name: string;
   username: string;
   phone: string;
-  address?: string;
+  address: string | null;
   role?: string;
   createdAt: Date;
 }
@@ -16,7 +16,7 @@ export interface Category {
   id: number;
   name: string;
   code: string;
-  description?: string;
+  description: string | null;
   createdAt: Date;
 }
 
@@ -34,15 +34,17 @@ export interface ProductVariant {
   variantName: string;
   price: number;
   createdAt: Date;
+  updatedAt?: Date;
+  productId?: number;
 }
 
 // ✅ Product
 export interface Product {
   id: number;
   name: string;
-  description?: string;
+  description: string | null;
   baseCode: string;
-  photo?: string;
+  photo: string | null;
   categoryId: number;
   category?: {
     id: number;
@@ -53,7 +55,7 @@ export interface Product {
 }
 
 // Sort keys for Product
-export type ProductSortKey = keyof Product | 'category.name';
+export type ProductSortKey = keyof Product | "category.name";
 
 // ✅ Form data untuk Login dan Register
 export interface LoginFormData {
@@ -73,5 +75,3 @@ export interface ApiResponse<T = unknown> {
   message: string;
   data?: T;
 }
-
-

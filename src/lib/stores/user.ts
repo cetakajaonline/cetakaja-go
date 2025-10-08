@@ -6,9 +6,9 @@ export type User = {
   name: string;
   username: string;
   phone: string;
-  address?: string;
+  address: string | null;
   role?: string;
-  createdAt: Date | string;  // Could be Date or ISO string from SvelteKit
+  createdAt: Date | string; // Could be Date or ISO string from SvelteKit
 };
 
 export const user = writable<User | null>(null);

@@ -10,7 +10,7 @@ if (!JWT_SECRET) {
 
 export const handle: Handle = async ({ event, resolve }) => {
   // 🌡️ Pastikan Prisma siap sebelum lanjut
-  if (process.env.NODE_ENV !== 'production') {
+  if (process.env.NODE_ENV !== "production") {
     await prisma.$connect(); // hanya warm-up saat dev
   }
 

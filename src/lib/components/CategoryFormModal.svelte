@@ -7,7 +7,7 @@
   export let show = false;
   export let isEditMode = false;
   export let loading = false;
-  export let isAdmin = false;
+  
   export let initial = {
     name: '',
     code: '',

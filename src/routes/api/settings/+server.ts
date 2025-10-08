@@ -34,7 +34,7 @@ export const POST: RequestHandler = async (event) => {
         message: "Validasi gagal",
         errors: parsed.error.flatten().fieldErrors,
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -49,7 +49,7 @@ export const POST: RequestHandler = async (event) => {
 
   const setting = await updateSetting({
     ...parsed.data,
-    ...(logoUrl ? { logo: logoUrl } : {})
+    ...(logoUrl ? { logo: logoUrl } : {}),
   });
 
   return json(setting);

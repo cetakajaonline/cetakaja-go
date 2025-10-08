@@ -1,11 +1,18 @@
 // prisma/seed.ts
-import { PrismaClient, Role, OrderStatus, ShippingMethod, PaymentMethod, PaymentStatus } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import {
+  PrismaClient,
+  Role,
+  OrderStatus,
+  ShippingMethod,
+  PaymentMethod,
+  PaymentStatus,
+} from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Seeding database (full status sample)...');
+  console.log("🌱 Seeding database (full status sample)...");
 
   // Bersihkan data lama
   await prisma.notification.deleteMany();
@@ -23,23 +30,23 @@ async function main() {
   // Setting
   await prisma.setting.create({
     data: {
-      name: 'Sistem Pemesanan Cabang Pusat',
-      description: 'Aplikasi manajemen order dan pembayaran',
-      logo: '/uploads/logo.png',
+      name: "Sistem Pemesanan Cabang Pusat",
+      description: "Aplikasi manajemen order dan pembayaran",
+      logo: "/uploads/logo.png",
     },
   });
 
   // Hash passwords
-  const adminPassword = await bcrypt.hash('admin123', 10);
-  const staffPassword = await bcrypt.hash('staff123', 10);
-  const customerPassword = await bcrypt.hash('customer123', 10);
+  const adminPassword = await bcrypt.hash("admin123", 10);
+  const staffPassword = await bcrypt.hash("staff123", 10);
+  const customerPassword = await bcrypt.hash("customer123", 10);
 
   // Users
   await prisma.user.create({
     data: {
-      name: 'Admin Utama',
-      username: 'admin',
-      phone: '0811111111',
+      name: "Admin Utama",
+      username: "admin",
+      phone: "0811111111",
       password: adminPassword,
       role: Role.admin,
     },
@@ -47,9 +54,9 @@ async function main() {
 
   const staff = await prisma.user.create({
     data: {
-      name: 'Staff Operasional',
-      username: 'staff1',
-      phone: '0822222222',
+      name: "Staff Operasional",
+      username: "staff1",
+      phone: "0822222222",
       password: staffPassword,
       role: Role.staff,
     },
@@ -57,29 +64,29 @@ async function main() {
 
   const customer = await prisma.user.create({
     data: {
-      name: 'Riza Putr',
-      username: 'riza',
-      phone: '0833333333',
+      name: "Riza Putr",
+      username: "riza",
+      phone: "0833333333",
       password: customerPassword,
       role: Role.customer,
-      address: 'Jl. Melati No. 45, Bandung',
+      address: "Jl. Melati No. 45, Bandung",
     },
   });
 
   // Categories
   const catFood = await prisma.category.create({
     data: {
-      name: 'Makanan',
-      code: 'FOOD',
-      description: 'Aneka makanan lezat',
+      name: "Makanan",
+      code: "FOOD",
+      description: "Aneka makanan lezat",
     },
   });
 
   const catDrink = await prisma.category.create({
     data: {
-      name: 'Minuman',
-      code: 'DRINK',
-      description: 'Aneka minuman segar dan panas',
+      name: "Minuman",
+      code: "DRINK",
+      description: "Aneka minuman segar dan panas",
     },
   });
 
@@ -87,13 +94,13 @@ async function main() {
   const productNasi = await prisma.product.create({
     data: {
       categoryId: catFood.id,
-      name: 'Nasi Goreng Spesial',
-      baseCode: 'NSG01',
-      description: 'Nasi goreng dengan ayam, telur, dan sosis.',
+      name: "Nasi Goreng Spesial",
+      baseCode: "NSG01",
+      description: "Nasi goreng dengan ayam, telur, dan sosis.",
       variants: {
         create: [
-          { variantName: 'Regular', price: 25000 },
-          { variantName: 'Jumbo', price: 35000 },
+          { variantName: "Regular", price: 25000 },
+          { variantName: "Jumbo", price: 35000 },
         ],
       },
     },
@@ -103,13 +110,13 @@ async function main() {
   const productKopi = await prisma.product.create({
     data: {
       categoryId: catDrink.id,
-      name: 'Kopi Hitam',
-      baseCode: 'KPH01',
-      description: 'Kopi robusta murni tanpa gula.',
+      name: "Kopi Hitam",
+      baseCode: "KPH01",
+      description: "Kopi robusta murni tanpa gula.",
       variants: {
         create: [
-          { variantName: 'Panas', price: 10000 },
-          { variantName: 'Dingin', price: 12000 },
+          { variantName: "Panas", price: 10000 },
+          { variantName: "Dingin", price: 12000 },
         ],
       },
     },
@@ -120,7 +127,7 @@ async function main() {
   async function createOrderWithPayment(
     index: number,
     orderStatus: OrderStatus,
-    paymentStatus: PaymentStatus
+    paymentStatus: PaymentStatus,
   ) {
     const total = 47000;
     const order = await prisma.order.create({
@@ -156,7 +163,7 @@ async function main() {
           create: {
             fileName: `order_${index}_alamat.jpg`,
             filePath: `/uploads/orders/order_${index}_alamat.jpg`,
-            fileType: 'image/jpeg',
+            fileType: "image/jpeg",
           },
         },
       },
@@ -176,7 +183,7 @@ async function main() {
           create: {
             fileName: `bukti_transfer_${index}.jpg`,
             filePath: `/uploads/payments/bukti_transfer_${index}.jpg`,
-            fileType: 'image/jpeg',
+            fileType: "image/jpeg",
           },
         },
       },
@@ -188,7 +195,7 @@ async function main() {
         orderId: order.id,
         toNumber: customer.phone,
         message: `Pesanan ${order.orderNumber} (${orderStatus}) dengan pembayaran ${paymentStatus}`,
-        status: 'sent',
+        status: "sent",
       },
     });
 
@@ -197,16 +204,20 @@ async function main() {
 
   // Buat 4 order berbeda status
   await createOrderWithPayment(1, OrderStatus.pending, PaymentStatus.pending);
-  await createOrderWithPayment(2, OrderStatus.processing, PaymentStatus.confirmed);
+  await createOrderWithPayment(
+    2,
+    OrderStatus.processing,
+    PaymentStatus.confirmed,
+  );
   await createOrderWithPayment(3, OrderStatus.finished, PaymentStatus.refunded);
   await createOrderWithPayment(4, OrderStatus.canceled, PaymentStatus.failed);
 
-  console.log('✅ Seeding selesai: Semua status sudah terisi');
+  console.log("✅ Seeding selesai: Semua status sudah terisi");
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Error saat seeding:', e);
+    console.error("❌ Error saat seeding:", e);
     process.exit(1);
   })
   .finally(() => {

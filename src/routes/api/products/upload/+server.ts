@@ -15,7 +15,10 @@ export const POST: RequestHandler = async (event) => {
 
   // Validasi ukuran file (maks 5MB)
   if (file.size > 5 * 1024 * 1024) {
-    return json({ message: "Ukuran file terlalu besar (maks 5MB)" }, { status: 400 });
+    return json(
+      { message: "Ukuran file terlalu besar (maks 5MB)" },
+      { status: 400 },
+    );
   }
 
   try {

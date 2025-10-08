@@ -30,7 +30,7 @@ export const POST: RequestHandler = async (event) => {
         message: "Validasi gagal",
         errors: parsed.error.flatten().fieldErrors,
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -38,7 +38,10 @@ export const POST: RequestHandler = async (event) => {
 
   const existing = await getProductByBaseCode(data.baseCode, data.categoryId);
   if (existing) {
-    return json({ message: "Kode produk sudah terdaftar dalam kategori ini" }, { status: 400 });
+    return json(
+      { message: "Kode produk sudah terdaftar dalam kategori ini" },
+      { status: 400 },
+    );
   }
 
   try {
@@ -46,7 +49,7 @@ export const POST: RequestHandler = async (event) => {
       name: data.name,
       description: data.description,
       baseCode: data.baseCode,
-      photo: data.photo || undefined,  // ubah "" menjadi undefined jika null/empty
+      photo: data.photo || undefined, // ubah "" menjadi undefined jika null/empty
       categoryId: data.categoryId,
       variants: data.variants,
     });

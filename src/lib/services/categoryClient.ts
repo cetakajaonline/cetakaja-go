@@ -1,68 +1,77 @@
 // src/lib/services/categoryClient.ts
-import type { Category } from "$lib/types";
+import type { Category, ApiResponse } from "$lib/types";
 
 // Get all categories
 export async function getAllCategories(): Promise<Category[]> {
-  const response = await fetch('/api/categories');
+  const response = await fetch("/api/categories");
   if (!response.ok) {
-    throw new Error('Gagal mengambil kategori');
+    throw new Error("Gagal mengambil kategori");
   }
-  return response.json();
+  const result: ApiResponse<Category[]> = await response.json();
+  return result.data || [];
 }
 
 // Get category by ID
 export async function getCategoryById(id: number): Promise<Category> {
   const response = await fetch(`/api/categories/${id}`);
   if (!response.ok) {
-    throw new Error('Gagal mengambil kategori');
+    throw new Error("Gagal mengambil kategori");
   }
-  return response.json();
+  const result: ApiResponse<Category> = await response.json();
+  return result.data!;
 }
 
 // Create category
-export async function createCategory(category: Omit<Category, 'id' | 'createdAt'>): Promise<Category> {
-  const response = await fetch('/api/categories', {
-    method: 'POST',
+export async function createCategory(
+  category: Omit<Category, "id" | "createdAt">,
+): Promise<Category> {
+  const response = await fetch("/api/categories", {
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(category),
   });
-  
+
   if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || 'Gagal membuat kategori');
+    const errorData: ApiResponse = await response.json();
+    throw new Error(errorData.message || "Gagal membuat kategori");
   }
-  
-  return response.json();
+
+  const result: ApiResponse<Category> = await response.json();
+  return result.data!;
 }
 
 // Update category
-export async function updateCategory(id: number, category: Partial<Category>): Promise<Category> {
+export async function updateCategory(
+  id: number,
+  category: Partial<Category>,
+): Promise<Category> {
   const response = await fetch(`/api/categories/${id}`, {
-    method: 'PUT',
+    method: "PUT",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify(category),
   });
-  
+
   if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || 'Gagal mengupdate kategori');
+    const errorData: ApiResponse = await response.json();
+    throw new Error(errorData.message || "Gagal mengupdate kategori");
   }
-  
-  return response.json();
+
+  const result: ApiResponse<Category> = await response.json();
+  return result.data!;
 }
 
 // Delete category
 export async function deleteCategory(id: number): Promise<void> {
   const response = await fetch(`/api/categories/${id}`, {
-    method: 'DELETE',
+    method: "DELETE",
   });
-  
+
   if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || 'Gagal menghapus kategori');
+    const errorData: ApiResponse = await response.json();
+    throw new Error(errorData.message || "Gagal menghapus kategori");
   }
 }

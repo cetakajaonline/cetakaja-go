@@ -20,7 +20,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
           message: "Validasi gagal",
           errors: parsed.error.flatten().fieldErrors,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -31,7 +31,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return json(
         { success: false, message: "Username atau password salah" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -50,7 +50,7 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
     console.error("Login Error:", error);
     return json(
       { success: false, message: "Terjadi kesalahan saat login" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 };

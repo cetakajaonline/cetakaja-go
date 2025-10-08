@@ -1,5 +1,6 @@
 // src/routes/+layout.server.ts
 import type { LayoutServerLoad } from "./$types";
+import type { User } from "$lib/types";
 import prisma from "$lib/server/prisma";
 
 export const load: LayoutServerLoad = async ({ url, locals }) => {
@@ -22,7 +23,17 @@ export const load: LayoutServerLoad = async ({ url, locals }) => {
   const pageTitle = titles[url.pathname] ?? "";
   const title = pageTitle ? `${pageTitle} | ${appName}` : appName;
 
+  // Kita perlu menyediakan 'users' karena diperlukan oleh PageData
+  // Untuk efisiensi, kita hanya mengambil user yang relevan di halaman tertentu
+  // Di layout utama, kita bisa kembalikan array kosong dan biarkan halaman individual menangani data users
+  const users: User[] = [];
+
   return {
-    title, appName, appDesc, appLogo, user: locals.user ?? null,
+    title,
+    appName,
+    appDesc,
+    appLogo,
+    user: locals.user ?? undefined,
+    users,
   };
 };

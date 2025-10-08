@@ -92,7 +92,15 @@
           u.id === selectedUser!.id ? { ...u, ...result } : u
         );
       } else {
-        result = await createUser({ ...validated, password: validated.password! });
+        // Pastikan tipe yang dikirim ke createUser sesuai dengan tipe yang diharapkan
+        result = await createUser({
+          name: validated.name!,
+          username: validated.username!,
+          password: validated.password!,
+          phone: validated.phone!,
+          address: validated.address ?? null, // Konversi undefined ke null
+          role: validated.role
+        });
         users = [...users, result];
       }
       closeFormModal();

@@ -302,35 +302,25 @@ Welcome, authenticated user!
 ### API Authentication
 
 ```typescript
-
 // Contoh protected API endpoint
 
 export const POST: RequestHandler = async ({ request, cookies }) => {
+  const token = cookies.get("token");
 
-const token = cookies.get('token');
+  if (!token) {
+    return json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-if (!token) {
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
 
-return json({ error: 'Unauthorized' }, { status: 401 });
+    // Process request dengan user data
 
-}
-
-try {
-
-const decoded = jwt.verify(token, JWT_SECRET);
-
-// Process request dengan user data
-
-return json({ success: true, data: decoded });
-
-} catch (error) {
-
-return json({ error: 'Invalid token' }, { status: 401 });
-
-}
-
+    return json({ success: true, data: decoded });
+  } catch (error) {
+    return json({ error: "Invalid token" }, { status: 401 });
+  }
 };
-
 ```
 
 ## 🎨 Customization & Styling
@@ -367,41 +357,29 @@ This is a custom component
 - Customize DaisyUI theme di `tailwind.config.js`
 
 ```javascript
-
 // tailwind.config.js
 
-import daisyui from 'daisyui';
+import daisyui from "daisyui";
 
 /** @type {import('tailwindcss').Config} */
 
 export default {
+  content: ["./src/**/*.{html,js,svelte,ts}"],
 
-content: ['./src/**/*.{html,js,svelte,ts}'],
+  theme: {
+    extend: {
+      colors: {
+        primary: "#your-custom-color",
+      },
+    },
+  },
 
-theme: {
+  plugins: [daisyui],
 
-extend: {
-
-colors: {
-
-primary: '#your-custom-color',
-
-},
-
-},
-
-},
-
-plugins: [daisyui],
-
-daisyui: {
-
-themes: ['light', 'dark', 'corporate'], // Pilih themes yang diinginkan
-
-},
-
+  daisyui: {
+    themes: ["light", "dark", "corporate"], // Pilih themes yang diinginkan
+  },
 };
-
 ```
 
 ## 📦 Deployment
@@ -509,25 +487,19 @@ pnpm test:coverage
 Buat test files di `tests/` directory:
 
 ```typescript
-
 // tests/auth.test.ts
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect } from "vitest";
 
-import { login } from '../src/lib/utils/auth';
+import { login } from "../src/lib/utils/auth";
 
-describe('Authentication', () => {
+describe("Authentication", () => {
+  it("should validate login credentials", async () => {
+    const result = await login("test@example.com", "password");
 
-it('should validate login credentials', async () => {
-
-const result = await login('test@example.com', 'password');
-
-expect(result.success).toBe(true);
-
+    expect(result.success).toBe(true);
+  });
 });
-
-});
-
 ```
 
 ## 🤝 Contributing

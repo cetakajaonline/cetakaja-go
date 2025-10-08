@@ -59,8 +59,8 @@ export async function createUser({
       name,
       username,
       password: hashed,
-      phone: phone ?? '',
-      address: address ?? '',
+      phone: phone ?? "",
+      address: address ?? "",
       role: role ?? "customer", // default 'customer' jika tidak ditentukan
     },
     select: userSelect,
@@ -124,13 +124,30 @@ export async function deleteUser(id: number) {
   });
 }
 
-export async function validatePassword(username: string, plainPassword: string) {
-  const user = await getUserByUsername(username);
+export async function validatePassword(
+  username: string,
+  plainPassword: string,
+) {
+  const user = await prisma.user.findUnique({
+    where: { username },
+    select: {
+      id: true,
+      name: true,
+      username: true,
+      password: true, // Ambil password hanya untuk validasi
+      phone: true,
+      address: true,
+      role: true,
+      createdAt: true,
+    },
+  });
+
   if (!user) return null;
 
   const match = await bcrypt.compare(plainPassword, user.password);
   if (!match) return null;
 
+  // Kembalikan objek tanpa password untuk keamanan
   return {
     id: user.id,
     name: user.name,

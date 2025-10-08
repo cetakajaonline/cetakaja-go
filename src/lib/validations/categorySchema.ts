@@ -6,8 +6,7 @@ export const categorySchema = z.object({
   description: z.string().optional(),
 });
 
-export const categoryUpdateSchema = categorySchema
-  .partial();
+export const categoryUpdateSchema = categorySchema.partial();
 
 export type CategoryFormSchema = z.infer<typeof categorySchema>;
 export type CategoryUpdateSchema = z.infer<typeof categoryUpdateSchema>;

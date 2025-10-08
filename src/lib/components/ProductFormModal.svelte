@@ -167,41 +167,39 @@
 </script>
 
 <Modal {show} on:close={() => dispatch('close')}>
-  <form on:submit|preventDefault={handleSubmit} class="space-y-4 p-6 w-full max-w-2xl mx-auto">
-    <h2 class="text-xl font-semibold text-center mb-2">
+  <form on:submit|preventDefault={handleSubmit} class="p-6 w-full max-w-4xl mx-auto">
+    <h2 class="text-xl font-semibold text-center mb-4">
       {isEditMode ? 'Edit Produk' : 'Tambah Produk'}
     </h2>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="grid grid-cols-2 gap-4">
       <FormInput label="Nama Produk" bind:value={name} required />
       <FormInput label="Kode Produk" bind:value={baseCode} required />
-    </div>
-
-    <FormInput label="Deskripsi Produk" bind:value={description} />
-
-    <div class="form-control w-full">
-      <label for="category-select" class="label py-2">
-        <span class="label-text font-medium">Kategori</span>
-      </label>
-      {#if isLoadingCategories}
-        <div class="loading loading-spinner loading-md"></div>
-      {:else}
-        <select 
-          id="category-select"
-          bind:value={categoryId} 
-          class="select select-bordered w-full"
-          disabled={!categories.length}
-        >
-          <option value="" disabled>Pilih kategori</option>
-          {#each categories as category}
-            <option value={category.id}>{category.name}</option>
-          {/each}
-        </select>
-      {/if}
+      <FormInput label="Deskripsi Produk" bind:value={description} />
+      <div class="form-control w-full">
+        <label for="category-select" class="label py-2">
+          <span class="label-text font-medium">Kategori</span>
+        </label>
+        {#if isLoadingCategories}
+          <div class="loading loading-spinner loading-md"></div>
+        {:else}
+          <select 
+            id="category-select"
+            bind:value={categoryId} 
+            class="select select-bordered w-full"
+            disabled={!categories.length}
+          >
+            <option value="" disabled>Pilih kategori</option>
+            {#each categories as category}
+              <option value={category.id}>{category.name}</option>
+            {/each}
+          </select>
+        {/if}
+      </div>
     </div>
 
     <!-- Photo Upload -->
-    <div class="form-control w-full">
+    <div class="form-control w-full mt-4">
       <label for="photo-upload" class="label py-2">
         <span class="label-text font-medium">Foto Produk</span>
       </label>
@@ -271,30 +269,29 @@
                 required
               />
             </div>
-            <div class="md:col-span-2 flex justify-center">
+            <div class="md:col-span-2 flex items-center justify-center gap-1">
               <Button 
                 type="button" 
-                className="btn-error btn-sm" 
+                className="btn-error btn-circle btn-sm" 
                 on:click={() => removeVariant(i)}
                 disabled={variants.filter(v => !v.delete).length <= 1}
               >
-                Hapus
+                x
               </Button>
+              {#if i === variants.length - 1}
+                <Button 
+                  type="button" 
+                  className="btn-info btn-outline btn-circle btn-sm" 
+                  on:click={addVariant}
+                >
+                  +
+                </Button>
+              {/if}
             </div>
           </div>
         </div>
       {/if}
     {/each}
-
-    <div class="flex justify-center">
-      <Button 
-        type="button" 
-        className="btn-outline btn-sm" 
-        on:click={addVariant}
-      >
-        + Tambah Varian
-      </Button>
-    </div>
 
     <div class="flex justify-center gap-4 mt-6">
       <Button type="submit" className="btn-primary" loading={loading}>

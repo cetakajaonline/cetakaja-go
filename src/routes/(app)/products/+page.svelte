@@ -40,7 +40,7 @@
     baseCode: "",
     photo: "",
     categoryId: 0,
-    variants: [{ variantName: '', price: 0 }] as { id?: number; variantName: string; price: number; delete?: boolean }[],
+    variants: [{ variantName: '', price: 0 }] as { id?: number; variantName: string; price: number; delete?: boolean; createdAt?: Date }[],
   };
 
   let validationMessages: string[] = [];
@@ -53,7 +53,7 @@
       name: "", 
       description: "", 
       baseCode: "", 
-      photo: null,
+      photo: "",
       categoryId: 0,
       variants: [{ variantName: '', price: 0 }] 
     };
@@ -67,7 +67,7 @@
       name: product.name,
       description: product.description ?? "",
       baseCode: product.baseCode,
-      photo: product.photo ?? null,
+      photo: product.photo ?? "",
       categoryId: product.categoryId,
       variants: product.variants.map(v => ({
         id: v.id,
@@ -97,12 +97,40 @@
 
       let result: Product;
       if (isEditMode && selectedProduct) {
-        result = await updateProduct(selectedProduct.id, validated);
+        const validatedWithCreatedAt = {
+          ...validated,
+          variants: validated.variants?.map(v => {
+            // For update, if id exists, use it; if creating new, id will be 0 (handled by Prisma)
+            // Adding createdAt with a default value to match ProductVariant interface
+            return {
+              id: v.id || 0,
+              variantName: v.variantName,
+              price: v.price,
+              createdAt: new Date() // Provide a default value for createdAt
+            };
+          })
+        };
+        result = await updateProduct(selectedProduct.id, validatedWithCreatedAt);
         products = products.map((p) =>
           p.id === selectedProduct!.id ? { ...p, ...result } : p
         );
       } else {
-        result = await createProduct(validated);
+        // Ensure required fields are present and not undefined
+        const createPayload = {
+          name: validated.name ?? "",
+          description: validated.description ?? "",
+          baseCode: validated.baseCode ?? "",
+          photo: validated.photo ?? "",
+          categoryId: validated.categoryId ?? 0,
+          variants: (validated.variants ?? []).map(v => ({
+            id: 0, // Placeholder ID untuk variant baru
+            variantName: v.variantName,
+            price: v.price,
+            createdAt: new Date(), // Tambahkan createdAt untuk variant baru
+            updatedAt: new Date()
+          }))
+        };
+        result = await createProduct(createPayload);
         products = [...products, result];
       }
       closeFormModal();

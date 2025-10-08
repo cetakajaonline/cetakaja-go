@@ -24,11 +24,11 @@ export default [
   js.configs.recommended,
 
   {
-    files: [ "**/*.ts", "**/*.tsx" ],
+    files: ["**/*.ts", "**/*.tsx"],
     languageOptions: {
       parser: tsParser,
       parserOptions: {
-        project: [ "./tsconfig.eslint.json" ],
+        project: ["./tsconfig.eslint.json"],
         tsconfigRootDir: process.cwd(),
         ecmaVersion: "latest",
         sourceType: "module",
@@ -39,29 +39,29 @@ export default [
     },
     rules: {
       ...ts.configs.recommended.rules,
-      ...ts.configs[ "recommended-type-checked" ].rules,
+      ...ts.configs["recommended-type-checked"].rules,
 
       // Nonaktifkan rule yang terlalu strict (opsional)
 
-      '@typescript-eslint/no-unsafe-call': 'off',
-      '@typescript-eslint/no-unsafe-assignment': 'off',
-      '@typescript-eslint/no-unsafe-member-access': 'off',
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
       "@typescript-eslint/no-unsafe-argument": "off",
       "@typescript-eslint/only-throw-error": "off",
     },
   },
 
   {
-    files: [ "**/*.svelte" ],
+    files: ["**/*.svelte"],
     languageOptions: {
       parser: svelteParser,
       parserOptions: {
         parser: tsParser,
         ecmaVersion: "latest",
         sourceType: "module",
-        project: [ "./tsconfig.eslint.json" ],
+        project: ["./tsconfig.eslint.json"],
         tsconfigRootDir: process.cwd(),
-        extraFileExtensions: [ ".svelte" ],
+        extraFileExtensions: [".svelte"],
       },
     },
     plugins: {

@@ -1,10 +1,10 @@
 // utils/fetcher.ts
-import type { z } from 'zod';
+import type { z } from "zod";
 
 export async function fetcher<T>(
   url: string,
   options: RequestInit = {},
-  validator?: z.ZodSchema<T>
+  validator?: z.ZodSchema<T>,
 ): Promise<T> {
   const res = await fetch(url, {
     headers: { "Content-Type": "application/json" },

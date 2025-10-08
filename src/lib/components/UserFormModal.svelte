@@ -49,36 +49,37 @@
 </script>
 
 <Modal {show} on:close={() => dispatch('close')}>
-  <form on:submit|preventDefault={handleSubmit} class="space-y-4 p-6 w-full max-w-md mx-auto">
-    <h2 class="text-xl font-semibold text-center mb-2">
+  <form on:submit|preventDefault={handleSubmit} class="p-6 w-full max-w-4xl mx-auto">
+    <h2 class="text-xl font-semibold text-center mb-4">
       {isEditMode ? 'Edit Pengguna' : 'Tambah Pengguna'}
     </h2>
 
-    <FormInput label="Nama" bind:value={name} required />
-    <FormInput label="Username" bind:value={username} required />
-    <FormInput label="No. HP" bind:value={phone} required />
-    <FormInput label="Alamat" bind:value={address} />
-    <FormInput
-      label="Password"
-      type="password"
-      bind:value={password}
-      required={!isEditMode}
-      placeholder={isEditMode ? '(Biarkan kosong jika tidak diubah)' : ''}
-    />
-
-    {#if isAdmin}
-      <div class="form-control">
-        <!-- svelte-ignore a11y_label_has_associated_control -->
-        <label class="label py-2">
-          <span class="label-text font-medium">Role</span>
-        </label>
-        <select bind:value={role} class="select select-bordered w-full">
-          <option value="customer">Customer</option>
-          <option value="staff">Staff</option>
-          <option value="admin">Admin</option>
-        </select>
-      </div>
-    {/if}
+    <div class="grid grid-cols-2 gap-4">
+      <FormInput label="Nama" bind:value={name} required />
+      <FormInput label="Username" bind:value={username} required />
+      <FormInput label="No. HP" bind:value={phone} required />
+      <FormInput label="Alamat" bind:value={address} />
+      <FormInput
+        label="Password"
+        type="password"
+        bind:value={password}
+        required={!isEditMode}
+        placeholder={isEditMode ? '(Biarkan kosong jika tidak diubah)' : ''}
+      />
+      {#if isAdmin}
+        <div class="form-control">
+          <!-- svelte-ignore a11y_label_has_associated_control -->
+          <label class="label py-2">
+            <span class="label-text font-medium">Role</span>
+          </label>
+          <select bind:value={role} class="select select-bordered w-full">
+            <option value="customer">Customer</option>
+            <option value="staff">Staff</option>
+            <option value="admin">Admin</option>
+          </select>
+        </div>
+      {/if}
+    </div>
 
     <div class="flex justify-center gap-4 mt-6">
       <Button type="submit" className="btn-primary" loading={loading}>

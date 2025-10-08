@@ -47,7 +47,7 @@ export async function createCategory({
     data: {
       name,
       code,
-      description: description ?? '',
+      description: description ?? "",
     },
     select: categorySelect,
   });
@@ -92,13 +92,15 @@ export async function deleteCategory(id: number) {
   // Check if category has products associated with it
   const products = await prisma.product.findMany({
     where: { categoryId: id },
-    select: { id: true }
+    select: { id: true },
   });
 
   if (products.length > 0) {
-    throw new Error("Kategori tidak bisa dihapus karena masih memiliki produk terkait");
+    throw new Error(
+      "Kategori tidak bisa dihapus karena masih memiliki produk terkait",
+    );
   }
-  
+
   return prisma.category.delete({
     where: { id },
   });

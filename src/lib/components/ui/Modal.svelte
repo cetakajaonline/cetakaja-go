@@ -1,12 +1,9 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
   export let show: boolean = false;
+  export let size: 'sm' | 'md' | 'lg' | 'xl' | 'fullscreen' = 'md';
 
   const dispatch = createEventDispatcher();
-
-  function handleClose() {
-    dispatch("close");
-  }
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -19,7 +16,14 @@
   >
     <!-- Berhenti agar klik dalam modal tidak close -->
     <div
-      class="bg-base-100 rounded-lg p-6 w-full max-w-md shadow-lg"
+      class="bg-base-100 rounded-lg p-6 shadow-lg"
+      class:max-w-sm={size === 'sm'}
+      class:max-w-lg={size === 'lg'}
+      class:max-w-xl={size === 'xl'}
+      class:w-full={size === 'fullscreen'}
+      class:h-full={size === 'fullscreen'}
+      class:max-w-full={size === 'fullscreen'}
+      class:max-h-full={size === 'fullscreen'}
       on:click|stopPropagation
     >
       <slot />
