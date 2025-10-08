@@ -3,7 +3,6 @@ import type { Order } from "$lib/types";
 // Define types for order creation (with required fields)
 interface OrderCreationData {
   userId: number; // Required for creation
-  orderNumber: string;
   status?: string;
   shippingMethod: string;
   shippingAddress?: string | null;

@@ -3,6 +3,7 @@
   import Modal from '$lib/components/ui/Modal.svelte';
   import Button from '$lib/components/ui/Button.svelte';
   import FormInput from '$lib/components/ui/FormInput.svelte';
+  import SearchSelect from '$lib/components/ui/SearchSelect.svelte';
   import type { User, Product, ProductVariant } from '$lib/types';
 
   import type { Order, OrderItem } from '$lib/types';
@@ -73,6 +74,9 @@
     if (show) {
       formData = { ...initial };
       orderItems = [...initial.orderItems || []];
+      // Set default values for shipping
+      if (!formData.shippingMethod) formData.shippingMethod = 'delivery';
+      if (!formData.shippingAddress) formData.shippingAddress = '';
     }
   });
 
@@ -83,6 +87,12 @@
   function addOrderItem() {
     if (newOrderItem.productId === 0 || newOrderItem.qty <= 0) {
       alert("Silakan pilih produk dan masukkan jumlah yang valid");
+      return;
+    }
+
+    // Check if variant is required and selected
+    if (newOrderItem.productId && productVariants.length > 0 && !newOrderItem.variantId) {
+      alert("Silakan pilih varian produk");
       return;
     }
 
@@ -151,10 +161,26 @@
     }).format(amount);
   }
 
+  // Prepare options for SearchSelect
+  let customerOptions = $derived(
+    users
+      .filter(user => user.role === 'customer')
+      .map(user => ({
+        value: user.id,
+        label: `${user.name} - ${user.phone}`
+      }))
+  );
+
+  let productOptions = $derived(
+    products.map(product => ({
+      value: product.id,
+      label: product.name
+    }))
+  );
 
 </script>
 
-<Modal {show} on:close={handleClose}>
+<Modal {show} size="xl" on:close={handleClose}>
   <form onsubmit={handleSubmit} class="p-6 w-full max-w-7xl mx-auto h-full flex flex-col">
     <h2 class="text-xl font-semibold text-center mb-4">
       {isEditMode ? 'Edit Order' : 'Tambah Order Baru'}
@@ -170,7 +196,7 @@
           type="text"
           class="input input-bordered w-full"
           bind:value={formData.orderNumber}
-          required
+          readonly
         />
       </div>
       
@@ -194,44 +220,16 @@
         <label class="label" for="userId">
           <span class="label-text">Pelanggan</span>
         </label>
-        <select
+        <SearchSelect
           id="userId"
-          class="select select-bordered w-full"
           bind:value={formData.userId}
-        >
-          {#each users as user}
-            <option value={user.id}>{user.name} ({user.username})</option>
-          {/each}
-        </select>
+          options={customerOptions}
+          placeholder="Cari pelanggan..."
+        />
       </div>
       
-      <div class="form-control w-full">
-        <label class="label" for="shippingMethod">
-          <span class="label-text">Metode Pengiriman</span>
-        </label>
-        <select
-          id="shippingMethod"
-          class="select select-bordered w-full"
-          bind:value={formData.shippingMethod}
-        >
-          <option value="pickup">Ambil Sendiri</option>
-          <option value="delivery">Dikirim</option>
-        </select>
-      </div>
-      
-      {#if formData.shippingMethod === 'delivery'}
-      <div class="form-control w-full md:col-span-2">
-        <label class="label" for="shippingAddress">
-          <span class="label-text">Alamat Pengiriman</span>
-        </label>
-        <textarea
-          id="shippingAddress"
-          class="textarea textarea-bordered w-full"
-          bind:value={formData.shippingAddress}
-          rows="2"
-        ></textarea>
-      </div>
-      {/if}
+      <input type="hidden" bind:value={formData.shippingMethod} />
+      <input type="hidden" bind:value={formData.shippingAddress} />
       
       <div class="form-control w-full">
         <label class="label" for="paymentMethod">
@@ -276,16 +274,12 @@
             <label class="label" for="newItemProduct">
               <span class="label-text">Produk</span>
             </label>
-            <select
+            <SearchSelect
               id="newItemProduct"
-              class="select select-bordered w-full text-sm"
               bind:value={newOrderItem.productId}
-            >
-              <option value="0">Pilih Produk</option>
-              {#each products as product}
-                <option value={product.id}>{product.name}</option>
-              {/each}
-            </select>
+              options={productOptions}
+              placeholder="Cari produk..."
+            />
           </div>
           
           <div class="form-control w-full">

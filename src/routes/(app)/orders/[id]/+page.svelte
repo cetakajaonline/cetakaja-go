@@ -63,7 +63,7 @@
             order.status === 'finished' ? 'text-green-600' :
             'text-red-600'
           }`}>
-            {order.status}
+            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
           </span>
         </div>
         <div class="flex">
@@ -88,7 +88,7 @@
             order.paymentStatus === 'refunded' ? 'text-gray-600' :
             'text-yellow-600'
           }`}>
-            {order.paymentStatus}
+            {order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)}
           </span>
         </div>
         <div class="flex">

@@ -4,6 +4,7 @@ import {
   getAllOrders,
   createOrder,
   getOrderByOrderNumber,
+  getNextOrderNumberForToday,
 } from "$lib/server/orderService";
 import { orderSchema } from "$lib/validations/orderSchema";
 
@@ -47,8 +48,11 @@ export async function POST(event) {
 
     const data = parsed.data;
 
-    // Check if order number already exists
-    const existing = await getOrderByOrderNumber(data.orderNumber);
+    // Auto-generate order number for the day
+    const orderNumber = await getNextOrderNumberForToday();
+    
+    // Check if order number already exists (shouldn't happen with our logic, but just in case)
+    const existing = await getOrderByOrderNumber(orderNumber);
     if (existing) {
       return json({ message: "Order number sudah terdaftar" }, { status: 400 });
     }
@@ -56,10 +60,10 @@ export async function POST(event) {
     const newOrder = await createOrder({
       userId: data.userId,
       createdById: event.locals.user?.id,
-      orderNumber: data.orderNumber,
+      orderNumber,
       status: data.status,
       shippingMethod: data.shippingMethod,
-      shippingAddress: data.shippingAddress,
+      shippingAddress: data.shippingAddress || undefined, // Pass undefined to let the service use customer's address
       paymentMethod: data.paymentMethod,
       totalAmount: data.totalAmount,
       orderItems: data.orderItems || [],

@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { Order } from "$lib/types";
-  import { goto } from "$app/navigation";
 
   let { 
     orders, 
@@ -8,6 +7,7 @@
     isStaff, 
     onEdit, 
     onDelete, 
+    onDetail,
     onSort, 
     sortKey, 
     sortDirection 
@@ -17,6 +17,7 @@
     isStaff: boolean;
     onEdit: (order: Order) => void;
     onDelete: (order: Order) => void;
+    onDetail: (order: Order) => void;
     onSort: (key: keyof Order) => void;
     sortKey: keyof Order;
     sortDirection: "asc" | "desc";
@@ -114,7 +115,7 @@
                 order.status === 'finished' ? 'badge-success' :
                 'badge-error'
               }`}>
-                {order.status}
+                {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
               </span>
             </td>
             <td>
@@ -124,7 +125,7 @@
                 order.paymentStatus === 'refunded' ? 'badge-neutral' :
                 'badge-warning'
               }`}>
-                {order.paymentStatus}
+                {order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)}
               </span>
             </td>
             <td>
@@ -137,7 +138,7 @@
               <div class="join">
                 <button 
                   class="btn btn-xs btn-outline btn-info join-item"
-                  onclick={() => goto(`/orders/${order.id}`)}
+                  onclick={() => onDetail(order)}
                 >
                   Detail
                 </button>

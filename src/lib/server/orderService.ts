@@ -101,6 +101,15 @@ export async function createOrder({
   }[];
 }) {
   return prisma.$transaction(async (tx) => {
+    // Get the user to fetch their address
+    const user = await tx.user.findUnique({
+      where: { id: userId },
+      select: { address: true }
+    });
+
+    // Use user's address if shippingAddress is not provided
+    const finalShippingAddress = shippingAddress || user?.address || '';
+
     const newOrder = await tx.order.create({
       data: {
         userId,
@@ -108,7 +117,7 @@ export async function createOrder({
         orderNumber,
         status: status || "pending",
         shippingMethod,
-        shippingAddress,
+        shippingAddress: finalShippingAddress,
         paymentMethod,
         totalAmount,
         orderItems: {
@@ -161,19 +170,38 @@ export async function updateOrder(
     }[];
   },
 ) {
-  const data: Partial<Order> = {};
-
-  if (userId) data.userId = userId;
-  if (createdById) data.createdById = createdById;
-  if (orderNumber) data.orderNumber = orderNumber;
-  if (status) data.status = status;
-  if (shippingMethod) data.shippingMethod = shippingMethod;
-  if (shippingAddress) data.shippingAddress = shippingAddress;
-  if (paymentMethod) data.paymentMethod = paymentMethod;
-  if (paymentStatus) data.paymentStatus = paymentStatus;
-  if (totalAmount) data.totalAmount = totalAmount;
-
   return prisma.$transaction(async (tx) => {
+    // Get the current order to get the userId
+    const currentOrder = await tx.order.findUnique({
+      where: { id },
+      select: { userId: true }
+    });
+
+    // Get the user to fetch their address
+    const user = currentOrder?.userId 
+      ? await tx.user.findUnique({
+          where: { id: currentOrder.userId },
+          select: { address: true }
+        })
+      : null;
+
+    // Use user's address if shippingAddress is not provided and not explicitly null
+    const finalShippingAddress = shippingAddress !== undefined 
+      ? (shippingAddress || user?.address || '') 
+      : undefined;
+
+    const data: Partial<Order> = {};
+
+    if (userId) data.userId = userId;
+    if (createdById) data.createdById = createdById;
+    if (orderNumber) data.orderNumber = orderNumber;
+    if (status) data.status = status;
+    if (shippingMethod) data.shippingMethod = shippingMethod;
+    if (finalShippingAddress !== undefined) data.shippingAddress = finalShippingAddress;
+    if (paymentMethod) data.paymentMethod = paymentMethod;
+    if (paymentStatus) data.paymentStatus = paymentStatus;
+    if (totalAmount) data.totalAmount = totalAmount;
+
     // Update the order
     const updatedOrder = await tx.order.update({
       where: { id },
@@ -219,4 +247,33 @@ export async function getOrdersByUserId(userId: number) {
     select: orderSelect,
     orderBy: { createdAt: "desc" },
   });
+}
+
+export async function getNextOrderNumberForToday() {
+  const today = new Date();
+  const year = today.getFullYear().toString().slice(-2);
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  const datePrefix = `ORD-${year}${month}${day}`;
+  
+  // Find the highest order number with today's prefix
+  const lastOrder = await prisma.order.findFirst({
+    where: {
+      orderNumber: {
+        startsWith: datePrefix
+      }
+    },
+    orderBy: {
+      orderNumber: 'desc'
+    }
+  });
+  
+  let nextNumber = 1;
+  if (lastOrder) {
+    // Extract the number part after the date (e.g., from ORD-251008-0005 get 0005)
+    const lastNumber = parseInt(lastOrder.orderNumber.split('-')[2], 10);
+    nextNumber = lastNumber + 1;
+  }
+  
+  return `${datePrefix}-${String(nextNumber).padStart(4, '0')}`;
 }

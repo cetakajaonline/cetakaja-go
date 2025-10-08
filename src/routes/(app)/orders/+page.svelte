@@ -3,6 +3,7 @@
   import OrderTable from "$lib/components/OrderTable.svelte";
   import TableToolbar from "$lib/components/TableToolbar.svelte";
   import OrderFormModal from "$lib/components/OrderFormModal.svelte";
+  import OrderDetailModal from "$lib/components/OrderDetailModal.svelte";
   import PageHeader from "$lib/components/PageHeader.svelte";
   import Pagination from "$lib/components/Pagination.svelte";
   import ConfirmModal from "$lib/components/ConfirmModal.svelte";
@@ -27,7 +28,9 @@
   let orders = [...initialOrders];
   let orderToDelete: Order | null = null;
   let selectedOrder: Order | null = null;
+  let selectedOrderDetail: Order | null = null;
   let showOrderModal = false;
+  let showOrderDetailModal = false;
   let isEditMode = false;
   let loading = false;
   let currentPage = 1;
@@ -61,15 +64,8 @@
   function openAddModal() {
     isEditMode = false;
     selectedOrder = null;
-    // Generate initial order number for new order
-    const date = new Date();
-    const year = date.getFullYear().toString().slice(-2);
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const randomNum = Math.floor(1000 + Math.random() * 9000);
     orderForm = {
       userId: users[0]?.id ?? 0,
-      orderNumber: `ORD-${year}${month}${day}-${randomNum}`,
       status: "pending",
       shippingMethod: "pickup",
       shippingAddress: "",
@@ -170,6 +166,15 @@
     }, 0);
   }
 
+  function openDetailModal(order: Order) {
+    selectedOrderDetail = order;
+    showOrderDetailModal = true;
+  }
+
+  function closeDetailModal() {
+    showOrderDetailModal = false;
+  }
+
   function handleSearch(keyword: string) {
     searchKeyword = keyword.toLowerCase();
     currentPage = 1;
@@ -230,6 +235,7 @@
     orders={paginatedOrders}
     onEdit={openEditModal}
     onDelete={(order) => (isAdmin || isStaff) && askDelete(order)}
+    onDetail={openDetailModal}
     onSort={toggleSort}
     {sortKey}
     {sortDirection}
@@ -261,6 +267,12 @@
     title="Validasi Gagal"
     messages={validationMessages}
     onClose={closeValidationModal}
+  />
+
+  <OrderDetailModal
+    show={showOrderDetailModal}
+    order={selectedOrderDetail}
+    onClose={closeDetailModal}
   />
 
   {#if isAdmin || isStaff}

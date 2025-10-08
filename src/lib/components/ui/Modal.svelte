@@ -4,6 +4,13 @@
   export let size: 'sm' | 'md' | 'lg' | 'xl' | 'fullscreen' = 'md';
 
   const dispatch = createEventDispatcher();
+  
+  $: sizeClass = size === 'sm' ? 'w-80' :
+      size === 'md' ? 'w-96 sm:w-[26rem]' :  /* ~416px */
+      size === 'lg' ? 'w-[24rem] sm:w-[32rem] md:w-[42rem]' :  /* ~384px to ~672px */
+      size === 'xl' ? 'w-screen sm:w-[32rem] md:w-[48rem] lg:w-[64rem] xl:w-[72rem]' :  /* Nearly full on mobile, very large on desktop */
+      size === 'fullscreen' ? 'w-full h-full max-w-full max-h-full' :
+      'w-96'; // Default
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -16,14 +23,8 @@
   >
     <!-- Berhenti agar klik dalam modal tidak close -->
     <div
-      class="bg-base-100 rounded-lg p-6 shadow-lg"
-      class:max-w-sm={size === 'sm'}
-      class:max-w-lg={size === 'lg'}
-      class:max-w-xl={size === 'xl'}
-      class:w-full={size === 'fullscreen'}
-      class:h-full={size === 'fullscreen'}
-      class:max-w-full={size === 'fullscreen'}
-      class:max-h-full={size === 'fullscreen'}
+      class="bg-base-100 rounded-lg shadow-lg overflow-y-auto p-6 {sizeClass}"
+      style="max-height: 80vh;"
       on:click|stopPropagation
     >
       <slot />

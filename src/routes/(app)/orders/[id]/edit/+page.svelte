@@ -4,6 +4,8 @@
   import { browser } from "$app/environment";
   import { goto } from "$app/navigation";
   import { updateOrder } from "$lib/services/orderClient";
+  import SearchSelect from "$lib/components/ui/SearchSelect.svelte";
+  import type { User, Product, ProductVariant } from "$lib/types";
 
   let { data }: { data: PageData } = $props();
 
@@ -13,8 +15,8 @@
     userId: order.user.id,
     orderNumber: order.orderNumber,
     status: order.status,
-    shippingMethod: order.shippingMethod,
-    shippingAddress: order.shippingAddress || "",
+    shippingMethod: "delivery", // Changed to delivery by default
+    shippingAddress: "", // Remove the shipping address as it's not needed
     paymentMethod: order.paymentMethod,
     paymentStatus: order.paymentStatus,
     totalAmount: order.totalAmount,
@@ -50,6 +52,25 @@
     subtotal: 0
   });
 
+  // State for product variants - computed based on selected product
+  let productVariants = $state<ProductVariant[]>([]);
+
+  // Update product variants when selected product changes
+  $effect(() => {
+    const product = products.find(p => p.id === newOrderItem.productId);
+    productVariants = product ? (product.variants || []) : [];
+  });
+
+  // Update price when variant changes
+  $effect(() => {
+    if (newOrderItem.variantId) {
+      const variant = productVariants.find(v => v.id === newOrderItem.variantId);
+      if (variant) {
+        newOrderItem.price = variant.price;
+      }
+    }
+  });
+
   // Update subtotal when qty or price changes
   $effect(() => {
     if (newOrderItem.qty > 0 && newOrderItem.price > 0) {
@@ -64,6 +85,12 @@
   function addOrderItem() {
     if (newOrderItem.productId === 0 || newOrderItem.qty <= 0) {
       error = "Silakan pilih produk dan masukkan jumlah yang valid";
+      return;
+    }
+
+    // Check if variant is required and selected
+    if (newOrderItem.productId && productVariants.length > 0 && !newOrderItem.variantId) {
+      error = "Silakan pilih varian produk";
       return;
     }
 
@@ -130,6 +157,23 @@
   function handleGoBack() {
     goto(`/orders/${order.id}`);
   }
+
+  // Prepare options for SearchSelect
+  let customerOptions = $derived(
+    users
+      .filter(user => user.role === 'customer')
+      .map(user => ({
+        value: user.id,
+        label: `${user.name} (${user.username})`
+      }))
+  );
+
+  let productOptions = $derived(
+    products.map(product => ({
+      value: product.id,
+      label: product.name
+    }))
+  );
 </script>
 
 <div class="p-6">
@@ -158,7 +202,7 @@
               type="text"
               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               bind:value={formData.orderNumber}
-              required
+              readonly
             />
           </div>
           
@@ -178,40 +222,17 @@
           
           <div>
             <label for="userId" class="block text-sm font-medium text-gray-700 mb-1">Pelanggan</label>
-            <select
+            <SearchSelect
               id="userId"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               bind:value={formData.userId}
-            >
-              {#each users as user}
-                <option value={user.id}>{user.name} ({user.username})</option>
-              {/each}
-            </select>
+              options={customerOptions}
+              placeholder="Cari pelanggan..."
+            />
           </div>
           
-          <div>
-            <label for="shippingMethod" class="block text-sm font-medium text-gray-700 mb-1">Metode Pengiriman</label>
-            <select
-              id="shippingMethod"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              bind:value={formData.shippingMethod}
-            >
-              <option value="pickup">Ambil Sendiri</option>
-              <option value="delivery">Dikirim</option>
-            </select>
-          </div>
-          
-          {#if formData.shippingMethod === 'delivery'}
-          <div>
-            <label for="shippingAddress" class="block text-sm font-medium text-gray-700 mb-1">Alamat Pengiriman</label>
-            <textarea
-              id="shippingAddress"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              bind:value={formData.shippingAddress}
-              rows="3"
-            ></textarea>
-          </div>
-          {/if}
+          <!-- Shipping method and address are now handled differently - hidden fields -->
+          <input type="hidden" bind:value={formData.shippingMethod} />
+          <input type="hidden" bind:value={formData.shippingAddress} />
         </div>
       </div>
 
@@ -271,14 +292,28 @@
         <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
           <div>
             <label for="newOrderItemProduct" class="block text-sm font-medium text-gray-700 mb-1">Produk</label>
-            <select
+            <SearchSelect
               id="newOrderItemProduct"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               bind:value={newOrderItem.productId}
+              options={productOptions}
+              placeholder="Cari produk..."
+            />
+          </div>
+          
+          <div>
+            <label for="newOrderItemVariant" class="block text-sm font-medium text-gray-700 mb-1">Varian</label>
+            <select
+              id="newOrderItemVariant"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              bind:value={newOrderItem.variantId}
             >
-              <option value="0">Pilih Produk</option>
-              {#each products as product}
-                <option value={product.id}>{product.name}</option>
+              <option value="">Pilih Varian</option>
+              {#each productVariants as variant}
+                <option value={variant.id}>{variant.variantName} - {new Intl.NumberFormat('id-ID', {
+                  style: 'currency',
+                  currency: 'IDR',
+                  minimumFractionDigits: 0
+                }).format(variant.price)}</option>
               {/each}
             </select>
           </div>
@@ -302,18 +337,7 @@
               min="0"
               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               bind:value={newOrderItem.price}
-            />
-          </div>
-          
-          <div>
-            <label for="newOrderItemSubtotal" class="block text-sm font-medium text-gray-700 mb-1">Subtotal</label>
-            <input
-              id="newOrderItemSubtotal"
-              type="number"
-              min="0"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              bind:value={newOrderItem.subtotal}
-              readonly
+              readonly={!newOrderItem.variantId}
             />
           </div>
           
@@ -339,6 +363,7 @@
           <thead class="bg-gray-50">
             <tr>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produk</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Varian</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jumlah</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Harga</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
@@ -351,6 +376,21 @@
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="text-sm font-medium text-gray-900">
                     {products.find(p => p.id === item.productId)?.name}
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm text-gray-900">
+                    {#if item.variantId}
+                      {#if products.find(p => p.id === item.productId)}
+                        {#each products.find(p => p.id === item.productId)?.variants as variant}
+                          {#if variant.id === item.variantId}
+                            {variant.variantName}
+                          {/if}
+                        {/each}
+                      {/if}
+                    {:else}
+                      -
+                    {/if}
                   </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
@@ -381,7 +421,7 @@
               </tr>
             {/each}
             <tr class="bg-gray-50">
-              <td colspan="3" class="px-6 py-3 text-right text-sm font-medium text-gray-900">Total</td>
+              <td colspan="4" class="px-6 py-3 text-right text-sm font-medium text-gray-900">Total</td>
               <td class="px-6 py-3 text-sm font-medium text-gray-900">
                 {new Intl.NumberFormat('id-ID', {
                   style: 'currency',

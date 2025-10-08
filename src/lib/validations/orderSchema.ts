@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const orderSchema = z.object({
   userId: z.number().min(1, "User wajib dipilih"),
-  orderNumber: z.string().min(3, "Nomor order minimal 3 karakter"),
+  orderNumber: z.string().min(3, "Nomor order minimal 3 karakter").optional(),
   status: z.enum(["pending", "processing", "finished", "canceled"]),
   shippingMethod: z.enum(["pickup", "delivery"]),
   shippingAddress: z.string().optional(),

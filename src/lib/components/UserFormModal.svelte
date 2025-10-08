@@ -48,7 +48,7 @@
   }
 </script>
 
-<Modal {show} on:close={() => dispatch('close')}>
+<Modal {show} size="xl" on:close={() => dispatch('close')}>
   <form on:submit|preventDefault={handleSubmit} class="p-6 w-full max-w-4xl mx-auto">
     <h2 class="text-xl font-semibold text-center mb-4">
       {isEditMode ? 'Edit Pengguna' : 'Tambah Pengguna'}
