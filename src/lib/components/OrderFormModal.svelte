@@ -2,7 +2,6 @@
   import { createEventDispatcher } from 'svelte';
   import Modal from '$lib/components/ui/Modal.svelte';
   import Button from '$lib/components/ui/Button.svelte';
-  import FormInput from '$lib/components/ui/FormInput.svelte';
   import SearchSelect from '$lib/components/ui/SearchSelect.svelte';
   import type { User, Product, ProductVariant } from '$lib/types';
 
@@ -43,40 +42,41 @@
   // State for product variants - computed based on selected product
   let productVariants = $state<ProductVariant[]>([]);
 
-  // Update product variants when selected product changes
+  // Update product variants when selected product changes using reactive effect
   $effect(() => {
     const product = products.find(p => p.id === newOrderItem.productId);
     productVariants = product ? (product.variants || []) : [];
   });
 
-  // Update price when variant changes
+  // Update price when variant changes using derived state
   $effect(() => {
     if (newOrderItem.variantId) {
       const variant = productVariants.find((v: ProductVariant) => v.id === newOrderItem.variantId);
       if (variant) {
         newOrderItem.price = variant.price;
       }
-    } else if (newOrderItem.productId && productVariants.length === 0) {
-      // If product has no variants, use a default price or get it from somewhere else
-      // For now, we'll leave price as is or set to 0 if no variant is selected
-      // The implementation might need to get the base price from the product
     }
   });
 
-  // Update subtotal when qty or price changes
+  // Update subtotal when qty or price changes using derived state
   $effect(() => {
     if (newOrderItem.qty > 0 && newOrderItem.price > 0) {
       newOrderItem.subtotal = newOrderItem.qty * newOrderItem.price;
     }
   });
 
+  // Handle modal state changes using reactive assignments
+  let previousShow = $state(false);
   $effect(() => {
-    if (show) {
+    if (show && !previousShow) { // Only run when modal opens (show becomes true from false)
       formData = { ...initial };
       orderItems = [...initial.orderItems || []];
       // Set default values for shipping
       if (!formData.shippingMethod) formData.shippingMethod = 'delivery';
-      if (!formData.shippingAddress) formData.shippingAddress = '';
+      
+      previousShow = show;
+    } else if (!show && previousShow) { // When modal closes
+      previousShow = show;
     }
   });
 
@@ -90,16 +90,21 @@
       return;
     }
 
-    // Check if variant is required and selected
-    if (newOrderItem.productId && productVariants.length > 0 && !newOrderItem.variantId) {
-      alert("Silakan pilih varian produk");
-      return;
-    }
-
     const product = products.find(p => p.id === newOrderItem.productId);
     if (!product) {
       alert("Produk tidak ditemukan");
       return;
+    }
+    
+    // Check if product has variants and if so, a variant must be selected
+    if (product.variants && product.variants.length > 0 && !newOrderItem.variantId) {
+      alert("Silakan pilih varian produk");
+      return;
+    }
+
+    // If the product has no variants but the user selected a variant, clear the variant selection
+    if ((!product.variants || product.variants.length === 0) && newOrderItem.variantId) {
+      newOrderItem.variantId = undefined;
     }
 
     const item: OrderItem = {
@@ -196,7 +201,6 @@
           type="text"
           class="input input-bordered w-full"
           bind:value={formData.orderNumber}
-          readonly
         />
       </div>
       
@@ -228,8 +232,19 @@
         />
       </div>
       
-      <input type="hidden" bind:value={formData.shippingMethod} />
-      <input type="hidden" bind:value={formData.shippingAddress} />
+      <div class="form-control w-full">
+        <label class="label" for="shippingMethod">
+          <span class="label-text">Metode Pengiriman</span>
+        </label>
+        <select
+          id="shippingMethod"
+          class="select select-bordered w-full"
+          bind:value={formData.shippingMethod}
+        >
+          <option value="pickup">Pickup</option>
+          <option value="delivery">Delivery</option>
+        </select>
+      </div>
       
       <div class="form-control w-full">
         <label class="label" for="paymentMethod">
@@ -244,6 +259,19 @@
           <option value="qris">QRIS</option>
           <option value="cash">Tunai</option>
         </select>
+      </div>
+      
+      <div class="form-control w-full md:col-span-2">
+        <label class="label" for="notes">
+          <span class="label-text">Catatan</span>
+        </label>
+        <textarea
+          id="notes"
+          class="textarea textarea-bordered w-full"
+          bind:value={formData.notes}
+          placeholder="Catatan tambahan untuk pesanan"
+          rows="2"
+        ></textarea>
       </div>
       
       <div class="form-control w-full">
@@ -290,11 +318,16 @@
               id="newItemVariant"
               class="select select-bordered w-full text-sm"
               bind:value={newOrderItem.variantId}
+              disabled={!newOrderItem.productId || productVariants.length === 0}
             >
-              <option value="">Pilih Varian</option>
-              {#each productVariants as variant}
-                <option value={variant.id}>{variant.variantName} - {formatCurrency(variant.price)}</option>
-              {/each}
+              {#if productVariants.length > 0}
+                <option value="">Pilih Varian</option>
+                {#each productVariants as variant}
+                  <option value={variant.id}>{variant.variantName} - {formatCurrency(variant.price)}</option>
+                {/each}
+              {:else}
+                <option value="">-- Produk tidak memiliki varian --</option>
+              {/if}
             </select>
           </div>
           
@@ -344,6 +377,7 @@
               type="button"
               onclick={addOrderItem}
               class="btn btn-primary btn-sm w-full"
+              disabled={!newOrderItem.productId || newOrderItem.qty <= 0 || (productVariants.length > 0 && !newOrderItem.variantId)}
             >
               Tambah
             </button>

@@ -81,7 +81,7 @@ export interface Order {
   orderNumber: string;
   status: string; // OrderStatus enum
   shippingMethod: string; // ShippingMethod enum
-  shippingAddress: string | null | undefined;
+
   paymentMethod: string; // PaymentMethod enum
   paymentStatus: string; // PaymentStatus enum
   totalAmount: number;

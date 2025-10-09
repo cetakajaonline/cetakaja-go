@@ -16,7 +16,7 @@
     orderNumber: "",
     status: "pending",
     shippingMethod: "delivery", // Changed from "pickup" to "delivery" by default
-    shippingAddress: "",
+
     paymentMethod: "transfer",
     paymentStatus: "pending",
     totalAmount: 0,
@@ -225,7 +225,7 @@
           
           <!-- Shipping method and address are now handled differently - hidden fields -->
           <input type="hidden" bind:value={formData.shippingMethod} />
-          <input type="hidden" bind:value={formData.shippingAddress} />
+
         </div>
       </div>
 

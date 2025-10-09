@@ -8,7 +8,7 @@ import {
 } from "$lib/server/orderService";
 import { orderSchema } from "$lib/validations/orderSchema";
 
-export async function GET(event) {
+export async function GET(event: any) {
   try {
     // Anyone authenticated can view orders
     if (!event.locals.user) {
@@ -23,7 +23,7 @@ export async function GET(event) {
   }
 }
 
-export async function POST(event) {
+export async function POST(event: any) {
   try {
     // Only admin and staff can create orders
     const userRole = event.locals.user?.role;
@@ -63,9 +63,9 @@ export async function POST(event) {
       orderNumber,
       status: data.status,
       shippingMethod: data.shippingMethod,
-      shippingAddress: data.shippingAddress || undefined, // Pass undefined to let the service use customer's address
       paymentMethod: data.paymentMethod,
       totalAmount: data.totalAmount,
+      notes: data.notes || undefined,
       orderItems: data.orderItems || [],
     });
 

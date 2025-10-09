@@ -70,12 +70,10 @@
           <span class="w-40 text-gray-600">Metode Pengiriman:</span>
           <span class="font-medium">{order.shippingMethod === 'pickup' ? 'Ambil Sendiri' : 'Dikirim'}</span>
         </div>
-        {#if order.shippingAddress}
         <div class="flex">
           <span class="w-40 text-gray-600">Alamat Pengiriman:</span>
-          <span class="font-medium">{order.shippingAddress}</span>
+          <span class="font-medium">{order.user.address || 'Tidak ada alamat'}</span>
         </div>
-        {/if}
         <div class="flex">
           <span class="w-40 text-gray-600">Metode Pembayaran:</span>
           <span class="font-medium">{order.paymentMethod === 'transfer' ? 'Transfer Bank' : order.paymentMethod === 'qris' ? 'QRIS' : 'Tunai'}</span>

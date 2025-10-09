@@ -1,21 +1,15 @@
 import prisma from "$lib/server/prisma";
-import type {
-  Order,
-  OrderStatus,
-  PaymentMethod,
-  PaymentStatus,
-  ShippingMethod,
-} from "@prisma/client";
 
 const orderSelect = {
   id: true,
   orderNumber: true,
   status: true,
   shippingMethod: true,
-  shippingAddress: true, // This might return null from Prisma, need to handle accordingly
+  // shippingAddress: true, // Field removed from schema
   paymentMethod: true,
   paymentStatus: true,
   totalAmount: true,
+  notes: true,
   createdAt: true,
   updatedAt: true,
   userId: true,
@@ -79,19 +73,19 @@ export async function createOrder({
   orderNumber,
   status,
   shippingMethod,
-  shippingAddress,
   paymentMethod,
   totalAmount,
+  notes,
   orderItems,
 }: {
   userId: number;
   createdById?: number;
   orderNumber: string;
-  status?: OrderStatus;
-  shippingMethod: ShippingMethod;
-  shippingAddress?: string;
-  paymentMethod: PaymentMethod;
+  status?: "pending" | "processing" | "finished" | "canceled";
+  shippingMethod: "pickup" | "delivery";
+  paymentMethod: "transfer" | "qris" | "cash";
   totalAmount: number;
+  notes?: string;
   orderItems: {
     productId: number;
     variantId?: number;
@@ -101,15 +95,6 @@ export async function createOrder({
   }[];
 }) {
   return prisma.$transaction(async (tx) => {
-    // Get the user to fetch their address
-    const user = await tx.user.findUnique({
-      where: { id: userId },
-      select: { address: true }
-    });
-
-    // Use user's address if shippingAddress is not provided
-    const finalShippingAddress = shippingAddress || user?.address || '';
-
     const newOrder = await tx.order.create({
       data: {
         userId,
@@ -117,9 +102,9 @@ export async function createOrder({
         orderNumber,
         status: status || "pending",
         shippingMethod,
-        shippingAddress: finalShippingAddress,
         paymentMethod,
         totalAmount,
+        notes: notes || null,
         orderItems: {
           create: orderItems.map((item) => ({
             productId: item.productId,
@@ -145,21 +130,21 @@ export async function updateOrder(
     orderNumber,
     status,
     shippingMethod,
-    shippingAddress,
     paymentMethod,
     paymentStatus,
     totalAmount,
+    notes,
     orderItems,
   }: {
     userId?: number;
     createdById?: number;
     orderNumber?: string;
-    status?: OrderStatus;
-    shippingMethod?: ShippingMethod;
-    shippingAddress?: string;
-    paymentMethod?: PaymentMethod;
-    paymentStatus?: PaymentStatus;
+    status?: "pending" | "processing" | "finished" | "canceled";
+    shippingMethod?: "pickup" | "delivery";
+    paymentMethod?: "transfer" | "qris" | "cash";
+    paymentStatus?: "pending" | "confirmed" | "failed" | "refunded";
     totalAmount?: number;
+    notes?: string;
     orderItems?: {
       id?: number;
       productId: number;
@@ -171,36 +156,27 @@ export async function updateOrder(
   },
 ) {
   return prisma.$transaction(async (tx) => {
-    // Get the current order to get the userId
-    const currentOrder = await tx.order.findUnique({
-      where: { id },
-      select: { userId: true }
-    });
-
-    // Get the user to fetch their address
-    const user = currentOrder?.userId 
-      ? await tx.user.findUnique({
-          where: { id: currentOrder.userId },
-          select: { address: true }
-        })
-      : null;
-
-    // Use user's address if shippingAddress is not provided and not explicitly null
-    const finalShippingAddress = shippingAddress !== undefined 
-      ? (shippingAddress || user?.address || '') 
-      : undefined;
-
-    const data: Partial<Order> = {};
+    const data: {
+      userId?: number;
+      createdById?: number;
+      orderNumber?: string;
+      status?: "pending" | "processing" | "finished" | "canceled";
+      shippingMethod?: "pickup" | "delivery";
+      paymentMethod?: "transfer" | "qris" | "cash";
+      paymentStatus?: "pending" | "confirmed" | "failed" | "refunded";
+      totalAmount?: number;
+      notes?: string;
+    } = {};
 
     if (userId) data.userId = userId;
     if (createdById) data.createdById = createdById;
     if (orderNumber) data.orderNumber = orderNumber;
     if (status) data.status = status;
     if (shippingMethod) data.shippingMethod = shippingMethod;
-    if (finalShippingAddress !== undefined) data.shippingAddress = finalShippingAddress;
     if (paymentMethod) data.paymentMethod = paymentMethod;
     if (paymentStatus) data.paymentStatus = paymentStatus;
     if (totalAmount) data.totalAmount = totalAmount;
+    if (notes !== undefined) data.notes = notes;
 
     // Update the order
     const updatedOrder = await tx.order.update({

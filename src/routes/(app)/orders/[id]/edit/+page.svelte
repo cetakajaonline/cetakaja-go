@@ -16,7 +16,7 @@
     orderNumber: order.orderNumber,
     status: order.status,
     shippingMethod: "delivery", // Changed to delivery by default
-    shippingAddress: "", // Remove the shipping address as it's not needed
+
     paymentMethod: order.paymentMethod,
     paymentStatus: order.paymentStatus,
     totalAmount: order.totalAmount,
@@ -232,7 +232,7 @@
           
           <!-- Shipping method and address are now handled differently - hidden fields -->
           <input type="hidden" bind:value={formData.shippingMethod} />
-          <input type="hidden" bind:value={formData.shippingAddress} />
+
         </div>
       </div>
 

@@ -5,13 +5,13 @@ CREATE TYPE "Role" AS ENUM ('admin', 'staff', 'customer');
 CREATE TYPE "OrderStatus" AS ENUM ('pending', 'processing', 'finished', 'canceled');
 
 -- CreateEnum
-CREATE TYPE "ShippingMethod" AS ENUM ('pickup', 'delivery');
-
--- CreateEnum
 CREATE TYPE "PaymentMethod" AS ENUM ('transfer', 'qris', 'cash');
 
 -- CreateEnum
 CREATE TYPE "PaymentStatus" AS ENUM ('pending', 'confirmed', 'failed', 'refunded');
+
+-- CreateEnum
+CREATE TYPE "ShippingMethod" AS ENUM ('pickup', 'delivery');
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -47,6 +47,7 @@ CREATE TABLE "Product" (
     "name" VARCHAR(150) NOT NULL,
     "description" TEXT,
     "baseCode" VARCHAR(50) NOT NULL,
+    "photo" VARCHAR(255),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -73,10 +74,10 @@ CREATE TABLE "Order" (
     "orderNumber" VARCHAR(50) NOT NULL,
     "status" "OrderStatus" NOT NULL DEFAULT 'pending',
     "shippingMethod" "ShippingMethod" NOT NULL,
-    "shippingAddress" VARCHAR(255),
     "paymentMethod" "PaymentMethod" NOT NULL,
     "paymentStatus" "PaymentStatus" NOT NULL DEFAULT 'pending',
     "totalAmount" INTEGER NOT NULL,
+    "notes" VARCHAR(500),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -96,18 +97,6 @@ CREATE TABLE "OrderItem" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "OrderItem_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "Upload" (
-    "id" SERIAL NOT NULL,
-    "orderId" INTEGER NOT NULL,
-    "fileName" VARCHAR(255) NOT NULL,
-    "filePath" VARCHAR(255) NOT NULL,
-    "fileType" VARCHAR(50) NOT NULL,
-    "uploadedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "Upload_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -226,9 +215,6 @@ ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_productId_fkey" FOREIGN KEY ("
 
 -- AddForeignKey
 ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "ProductVariant"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Upload" ADD CONSTRAINT "Upload_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Payment" ADD CONSTRAINT "Payment_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE CASCADE ON UPDATE CASCADE;

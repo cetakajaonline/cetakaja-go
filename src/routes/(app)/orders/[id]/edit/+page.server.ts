@@ -3,7 +3,7 @@ import { getOrderById } from "$lib/server/orderService";
 import { getAllUsers } from "$lib/server/userService";
 import { getAllProducts } from "$lib/server/productService";
 
-export const load = async (event) => {
+export const load = async (event: any) => {
   const id = Number(event.params.id);
   const user = event.locals.user;
 

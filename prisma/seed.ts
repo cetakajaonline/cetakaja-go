@@ -1,24 +1,17 @@
 // prisma/seed.ts
-import {
-  PrismaClient,
-  Role,
-  OrderStatus,
-  ShippingMethod,
-  PaymentMethod,
-  PaymentStatus,
-} from "@prisma/client";
-import bcrypt from "bcryptjs";
+import { fakerID_ID as faker } from '@faker-js/faker';
+import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 Seeding database (full status sample)...");
+  console.log('🌱 Seeding database for printing order management system...');
 
-  // Bersihkan data lama
+  // Clear old data
   await prisma.notification.deleteMany();
   await prisma.paymentProof.deleteMany();
   await prisma.payment.deleteMany();
-  await prisma.upload.deleteMany();
   await prisma.orderItem.deleteMany();
   await prisma.order.deleteMany();
   await prisma.productVariant.deleteMany();
@@ -30,194 +23,318 @@ async function main() {
   // Setting
   await prisma.setting.create({
     data: {
-      name: "Sistem Pemesanan Cabang Pusat",
-      description: "Aplikasi manajemen order dan pembayaran",
-      logo: "/uploads/logo.png",
+      name: 'Sistem Pemesanan Percetakan',
+      description: 'Aplikasi manajemen order dan pembayaran untuk usaha percetakan',
+      logo: '/uploads/logo.png',
     },
   });
 
   // Hash passwords
-  const adminPassword = await bcrypt.hash("admin123", 10);
-  const staffPassword = await bcrypt.hash("staff123", 10);
-  const customerPassword = await bcrypt.hash("customer123", 10);
+  const adminPassword = await bcrypt.hash('admin123', 10);
+  const staffPassword = await bcrypt.hash('staff123', 10);
+  const customerPassword = await bcrypt.hash('customer123', 10);
 
-  // Users
-  await prisma.user.create({
+  // Create Admin and Staff with addresses
+  const admin = await prisma.user.create({
     data: {
-      name: "Admin Utama",
-      username: "admin",
-      phone: "0811111111",
+      name: 'Admin Percetakan',
+      username: 'admin',
+      phone: `08${Math.floor(100000000 + Math.random() * 900000000)}`, // Generates 08 followed by 9 digits
       password: adminPassword,
-      role: Role.admin,
+      role: 'admin',
+      address: faker.location.streetAddress(),
     },
   });
 
   const staff = await prisma.user.create({
     data: {
-      name: "Staff Operasional",
-      username: "staff1",
-      phone: "0822222222",
+      name: 'Staff Operasional',
+      username: 'staff1',
+      phone: `08${Math.floor(100000000 + Math.random() * 900000000)}`, // Generates 08 followed by 9 digits
       password: staffPassword,
-      role: Role.staff,
+      role: 'staff',
+      address: faker.location.streetAddress(),
     },
   });
 
-  const customer = await prisma.user.create({
-    data: {
-      name: "Riza Putr",
-      username: "riza",
-      phone: "0833333333",
-      password: customerPassword,
-      role: Role.customer,
-      address: "Jl. Melati No. 45, Bandung",
-    },
-  });
+  // Create customers using faker
+  const customers = [];
+  for (let i = 0; i < 30; i++) {
+    customers.push(
+      await prisma.user.create({
+        data: {
+          name: faker.person.fullName(),
+          username: `${faker.person.firstName().toLowerCase()}_${i}`,
+          phone: `08${Math.floor(100000000 + Math.random() * 900000000)}`, // Generates 08 followed by 9 digits
+          password: customerPassword,
+          role: 'customer',
+          address: faker.location.streetAddress(),
+        },
+      })
+    );
+  }
 
-  // Categories
-  const catFood = await prisma.category.create({
-    data: {
-      name: "Makanan",
-      code: "FOOD",
-      description: "Aneka makanan lezat",
-    },
-  });
+  console.log(`✅ Created ${customers.length + 2} users (1 admin, 1 staff, ${customers.length} customers)`);
 
-  const catDrink = await prisma.category.create({
-    data: {
-      name: "Minuman",
-      code: "DRINK",
-      description: "Aneka minuman segar dan panas",
+  // Create categories for printing products
+  const categories = [
+    {
+      name: 'Desain Grafis',
+      code: 'DSN',
+      description: 'Berbagai layanan desain grafis untuk kebutuhan bisnis',
     },
-  });
+    {
+      name: 'Cetak Offset',
+      code: 'CTK',
+      description: 'Cetak produksi massal dengan kualitas tinggi',
+    },
+    {
+      name: 'Cetak Digital',
+      code: 'DIG',
+      description: 'Cetak digital dengan berbagai jenis kertas',
+    },
+    {
+      name: 'Cetak Large Format',
+      code: 'LFG',
+      description: 'Print besar seperti banner, x-banner, dll',
+    },
+    {
+      name: 'Binding & Finishing',
+      code: 'BND',
+      description: 'Layanan penjilidan dan finishing',
+    },
+  ];
 
-  // Products
-  const productNasi = await prisma.product.create({
-    data: {
-      categoryId: catFood.id,
-      name: "Nasi Goreng Spesial",
-      baseCode: "NSG01",
-      description: "Nasi goreng dengan ayam, telur, dan sosis.",
-      variants: {
-        create: [
-          { variantName: "Regular", price: 25000 },
-          { variantName: "Jumbo", price: 35000 },
-        ],
+  const createdCategories = [];
+  for (const category of categories) {
+    createdCategories.push(
+      await prisma.category.create({
+        data: category,
+      })
+    );
+  }
+
+  console.log(`✅ Created ${createdCategories.length} categories`);
+
+  // Create printing products with variants
+  const printingProducts = [
+    {
+      name: 'Kartu Nama',
+      baseCode: 'KTN',
+      description: 'Kartu nama premium dengan berbagai finishing',
+      categoryId: createdCategories.find(c => c.name === 'Cetak Offset')!.id,
+    },
+    {
+      name: 'Flyer',
+      baseCode: 'FLY',
+      description: 'Flyer promosi dengan berbagai ukuran dan finishing',
+      categoryId: createdCategories.find(c => c.name === 'Cetak Offset')!.id,
+    },
+    {
+      name: 'Brosur',
+      baseCode: 'BRS',
+      description: 'Brosur dengan berbagai jumlah halaman',
+      categoryId: createdCategories.find(c => c.name === 'Cetak Offset')!.id,
+    },
+    {
+      name: 'Katalog Produk',
+      baseCode: 'KTG',
+      description: 'Katalog produk dengan kualitas cetak tinggi',
+      categoryId: createdCategories.find(c => c.name === 'Cetak Offset')!.id,
+    },
+    {
+      name: 'Spanduk',
+      baseCode: 'SPD',
+      description: 'Spanduk untuk promosi outdoor dan indoor',
+      categoryId: createdCategories.find(c => c.name === 'Cetak Large Format')!.id,
+    },
+    {
+      name: 'Banner',
+      baseCode: 'BNR',
+      description: 'Banner untuk berbagai keperluan promosi',
+      categoryId: createdCategories.find(c => c.name === 'Cetak Large Format')!.id,
+    },
+    {
+      name: 'X-Banner',
+      baseCode: 'XBN',
+      description: 'X-banner portable untuk pameran dan promosi',
+      categoryId: createdCategories.find(c => c.name === 'Cetak Large Format')!.id,
+    },
+    {
+      name: 'Stiker',
+      baseCode: 'STK',
+      description: 'Stiker berbagai ukuran dan finishing',
+      categoryId: createdCategories.find(c => c.name === 'Cetak Digital')!.id,
+    },
+    {
+      name: 'Kalender',
+      baseCode: 'KLM',
+      description: 'Kalender meja dan dinding untuk tahun baru',
+      categoryId: createdCategories.find(c => c.name === 'Cetak Offset')!.id,
+    },
+    {
+      name: 'Buku',
+      baseCode: 'BKK',
+      description: 'Jasa cetak dan penjilidan buku',
+      categoryId: createdCategories.find(c => c.name === 'Binding & Finishing')!.id,
+    },
+  ];
+
+  const createdProducts = [];
+  for (const product of printingProducts) {
+    const variants = [
+      {
+        variantName: 'A4',
+        price: 50000,
       },
-    },
-    include: { variants: true },
-  });
-
-  const productKopi = await prisma.product.create({
-    data: {
-      categoryId: catDrink.id,
-      name: "Kopi Hitam",
-      baseCode: "KPH01",
-      description: "Kopi robusta murni tanpa gula.",
-      variants: {
-        create: [
-          { variantName: "Panas", price: 10000 },
-          { variantName: "Dingin", price: 12000 },
-        ],
+      {
+        variantName: 'A3',
+        price: 75000,
       },
-    },
-    include: { variants: true },
-  });
+      {
+        variantName: 'A2',
+        price: 120000,
+      },
+      {
+        variantName: 'Custom',
+        price: 150000,
+      },
+    ];
 
-  // Helper untuk membuat order+payment
-  async function createOrderWithPayment(
-    index: number,
-    orderStatus: OrderStatus,
-    paymentStatus: PaymentStatus,
-  ) {
-    const total = 47000;
+    const createdProduct = await prisma.product.create({
+      data: {
+        ...product,
+        variants: {
+          create: variants,
+        },
+      },
+      include: { variants: true },
+    });
+
+    createdProducts.push(createdProduct);
+  }
+
+  console.log(`✅ Created ${createdProducts.length} products with variants`);
+
+  // Create sample orders with all status combinations
+  const orderStatuses: Array<'pending' | 'processing' | 'finished' | 'canceled'> = [
+    'pending',
+    'processing',
+    'finished',
+    'canceled',
+  ];
+
+  const paymentMethods: Array<'transfer' | 'qris' | 'cash'> = [
+    'transfer',
+    'qris',
+    'cash',
+  ];
+
+  const paymentStatuses: Array<'pending' | 'confirmed' | 'failed' | 'refunded'> = [
+    'pending',
+    'confirmed',
+    'failed',
+    'refunded',
+  ];
+
+  const shippingMethods: Array<'pickup' | 'delivery'> = [
+    'pickup',
+    'delivery',
+  ];
+
+  for (let i = 0; i < 50; i++) {
+    const customer = faker.helpers.arrayElement(customers);
+    const product = faker.helpers.arrayElement(createdProducts);
+    const variant: { id: number; variantName: string; price: number } = faker.helpers.arrayElement(product.variants);
+
+    // Create order item
+    const qty = faker.number.int({ min: 1, max: 10 });
+    const price = variant.price;
+    const subtotal = price * qty;
+
+    // Generate random order data
+    const orderStatus = faker.helpers.arrayElement(orderStatuses);
+    const paymentMethod = faker.helpers.arrayElement(paymentMethods);
+    const paymentStatus = faker.helpers.arrayElement(paymentStatuses);
+    const shippingMethod = faker.helpers.arrayElement(shippingMethods);
+
+    // Randomly assign order creation between admin and staff for variety
+    const createdByUser = i % 2 === 0 ? staff : admin;
+
+    // Generate order number
+    const orderNumber = `ORD-${String(i + 1).padStart(4, '0')}`;
+
+    // Calculate total amount
+    const totalAmount = subtotal;
+
+    // Determine paidAt based on payment status
+    const paidAt = paymentStatus === 'confirmed' ? new Date(faker.date.recent({ days: 30 })) : null;
+
     const order = await prisma.order.create({
       data: {
         userId: customer.id,
-        createdById: staff.id,
-        orderNumber: `ORD-000${index}`,
+        createdById: createdByUser.id,
+        orderNumber,
         status: orderStatus,
-        shippingMethod: ShippingMethod.delivery,
-        shippingAddress: customer.address,
-        paymentMethod: PaymentMethod.transfer,
+        shippingMethod,
+        paymentMethod,
         paymentStatus,
-        totalAmount: total,
+        totalAmount,
+        notes: faker.lorem.sentence(),
         orderItems: {
           create: [
             {
-              productId: productNasi.id,
-              variantId: productNasi.variants[0].id,
-              qty: 1,
-              price: 25000,
-              subtotal: 25000,
-            },
-            {
-              productId: productKopi.id,
-              variantId: productKopi.variants[1].id,
-              qty: 1,
-              price: 12000,
-              subtotal: 12000,
+              productId: product.id,
+              variantId: variant.id,
+              qty,
+              price,
+              subtotal,
             },
           ],
         },
-        uploads: {
-          create: {
-            fileName: `order_${index}_alamat.jpg`,
-            filePath: `/uploads/orders/order_${index}_alamat.jpg`,
-            fileType: "image/jpeg",
-          },
-        },
       },
     });
 
-    const payment = await prisma.payment.create({
+    // Create payment record
+    await prisma.payment.create({
       data: {
         orderId: order.id,
         userId: customer.id,
-        createdById: staff.id,
-        method: PaymentMethod.transfer,
-        amount: total,
+        createdById: createdByUser.id,
+        method: paymentMethod,
+        amount: totalAmount,
         status: paymentStatus,
-        transactionRef: `TF-000${index}`,
-        paidAt: paymentStatus === PaymentStatus.confirmed ? new Date() : null,
+        transactionRef: `TXN-${String(i + 1).padStart(6, '0')}`,
+        paidAt,
         proofs: {
           create: {
-            fileName: `bukti_transfer_${index}.jpg`,
-            filePath: `/uploads/payments/bukti_transfer_${index}.jpg`,
-            fileType: "image/jpeg",
+            fileName: `payment_proof_${orderNumber}.jpg`,
+            filePath: `/uploads/payments/${orderNumber}_proof.jpg`,
+            fileType: 'image/jpeg',
           },
         },
       },
     });
 
+    // Create notification
     await prisma.notification.create({
       data: {
         userId: customer.id,
         orderId: order.id,
         toNumber: customer.phone,
-        message: `Pesanan ${order.orderNumber} (${orderStatus}) dengan pembayaran ${paymentStatus}`,
-        status: "sent",
+        message: `Pesanan ${orderNumber} (${orderStatus}) dengan pembayaran ${paymentStatus}`,
+        status: 'sent',
       },
     });
-
-    return { order, payment };
   }
 
-  // Buat 4 order berbeda status
-  await createOrderWithPayment(1, OrderStatus.pending, PaymentStatus.pending);
-  await createOrderWithPayment(
-    2,
-    OrderStatus.processing,
-    PaymentStatus.confirmed,
-  );
-  await createOrderWithPayment(3, OrderStatus.finished, PaymentStatus.refunded);
-  await createOrderWithPayment(4, OrderStatus.canceled, PaymentStatus.failed);
-
-  console.log("✅ Seeding selesai: Semua status sudah terisi");
+  console.log('✅ Created 50 sample orders with all statuses');
+  console.log('✅ Seeding completed successfully!');
 }
 
 main()
   .catch((e) => {
-    console.error("❌ Error saat seeding:", e);
+    console.error('❌ Error:', e);
     process.exit(1);
   })
   .finally(() => {

@@ -94,6 +94,14 @@
             {/if}
           </div>
         </th>
+        <th onclick={() => onSort('shippingMethod')}>
+          <div class="flex items-center gap-2">
+            <span>Pengiriman</span>
+            {#if sortKey === 'shippingMethod'}
+              {#if sortDirection === 'asc'} ↑ {:else} ↓ {/if}
+            {/if}
+          </div>
+        </th>
         <th class="text-right">Aksi</th>
       </tr>
     </thead>
@@ -133,6 +141,9 @@
             </td>
             <td>
               {formatDate(order.createdAt)}
+            </td>
+            <td>
+              {order.shippingMethod.charAt(0).toUpperCase() + order.shippingMethod.slice(1)}
             </td>
             <td class="text-right">
               <div class="join">

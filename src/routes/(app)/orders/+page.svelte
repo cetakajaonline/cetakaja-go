@@ -10,7 +10,7 @@
   import ValidationModal from "$lib/components/ValidationModal.svelte";
 
   import { orderSchema, orderUpdateSchema } from "$lib/validations/orderSchema";
-  import { createOrder, updateOrder, deleteOrder } from "$lib/services/orderClient";
+  import { createOrder, updateOrder, deleteOrder, getNextOrderNumber } from "$lib/services/orderClient";
   import { z } from "zod";
   import { tick } from "svelte";
   import type { Order, User, Product } from "$lib/types";
@@ -45,9 +45,9 @@
     orderNumber: "",
     status: "pending",
     shippingMethod: "pickup",
-    shippingAddress: "",
     paymentMethod: "transfer",
     paymentStatus: "pending",
+    notes: "",
     totalAmount: 0,
     orderItems: [] as {
       productId: number;
@@ -61,16 +61,37 @@
   let validationMessages: string[] = [];
   let showValidationModal = false;
 
-  function openAddModal() {
+  async function generateOrderNumber() {
+    try {
+      // Get the next order number from the server
+      const nextOrderNumber = await getNextOrderNumber();
+      return nextOrderNumber;
+    } catch (error) {
+      console.error("Failed to generate order number:", error);
+      // Fallback to a timestamp-based number if API fails
+      const now = new Date();
+      const year = now.getFullYear().toString().slice(-2);
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const timestamp = String(Math.floor(Date.now() / 1000) % 10000).padStart(4, '0');
+      return `ORD-${year}${month}${day}-${timestamp}`;
+    }
+  }
+
+  async function openAddModal() {
     isEditMode = false;
     selectedOrder = null;
+    
+    const newOrderNumber = await generateOrderNumber();
+    
     orderForm = {
       userId: users[0]?.id ?? 0,
+      orderNumber: newOrderNumber,
       status: "pending",
       shippingMethod: "pickup",
-      shippingAddress: "",
       paymentMethod: "transfer",
       paymentStatus: "pending",
+      notes: "",
       totalAmount: 0,
       orderItems: [],
     };
@@ -85,9 +106,9 @@
       orderNumber: order.orderNumber,
       status: order.status,
       shippingMethod: order.shippingMethod,
-      shippingAddress: order.shippingAddress ?? "",
       paymentMethod: order.paymentMethod,
       paymentStatus: order.paymentStatus,
+      notes: order.notes ?? "",
       totalAmount: order.totalAmount,
       orderItems: order.orderItems.map(item => ({
         productId: item.productId,

@@ -24,10 +24,7 @@ enum OrderStatus {
   canceled
 }
 
-enum ShippingMethod {
-  pickup
-  delivery
-}
+
 
 enum PaymentMethod {
   transfer
@@ -40,6 +37,11 @@ enum PaymentStatus {
   confirmed
   failed
   refunded
+}
+
+enum ShippingMethod {
+  pickup
+  delivery
 }
 
 //
@@ -112,10 +114,10 @@ model Order {
   orderNumber     String         @unique @db.VarChar(50)
   status          OrderStatus    @default(pending)
   shippingMethod  ShippingMethod
-  shippingAddress String?        @db.VarChar(255)
   paymentMethod   PaymentMethod
   paymentStatus   PaymentStatus  @default(pending)
   totalAmount     Int
+  notes           String?        @db.VarChar(500) // Additional notes for the order
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
@@ -124,7 +126,6 @@ model Order {
   createdBy     User?          @relation("OrderCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   orderItems    OrderItem[]
   payments      Payment[]
-  uploads       Upload[]
   notifications Notification[]
 
   @@index([userId])
@@ -151,16 +152,7 @@ model OrderItem {
   @@index([productId])
 }
 
-model Upload {
-  id         Int      @id @default(autoincrement())
-  orderId    Int
-  fileName   String   @db.VarChar(255)
-  filePath   String   @db.VarChar(255)
-  fileType   String   @db.VarChar(50)
-  uploadedAt DateTime @default(now())
 
-  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
-}
 
 model Payment {
   id             Int           @id @default(autoincrement())

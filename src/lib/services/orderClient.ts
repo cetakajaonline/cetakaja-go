@@ -5,10 +5,10 @@ interface OrderCreationData {
   userId: number; // Required for creation
   status?: string;
   shippingMethod: string;
-  shippingAddress?: string | null;
   paymentMethod: string;
   paymentStatus?: string;
   totalAmount: number;
+  notes?: string;
   orderItems?: Array<{
     productId: number;
     variantId?: number;
@@ -25,10 +25,10 @@ interface OrderUpdateData {
   orderNumber?: string;
   status?: string;
   shippingMethod?: string;
-  shippingAddress?: string | null;
   paymentMethod?: string;
   paymentStatus?: string;
   totalAmount?: number;
+  notes?: string;
   orderItems?: Array<{
     id?: number;
     productId: number;
@@ -93,6 +93,17 @@ export async function getOrder(id: number): Promise<Order> {
   }
 
   return (await res.json()) as Order;
+}
+
+export async function getNextOrderNumber(): Promise<string> {
+  const res = await fetch("/api/orders/next-number");
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch next order number");
+  }
+
+  const data = await res.json();
+  return data.orderNumber as string;
 }
 
 export async function getAllOrders(): Promise<Order[]> {

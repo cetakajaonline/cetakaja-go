@@ -136,12 +136,35 @@
       bind:value={searchQuery}
       oninput={handleInput}
       onkeydown={handleKeyDown}
-      onfocus={() => searchEnabled && (isOpen = true)}
+      onfocus={() => {
+        if (searchEnabled) {
+          // Clear the search query to show all options when dropdown opens
+          searchQuery = '';
+          isOpen = true;
+        }
+      }}
       readonly={!searchEnabled}
       disabled={disabled}
     />
     
-    <div class="absolute right-3 top-1/2 transform -translate-y-1/2">
+    <div class="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center">
+      {#if searchQuery && searchEnabled}
+        <button
+          type="button"
+          class="mr-2 text-gray-400 hover:text-gray-600"
+          onclick={() => {
+            searchQuery = '';
+            value = null;
+            isOpen = true;
+            dispatch('change', { value: null, label: '' });
+          }}
+          aria-label="Clear selection"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      {/if}
       {#if searchEnabled}
         <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
@@ -156,7 +179,7 @@
   
   {#if isOpen && filteredOptions.length > 0}
     <div 
-      class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-auto"
+      class="absolute z-10 w-full mt-1 bg-base-100 border border-base-300 rounded-lg shadow-lg max-h-60 overflow-auto"
       role="listbox"
       aria-label="Pilihan"
     >
@@ -165,8 +188,8 @@
           role="option"
           aria-selected={value === option.value}
           tabindex="0"
-          class={`px-4 py-2 cursor-pointer hover:bg-gray-100 ${
-            i === focusedOptionIndex ? 'bg-blue-100' : ''
+          class={`px-4 py-2 cursor-pointer hover:bg-base-200 text-base-content ${
+            i === focusedOptionIndex ? 'bg-base-300' : ''
           }`}
           onclick={() => handleOptionSelect(option)}
           onkeydown={(e) => {

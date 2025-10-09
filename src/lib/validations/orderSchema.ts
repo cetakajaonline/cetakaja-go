@@ -5,7 +5,6 @@ export const orderSchema = z.object({
   orderNumber: z.string().min(3, "Nomor order minimal 3 karakter").optional(),
   status: z.enum(["pending", "processing", "finished", "canceled"]),
   shippingMethod: z.enum(["pickup", "delivery"]),
-  shippingAddress: z.string().optional(),
   paymentMethod: z.enum(["transfer", "qris", "cash"]),
   paymentStatus: z
     .enum(["pending", "confirmed", "failed", "refunded"])
@@ -13,6 +12,7 @@ export const orderSchema = z.object({
   totalAmount: z
     .number()
     .min(0, "Total amount harus lebih dari atau sama dengan 0"),
+  notes: z.string().max(500, "Catatan maksimal 500 karakter").optional(),
   createdById: z.number().optional(),
   orderItems: z
     .array(
@@ -31,6 +31,7 @@ export const orderSchema = z.object({
 
 export const orderUpdateSchema = orderSchema.partial().extend({
   orderNumber: z.string().min(3, "Nomor order minimal 3 karakter").optional(),
+  notes: z.string().max(500, "Catatan maksimal 500 karakter").optional(),
 });
 
 export type OrderFormSchema = z.infer<typeof orderSchema>;

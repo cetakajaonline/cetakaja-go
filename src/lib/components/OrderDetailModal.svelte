@@ -92,15 +92,13 @@
         </div>
 
         <!-- Shipping Info -->
-        {#if order.shippingAddress}
-          <div class="bg-base-200 p-4 rounded-lg">
-            <h4 class="font-semibold mb-2">Pengiriman</h4>
-            <div class="space-y-1 text-sm">
-              <div><span class="font-medium">Metode:</span> {order.shippingMethod}</div>
-              <div><span class="font-medium">Alamat:</span> {order.shippingAddress}</div>
-            </div>
+        <div class="bg-base-200 p-4 rounded-lg">
+          <h4 class="font-semibold mb-2">Pengiriman</h4>
+          <div class="space-y-1 text-sm">
+            <div><span class="font-medium">Metode:</span> {order.shippingMethod}</div>
+            <div><span class="font-medium">Alamat:</span> {order.user.address || 'Tidak ada alamat'}</div>
           </div>
-        {/if}
+        </div>
 
         <!-- Order Items -->
         <div class="bg-base-200 p-4 rounded-lg">

@@ -7,7 +7,7 @@ import {
 } from "$lib/server/orderService";
 import { orderUpdateSchema } from "$lib/validations/orderSchema";
 
-export async function PUT(event) {
+export async function PUT(event: any) {
   try {
     const id = Number(event.params.id);
 
@@ -47,7 +47,7 @@ export async function PUT(event) {
   }
 }
 
-export async function DELETE(event) {
+export async function DELETE(event: any) {
   try {
     const id = Number(event.params.id);
 
@@ -64,7 +64,7 @@ export async function DELETE(event) {
   }
 }
 
-export async function GET(event) {
+export async function GET(event: any) {
   try {
     const id = Number(event.params.id);
 
