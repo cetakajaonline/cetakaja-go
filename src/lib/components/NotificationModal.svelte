@@ -53,14 +53,14 @@
       }
     }
 
-    // Get border and background classes based on type
+    // Get border and background classes based on type with better contrast
     function getBorderClass() {
       switch (type) {
-        case 'success': return 'border-success border-opacity-50 bg-success bg-opacity-5';
-        case 'error': return 'border-error border-opacity-50 bg-error bg-opacity-5';
-        case 'warning': return 'border-warning border-opacity-50 bg-warning bg-opacity-5';
-        case 'info': return 'border-info border-opacity-50 bg-info bg-opacity-5';
-        default: return 'border-primary border-opacity-50 bg-primary bg-opacity-5';
+        case 'success': return 'border-success bg-success bg-opacity-10 text-success-content';
+        case 'error': return 'border-error bg-error bg-opacity-10 text-error-content';
+        case 'warning': return 'border-warning bg-warning bg-opacity-10 text-warning-content';
+        case 'info': return 'border-info bg-info bg-opacity-10 text-info-content';
+        default: return 'border-primary bg-primary bg-opacity-10';
       }
     }
   

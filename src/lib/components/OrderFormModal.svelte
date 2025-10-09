@@ -30,6 +30,10 @@
   let formData = $state({ ...initial });
   let orderItems = $state<OrderItem[]>([...initial.orderItems || []]);
   
+  // State for managing payment proof
+  let paymentProofFile = $state<File | null>(null);
+  let paymentProofPreview = $state<string | null>(null);
+  
   // State for managing new order items
   let newOrderItem = $state({
     productId: 0,
@@ -74,12 +78,53 @@
       // Set default values for shipping and payment
       if (!formData.shippingMethod) formData.shippingMethod = 'delivery';
       if (!formData.paymentMethod) formData.paymentMethod = 'transfer';
+      // Reset payment proof when modal opens
+      paymentProofFile = null;
+      paymentProofPreview = null;
       
       previousShow = show;
     } else if (!show && previousShow) { // When modal closes
       previousShow = show;
     }
   });
+
+  // Update payment method when shipping method changes to ensure consistency
+  $effect(() => {
+    if (formData.shippingMethod !== 'pickup' && formData.paymentMethod === 'cash') {
+      // If shipping method is not pickup but payment method is cash, change to transfer
+      formData.paymentMethod = 'transfer';
+    }
+  });
+
+  // Handle payment proof file selection
+  function handlePaymentProofChange(e: Event) {
+    const target = e.target as HTMLInputElement;
+    if (target.files && target.files[0]) {
+      const file = target.files[0];
+      
+      // Validate file type (image/pdf only)
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf'];
+      if (!validTypes.includes(file.type)) {
+        alert('Hanya file gambar (JPG, PNG) atau PDF yang diperbolehkan');
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Ukuran file maksimal 5MB');
+        return;
+      }
+      
+      paymentProofFile = file;
+      
+      // Create preview for image files
+      if (file.type.startsWith('image/')) {
+        paymentProofPreview = URL.createObjectURL(file);
+      } else {
+        paymentProofPreview = null; // PDF files don't have previews
+      }
+    }
+  }
 
   function calculateTotal() {
     return orderItems.reduce((sum, item) => sum + item.subtotal, 0);
@@ -152,16 +197,35 @@
       return;
     }
     
+    // Validate payment proof if payment method is transfer or qris
+    if ((formData.paymentMethod === 'transfer' || formData.paymentMethod === 'qris') && !paymentProofFile) {
+      alert('Silakan upload bukti pembayaran untuk metode transfer atau QRIS');
+      return;
+    }
+    
     // Update form data with order items
     const finalFormData = {
       ...formData,
-      orderItems
+      orderItems,
+      // Include payment proof file if it exists
+      ...(paymentProofFile && { paymentProofFile })
     };
     
     dispatch('submit', finalFormData);
+    
+    // Reset payment proof state after submission
+    paymentProofFile = null;
+    paymentProofPreview = null;
   }
 
   function handleClose() {
+    // Clean up object URL to prevent memory leak
+    if (paymentProofPreview) {
+      URL.revokeObjectURL(paymentProofPreview);
+    }
+    // Reset payment proof state
+    paymentProofFile = null;
+    paymentProofPreview = null;
     dispatch('close');
   }
 
@@ -189,6 +253,20 @@
       value: product.id,
       label: product.name
     }))
+  );
+
+  // Payment options that depend on shipping method
+  let paymentOptions = $derived(
+    formData.shippingMethod === 'pickup'
+      ? [
+          { value: 'transfer', label: 'Transfer' },
+          { value: 'qris', label: 'QRIS' },
+          { value: 'cash', label: 'Tunai' }
+        ]
+      : [
+          { value: 'transfer', label: 'Transfer' },
+          { value: 'qris', label: 'QRIS' }
+        ]
   );
 
 </script>
@@ -263,9 +341,9 @@
           class="select select-bordered w-full"
           bind:value={formData.paymentMethod}
         >
-          <option value="transfer">Transfer</option>
-          <option value="qris">QRIS</option>
-          <option value="cash">Tunai</option>
+          {#each paymentOptions as option}
+            <option value={option.value}>{option.label}</option>
+          {/each}
         </select>
       </div>
       
@@ -319,7 +397,7 @@
                   <option value={variant.id}>{variant.variantName} - {formatCurrency(variant.price)}</option>
                 {/each}
               {:else}
-                <option value="">-- Produk tidak memiliki varian --</option>
+                <option value="">-- Pilih Produk Dulu --</option>
               {/if}
             </select>
           </div>
@@ -420,6 +498,58 @@
       </div>
       {/if}
     </div>
+
+    <!-- Payment Proof Section (only for transfer and qris) -->
+    {#if formData.paymentMethod === 'transfer' || formData.paymentMethod === 'qris'}
+    <div class="pt-4">
+      <div class="form-control w-full md:col-span-2">
+        <label class="label" for="paymentProof">
+          <span class="label-text">Bukti Pembayaran</span>
+        </label>
+        <input
+          id="paymentProof"
+          type="file"
+          class="file-input file-input-bordered w-full"
+          accept="image/jpeg,image/jpg,image/png,application/pdf"
+          onchange={handlePaymentProofChange}
+        />
+        
+        {#if paymentProofPreview}
+          <div class="mt-2">
+            <div class="flex items-center justify-between">
+              <div class="flex-1">
+                {#if paymentProofFile?.type.startsWith('image/')}
+                  <img 
+                    src={paymentProofPreview} 
+                    alt="Preview Bukti Pembayaran" 
+                    class="max-w-xs max-h-48 rounded border"
+                  />
+                {:else}
+                  <div class="p-4 bg-gray-100 rounded border flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span>File PDF: {paymentProofFile?.name}</span>
+                  </div>
+                {/if}
+              </div>
+              <button 
+                type="button" 
+                class="btn btn-sm btn-ghost ml-2"
+                onclick={() => {
+                  if (paymentProofPreview) URL.revokeObjectURL(paymentProofPreview);
+                  paymentProofFile = null;
+                  paymentProofPreview = null;
+                }}
+              >
+                Hapus
+              </button>
+            </div>
+          </div>
+        {/if}
+      </div>
+    </div>
+    {/if}
 
     <!-- Notes Section -->
     <div class="pt-4">

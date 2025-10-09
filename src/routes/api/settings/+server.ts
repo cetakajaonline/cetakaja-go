@@ -4,6 +4,8 @@ import type { RequestHandler } from "./$types";
 import { saveFile } from "$lib/server/uploadService";
 import { requireAnyRole, requireAdmin } from "$lib/server/auth";
 import { settingSchema } from "$lib/validations/settingSchema";
+import fs from 'fs';
+import path from 'path';
 
 export const GET: RequestHandler = async (event) => {
   requireAnyRole(event);
@@ -47,10 +49,27 @@ export const POST: RequestHandler = async (event) => {
     logoUrl = await saveFile(buffer, file.name); // saveFile bisa kembalikan `/uploads/filename`
   }
 
+  // Get the old setting to access the old logo path
+  const oldSetting = await getSetting();
+  const oldLogoPath = oldSetting?.logo;
+  
   const setting = await updateSetting({
     ...parsed.data,
     ...(logoUrl ? { logo: logoUrl } : {}),
   });
+
+  // Delete the old logo file if it exists and a new one was uploaded
+  if (oldLogoPath && logoUrl) {
+    try {
+      const fullPath = path.join(process.cwd(), 'static', oldLogoPath);
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+      }
+    } catch (err) {
+      console.error(`Gagal menghapus file logo lama: ${oldLogoPath}`, err);
+      // Continue even if file deletion fails
+    }
+  }
 
   return json(setting);
 };

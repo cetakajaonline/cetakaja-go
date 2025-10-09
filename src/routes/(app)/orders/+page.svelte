@@ -10,7 +10,7 @@
   import ValidationModal from "$lib/components/ValidationModal.svelte";
 
   import { orderSchema, orderUpdateSchema } from "$lib/validations/orderSchema";
-  import { createOrder, updateOrder, deleteOrder, getNextOrderNumber } from "$lib/services/orderClient";
+  import { createOrder, updateOrder, deleteOrder, getOrder, uploadPaymentProof, getNextOrderNumber } from "$lib/services/orderClient";
   import { z } from "zod";
   import { tick } from "svelte";
   import type { Order, User, Product } from "$lib/types";
@@ -136,15 +136,25 @@
 
     try {
       let result: Order;
+      // Extract paymentProofFile if it exists
+      const { paymentProofFile, ...orderData } = payload;
+
       if (isEditMode && selectedOrder) {
-        const validated = orderUpdateSchema.parse(payload);
-        result = await updateOrder(selectedOrder.id, validated);
+        // Update order with payment proof file if provided
+        const updatePayload = { ...orderData };
+        if (paymentProofFile instanceof File) {
+          updatePayload.paymentProofFile = paymentProofFile;
+        }
+        
+        // Validate if needed - but updateOrder will handle validation
+        result = await updateOrder(selectedOrder.id, updatePayload);
         orders = orders.map((o) =>
           o.id === selectedOrder!.id ? { ...o, ...result } : o
         );
       } else {
-        const validated = orderSchema.parse(payload);
-        result = await createOrder(validated);
+        // Create order with payment proof if provided
+        const validated = orderSchema.parse(orderData);
+        result = await createOrder({ ...validated, paymentProofFile });
         orders = [...orders, result];
       }
       closeFormModal();
@@ -187,9 +197,18 @@
     }, 0);
   }
 
-  function openDetailModal(order: Order) {
-    selectedOrderDetail = order;
-    showOrderDetailModal = true;
+  async function openDetailModal(order: Order) {
+    try {
+      // Fetch detailed order information including payments and payment proofs
+      const detailedOrder = await getOrder(order.id);
+      selectedOrderDetail = detailedOrder;
+      showOrderDetailModal = true;
+    } catch (error) {
+      console.error('Error fetching detailed order:', error);
+      // Fallback to the basic order if detailed fetch fails
+      selectedOrderDetail = order;
+      showOrderDetailModal = true;
+    }
   }
 
   function closeDetailModal() {

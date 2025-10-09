@@ -4,6 +4,7 @@ import {
   updateOrder,
   deleteOrder,
   getOrderById,
+  getOrderWithPayments,
 } from "$lib/server/orderService";
 import { orderUpdateSchema } from "$lib/validations/orderSchema";
 
@@ -69,7 +70,7 @@ export async function GET(event: any) {
     const id = Number(event.params.id);
 
     // Check if user can access this order (admin/staff or the order owner)
-    const order = await getOrderById(id);
+    const order = await getOrderWithPayments(id);
     if (!order) {
       return json({ message: "Order tidak ditemukan" }, { status: 404 });
     }

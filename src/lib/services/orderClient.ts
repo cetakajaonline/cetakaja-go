@@ -1,4 +1,4 @@
-import type { Order } from "$lib/types";
+import type { Order, PaymentProof } from "$lib/types";
 
 // Define types for order creation (with required fields)
 interface OrderCreationData {
@@ -38,17 +38,40 @@ interface OrderUpdateData {
     subtotal: number;
   }>;
   createdById?: number | null;
+  paymentProofFile?: File;
 }
 
 export async function createOrder(
   orderData: Omit<OrderCreationData, "orderItems"> & {
     orderItems?: OrderCreationData["orderItems"];
+    paymentProofFile?: File;
   },
 ): Promise<Order> {
-  const res = await fetch("/api/orders", {
+  // Use multipart endpoint to handle file uploads along with order data
+  const formData = new FormData();
+  
+  // Add basic order data
+  formData.append('userId', orderData.userId.toString());
+  if (orderData.status) formData.append('status', orderData.status);
+  formData.append('shippingMethod', orderData.shippingMethod);
+  formData.append('paymentMethod', orderData.paymentMethod);
+  formData.append('totalAmount', orderData.totalAmount.toString());
+  if (orderData.notes) formData.append('notes', orderData.notes);
+  if (orderData.createdById) formData.append('createdById', orderData.createdById.toString());
+  
+  // Add order items as JSON string
+  if (orderData.orderItems) {
+    formData.append('orderItems', JSON.stringify(orderData.orderItems));
+  }
+  
+  // Add payment proof file if provided and payment method is transfer or qris
+  if (orderData.paymentProofFile instanceof File && (orderData.paymentMethod === 'transfer' || orderData.paymentMethod === 'qris')) {
+    formData.append('paymentProofFile', orderData.paymentProofFile);
+  }
+
+  const res = await fetch("/api/orders/multipart", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(orderData),
+    body: formData,
   });
 
   if (!res.ok) {
@@ -56,25 +79,86 @@ export async function createOrder(
     throw new Error(errorData.message || "Failed to create order");
   }
 
-  return (await res.json()) as Order;
+  const result: Order = await res.json();
+  return result;
+}
+
+// Separately handle payment proof file upload
+export async function uploadPaymentProof(paymentId: number, file: File): Promise<{ message: string; paymentProof: PaymentProof }> {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('paymentId', paymentId.toString());
+  
+  const res = await fetch('/api/payment-proofs', {
+    method: 'POST',
+    body: formData
+  });
+  
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.message || "Failed to upload payment proof");
+  }
+  
+  const result: { message: string; paymentProof: PaymentProof } = await res.json();
+  return result;
 }
 
 export async function updateOrder(
   id: number,
   orderData: Partial<OrderUpdateData>,
 ): Promise<Order> {
-  const res = await fetch(`/api/orders/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(orderData),
-  });
+  // Check if payment proof file is being included
+  if (orderData.paymentProofFile instanceof File) {
+    // Use multipart endpoint to handle file uploads along with order data
+    const formData = new FormData();
+    
+    // Add all data fields
+    if (orderData.userId) formData.append('userId', orderData.userId.toString());
+    if (orderData.orderNumber) formData.append('orderNumber', orderData.orderNumber);
+    if (orderData.status) formData.append('status', orderData.status);
+    if (orderData.shippingMethod) formData.append('shippingMethod', orderData.shippingMethod);
+    if (orderData.paymentMethod) formData.append('paymentMethod', orderData.paymentMethod);
+    if (orderData.paymentStatus) formData.append('paymentStatus', orderData.paymentStatus);
+    if (orderData.totalAmount) formData.append('totalAmount', orderData.totalAmount.toString());
+    if (orderData.notes !== undefined) formData.append('notes', orderData.notes);
+    if (orderData.createdById) formData.append('createdById', orderData.createdById.toString());
+    
+    // Add order items as JSON string if provided
+    if (orderData.orderItems) {
+      formData.append('orderItems', JSON.stringify(orderData.orderItems));
+    }
+    
+    // Add payment proof file
+    formData.append('paymentProofFile', orderData.paymentProofFile);
 
-  if (!res.ok) {
-    const errorData = await res.json();
-    throw new Error(errorData.message || "Failed to update order");
+    const res = await fetch(`/api/orders/${id}/multipart`, {
+      method: "PUT",
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.message || "Failed to update order");
+    }
+
+    const result: Order = await res.json();
+    return result;
+  } else {
+    // Use regular JSON endpoint for orders without file uploads
+    const res = await fetch(`/api/orders/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(orderData),
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.message || "Failed to update order");
+    }
+
+    const result: Order = await res.json();
+    return result;
   }
-
-  return (await res.json()) as Order;
 }
 
 export async function deleteOrder(id: number): Promise<boolean> {
@@ -92,7 +176,8 @@ export async function getOrder(id: number): Promise<Order> {
     throw new Error("Failed to fetch order");
   }
 
-  return (await res.json()) as Order;
+  const result: Order = await res.json();
+  return result;
 }
 
 export async function getNextOrderNumber(): Promise<string> {
@@ -113,5 +198,6 @@ export async function getAllOrders(): Promise<Order[]> {
     throw new Error("Failed to fetch orders");
   }
 
-  return (await res.json()) as Order[];
+  const result: Order[] = await res.json();
+  return result;
 }

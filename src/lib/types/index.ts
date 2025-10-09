@@ -75,6 +75,27 @@ export interface OrderItem {
     | undefined;
 }
 
+// ✅ PaymentProof
+export interface PaymentProof {
+  id: number;
+  fileName: string;
+  filePath: string;
+  fileType: string;
+  uploadedAt: Date;
+}
+
+// ✅ Payment
+export interface Payment {
+  id: number;
+  method: string; // PaymentMethod enum
+  amount: number;
+  status: string; // PaymentStatus enum
+  transactionRef: string | null;
+  paidAt: Date | null;
+  proofs: PaymentProof[];
+  createdAt: Date;
+}
+
 // ✅ Order
 export interface Order {
   id: number;
@@ -102,6 +123,7 @@ export interface Order {
     username: string;
   } | null;
   orderItems: OrderItem[];
+  payments: Payment[]; // Added payments relation
 }
 
 // Sort keys for Product

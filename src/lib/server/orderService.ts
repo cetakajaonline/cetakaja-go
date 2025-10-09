@@ -1,4 +1,5 @@
 import prisma from "$lib/server/prisma";
+import { createOrderNotification, createPaymentNotification } from "$lib/server/notificationService";
 
 const orderSelect = {
   id: true,
@@ -55,6 +56,81 @@ const orderSelect = {
   },
 };
 
+const orderDetailSelect = {
+  id: true,
+  orderNumber: true,
+  status: true,
+  shippingMethod: true,
+  // shippingAddress: true, // Field removed from schema
+  paymentMethod: true,
+  paymentStatus: true,
+  totalAmount: true,
+  notes: true,
+  createdAt: true,
+  updatedAt: true,
+  userId: true,
+  createdById: true,
+  // Relations - including payments with proofs
+  user: {
+    select: {
+      id: true,
+      name: true,
+      username: true,
+      phone: true,
+      address: true,
+    },
+  },
+  createdBy: {
+    select: {
+      id: true,
+      name: true,
+      username: true,
+    },
+  },
+  orderItems: {
+    select: {
+      id: true,
+      qty: true,
+      price: true,
+      subtotal: true,
+      productId: true,
+      variantId: true,
+      product: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      variant: {
+        select: {
+          id: true,
+          variantName: true,
+        },
+      },
+    },
+  },
+  payments: {
+    select: {
+      id: true,
+      method: true,
+      amount: true,
+      status: true,
+      transactionRef: true,
+      paidAt: true,
+      createdAt: true,
+      proofs: {
+        select: {
+          id: true,
+          fileName: true,
+          filePath: true,
+          fileType: true,
+          uploadedAt: true,
+        }
+      }
+    }
+  },
+};
+
 export async function getAllOrders() {
   return prisma.order.findMany({
     select: orderSelect,
@@ -66,6 +142,42 @@ export async function getOrderById(id: number) {
   return prisma.order.findUnique({
     where: { id },
     select: orderSelect,
+  });
+}
+
+export async function getOrderDetailById(id: number) {
+  return prisma.order.findUnique({
+    where: { id },
+    select: orderDetailSelect,
+  });
+}
+
+// Also update the basic get order to include minimal payment info if needed elsewhere
+export async function getOrderWithPayments(id: number) {
+  return prisma.order.findUnique({
+    where: { id },
+    select: {
+      ...orderSelect,
+      payments: {
+        select: {
+          id: true,
+          method: true,
+          amount: true,
+          status: true,
+          transactionRef: true,
+          paidAt: true,
+          proofs: {
+            select: {
+              id: true,
+              fileName: true,
+              filePath: true,
+              fileType: true,
+              uploadedAt: true,
+            }
+          }
+        }
+      }
+    },
   });
 }
 
@@ -96,8 +208,8 @@ export async function createOrder({
     subtotal: number;
   }[];
 }) {
-  return prisma.$transaction(async (tx) => {
-    const newOrder = await tx.order.create({
+  const newOrder = await prisma.$transaction(async (tx) => {
+    const createdOrder = await tx.order.create({
       data: {
         userId,
         createdById,
@@ -120,8 +232,46 @@ export async function createOrder({
       select: orderSelect,
     });
 
-    return newOrder;
+    // If payment method is transfer or qris, create a payment record
+    if (paymentMethod === "transfer" || paymentMethod === "qris") {
+      await tx.payment.create({
+        data: {
+          orderId: createdOrder.id,
+          userId, // customer who made the payment
+          createdById, // staff/admin who created the order
+          method: paymentMethod,
+          amount: totalAmount,
+          status: "pending", // payment status starts as pending until confirmed
+        }
+      });
+    } 
+    // For cash payments, also create a payment record (but without proof needed)
+    else if (paymentMethod === "cash") {
+      await tx.payment.create({
+        data: {
+          orderId: createdOrder.id,
+          userId,
+          createdById,
+          method: paymentMethod,
+          amount: totalAmount,
+          status: "confirmed", // cash payments are typically confirmed immediately
+        }
+      });
+    }
+
+    return createdOrder;
   });
+
+  // Create notification outside the transaction to avoid foreign key constraint
+  const user = await prisma.user.findUnique({
+    where: { id: userId }
+  });
+  
+  if (user) {
+    await createOrderNotification(newOrder, user);
+  }
+
+  return newOrder;
 }
 
 export async function updateOrder(
@@ -157,7 +307,16 @@ export async function updateOrder(
     }[];
   },
 ) {
-  return prisma.$transaction(async (tx) => {
+  // Get the current order to check for changes before updating
+  const currentOrder = await prisma.order.findUnique({
+    where: { id }
+  });
+
+  if (!currentOrder) {
+    throw new Error('Order not found');
+  }
+
+  const updatedOrder = await prisma.$transaction(async (tx) => {
     const data: {
       userId?: number;
       createdById?: number;
@@ -181,7 +340,7 @@ export async function updateOrder(
     if (notes !== undefined) data.notes = notes;
 
     // Update the order
-    const updatedOrder = await tx.order.update({
+    const result = await tx.order.update({
       where: { id },
       data: {
         ...data,
@@ -202,8 +361,86 @@ export async function updateOrder(
       select: orderSelect,
     });
 
-    return updatedOrder;
+    // If payment method changed to transfer/qris and no payment exists, create a payment record
+    if (paymentMethod && (paymentMethod === "transfer" || paymentMethod === "qris")) {
+      const existingPayment = await tx.payment.findFirst({
+        where: { orderId: id }
+      });
+      
+      if (!existingPayment) {
+        await tx.payment.create({
+          data: {
+            orderId: id,
+            userId: result.userId, // customer who made the payment
+            createdById: result.createdById, // staff/admin who created the order
+            method: paymentMethod,
+            amount: totalAmount || result.totalAmount,
+            status: paymentStatus || "pending", // payment status starts as pending until confirmed
+          }
+        });
+      } else {
+        // Update existing payment if method changed
+        await tx.payment.update({
+          where: { id: existingPayment.id }, // Use the payment's ID instead of orderId
+          data: {
+            method: paymentMethod,
+            amount: totalAmount || result.totalAmount,
+            status: paymentStatus || existingPayment.status,
+          }
+        });
+      }
+    } 
+    // For cash payments, create or update payment record as confirmed
+    else if (paymentMethod && paymentMethod === "cash") {
+      const existingPayment = await tx.payment.findFirst({
+        where: { orderId: id }
+      });
+      
+      if (!existingPayment) {
+        await tx.payment.create({
+          data: {
+            orderId: id,
+            userId: result.userId,
+            createdById: result.createdById,
+            method: paymentMethod,
+            amount: totalAmount || result.totalAmount,
+            status: "confirmed", // cash payments are typically confirmed immediately
+          }
+        });
+      } else {
+        // Update existing payment
+        await tx.payment.update({
+          where: { id: existingPayment.id }, // Use the payment's ID instead of orderId
+          data: {
+            method: paymentMethod,
+            amount: totalAmount || result.totalAmount,
+            status: "confirmed",
+          }
+        });
+      }
+    }
+
+    return result;
   });
+
+  // Create notification outside the transaction to avoid foreign key constraint
+  const user = await prisma.user.findUnique({
+    where: { id: updatedOrder.userId }
+  });
+  
+  if (user) {
+    // Create notification if order status changed
+    if (status && currentOrder.status !== status) {
+      await createOrderNotification(updatedOrder, user);
+    }
+    
+    // Create notification if payment status changed
+    if (paymentStatus && currentOrder.paymentStatus !== paymentStatus) {
+      await createPaymentNotification(updatedOrder, user, paymentStatus);
+    }
+  }
+
+  return updatedOrder;
 }
 
 export async function deleteOrder(id: number) {

@@ -149,6 +149,76 @@
           </div>
         </div>
 
+        <!-- Payment Proof for transfer and qris methods -->
+        {#if order && (order.paymentMethod?.toLowerCase() === 'transfer' || order.paymentMethod?.toLowerCase() === 'qris')}
+          {#if order.payments && order.payments.length > 0}
+            <!-- Show payments with proofs -->
+            {#each order.payments as payment}
+              {#if payment.proofs && payment.proofs.length > 0}
+                <div class="bg-base-200 p-4 rounded-lg">
+                  <h4 class="font-semibold mb-2">Bukti Pembayaran</h4>
+                  <div class="space-y-2">
+                    {#each payment.proofs as proof}
+                      <div class="border rounded p-2">
+                        <div class="flex items-center justify-between">
+                          <div class="flex items-center">
+                            {#if proof.fileType.startsWith('image/')}
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                            {:else}
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                            {/if}
+                            <span class="text-sm">{proof.fileName}</span>
+                          </div>
+                          <div class="text-xs text-gray-500">
+                            {new Date(proof.uploadedAt).toLocaleDateString('id-ID')}
+                          </div>
+                        </div>
+                        
+                        <!-- Preview or download link -->
+                        <div class="mt-2">
+                          {#if proof.fileType.startsWith('image/')}
+                            <a 
+                              href="{proof.filePath}" 
+                              target="_blank"
+                              class="block"
+                            >
+                              <img 
+                                src="{proof.filePath}" 
+                                alt="Preview Bukti Pembayaran" 
+                                class="max-w-xs max-h-64 border rounded cursor-pointer hover:opacity-90"
+                              />
+                            </a>
+                          {:else}
+                            <a 
+                              href="{proof.filePath}" 
+                              target="_blank"
+                              class="btn btn-xs btn-primary"
+                            >
+                              Download File
+                            </a>
+                          {/if}
+                        </div>
+                      </div>
+                    {/each}
+                  </div>
+                </div>
+              {/if}
+            {/each}
+            
+            <!-- Show message if no proofs exist but payment is pending -->
+            {#if order.payments.every(payment => !payment.proofs || payment.proofs.length === 0)}
+              <div class="bg-warning p-4 rounded-lg text-warning-content">
+                <h4 class="font-semibold mb-2">Bukti Pembayaran Belum Diupload</h4>
+                <p class="text-sm">Pembayaran dengan metode transfer ini belum memiliki bukti pembayaran yang diupload.</p>
+              </div>
+            {/if}
+          {/if}
+        {/if}
+
         <!-- Notes -->
         {#if order.notes}
           <div class="bg-base-200 p-4 rounded-lg">

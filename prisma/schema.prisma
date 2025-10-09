@@ -8,9 +8,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-//
-// ENUMS
-//
 enum Role {
   admin
   staff
@@ -23,8 +20,6 @@ enum OrderStatus {
   finished
   canceled
 }
-
-
 
 enum PaymentMethod {
   transfer
@@ -44,9 +39,6 @@ enum ShippingMethod {
   delivery
 }
 
-//
-// MODELS
-//
 model User {
   id        Int      @id @default(autoincrement())
   name      String   @db.VarChar(100)
@@ -151,8 +143,6 @@ model OrderItem {
   @@index([orderId])
   @@index([productId])
 }
-
-
 
 model Payment {
   id             Int           @id @default(autoincrement())

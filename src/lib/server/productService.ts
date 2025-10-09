@@ -1,4 +1,6 @@
 import prisma from "$lib/server/prisma";
+import fs from 'fs';
+import path from 'path';
 
 const productInclude = {
   category: {
@@ -112,6 +114,12 @@ export async function updateProduct(
     }[];
   },
 ) {
+  // Get the current product to access the old photo path before updating
+  const currentProduct = await prisma.product.findUnique({
+    where: { id },
+    select: { photo: true }
+  });
+  
   // Build update data
   const data: {
     name?: string;
@@ -177,11 +185,26 @@ export async function updateProduct(
     }
   }
 
-  return prisma.product.update({
+  const updatedProduct = await prisma.product.update({
     where: { id },
     data,
     include: productInclude,
   });
+
+  // Delete the old photo file if it exists and a new one was uploaded
+  if (currentProduct?.photo && photo && currentProduct.photo !== photo) {
+    try {
+      const fullPath = path.join(process.cwd(), 'static', currentProduct.photo);
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+      }
+    } catch (err) {
+      console.error(`Gagal menghapus file foto produk lama: ${currentProduct.photo}`, err);
+      // Continue even if file deletion fails
+    }
+  }
+
+  return updatedProduct;
 }
 
 export async function deleteProduct(id: number) {
