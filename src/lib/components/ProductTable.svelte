@@ -31,7 +31,7 @@
   <table class="table w-full min-w-[800px] text-sm">
     <thead class="bg-base-100 text-base-content">
       <tr>
-        <th class="cursor-pointer" on:click={() => onSort("name")}>
+        <th class="cursor-pointer" onclick={() => onSort("name")}>
           <div class="flex items-center gap-1">
             Produk
             {#if sortKey === "name"}
@@ -44,7 +44,7 @@
           </div>
         </th>
 
-        <th class="cursor-pointer" on:click={() => onSort("baseCode")}>
+        <th class="cursor-pointer" onclick={() => onSort("baseCode")}>
           <div class="flex items-center gap-1">
             Kode Produk
             {#if sortKey === "baseCode"}
@@ -57,7 +57,7 @@
           </div>
         </th>
 
-        <th class="cursor-pointer" on:click={() => onSort("category.name")}>
+        <th class="cursor-pointer" onclick={() => onSort("category.name")}>
           <div class="flex items-center gap-1">
             Kategori
             {#if sortKey === "category.name"}
@@ -72,7 +72,7 @@
 
         <th>Varian & Harga</th>
 
-        <th class="cursor-pointer" on:click={() => onSort("createdAt")}>
+        <th class="cursor-pointer" onclick={() => onSort("createdAt")}>
           <div class="flex items-center gap-1">
             Dibuat
             {#if sortKey === "createdAt"}
@@ -128,19 +128,23 @@
 
           <td>{new Date(product.createdAt).toLocaleDateString()}</td>
 
-          <td class="text-right space-x-2 whitespace-nowrap">
-            {#if isAdmin}
-              <IconButton
-                icon={Pencil}
-                color="btn-circle btn-outline btn-success"
-                onClick={() => onEdit(product)}
-              />
-              <IconButton
-                icon={Trash2}
-                color="btn-circle btn-outline btn-error"
-                onClick={() => onDelete(product)}
-              />
-            {/if}
+          <td class="text-right whitespace-nowrap">
+            <div class="join">
+              {#if isAdmin}
+                <button 
+                  class="btn btn-xs btn-outline btn-warning join-item"
+                  onclick={() => onEdit(product)}
+                >
+                  Edit
+                </button>
+                <button 
+                  class="btn btn-xs btn-outline btn-error join-item"
+                  onclick={() => onDelete(product)}
+                >
+                  Hapus
+                </button>
+              {/if}
+            </div>
           </td>
         </tr>
       {/each}

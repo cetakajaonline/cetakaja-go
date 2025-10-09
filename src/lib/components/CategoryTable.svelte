@@ -20,7 +20,7 @@
   <table class="table w-full min-w-[700px] text-sm">
     <thead class="bg-base-100 text-base-content">
       <tr>
-        <th class="cursor-pointer" on:click={() => onSort("name")}>
+        <th class="cursor-pointer" onclick={() => onSort("name")}>
           <div class="flex items-center gap-1">
             Nama
             {#if sortKey === "name"}
@@ -33,7 +33,7 @@
           </div>
         </th>
 
-        <th class="cursor-pointer" on:click={() => onSort("code")}>
+        <th class="cursor-pointer" onclick={() => onSort("code")}>
           <div class="flex items-center gap-1">
             Kode
             {#if sortKey === "code"}
@@ -46,7 +46,7 @@
           </div>
         </th>
 
-        <th class="cursor-pointer" on:click={() => onSort("description")}>
+        <th class="cursor-pointer" onclick={() => onSort("description")}>
           <div class="flex items-center gap-1">
             Deskripsi
             {#if sortKey === "description"}
@@ -59,7 +59,7 @@
           </div>
         </th>
 
-        <th class="cursor-pointer" on:click={() => onSort("createdAt")}>
+        <th class="cursor-pointer" onclick={() => onSort("createdAt")}>
           <div class="flex items-center gap-1">
             Dibuat
             {#if sortKey === "createdAt"}
@@ -102,19 +102,23 @@
             {/if}
           </td>
 
-          <td class="text-right space-x-2 whitespace-nowrap">
-            {#if isAdmin}
-              <IconButton
-                icon={Pencil}
-                color="btn-circle btn-outline btn-success"
-                onClick={() => onEdit(category)}
-              />
-              <IconButton
-                icon={Trash2}
-                color="btn-circle btn-outline btn-error"
-                onClick={() => onDelete(category)}
-              />
-            {/if}
+          <td class="text-right whitespace-nowrap">
+            <div class="join">
+              {#if isAdmin}
+                <button 
+                  class="btn btn-xs btn-outline btn-warning join-item"
+                  onclick={() => onEdit(category)}
+                >
+                  Edit
+                </button>
+                <button 
+                  class="btn btn-xs btn-outline btn-error join-item"
+                  onclick={() => onDelete(category)}
+                >
+                  Hapus
+                </button>
+              {/if}
+            </div>
           </td>
         </tr>
       {/each}

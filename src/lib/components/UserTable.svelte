@@ -22,7 +22,7 @@
   <table class="table w-full min-w-[700px] text-sm">
     <thead class="bg-base-100 text-base-content">
       <tr>
-        <th class="cursor-pointer" on:click={() => onSort("name")}>
+        <th class="cursor-pointer" onclick={() => onSort("name")}>
           <div class="flex items-center gap-1">
             Nama
             {#if sortKey === "name"}
@@ -35,7 +35,7 @@
           </div>
         </th>
 
-        <th class="cursor-pointer" on:click={() => onSort("username")}>
+        <th class="cursor-pointer" onclick={() => onSort("username")}>
           <div class="flex items-center gap-1">
             Username
             {#if sortKey === "username"}
@@ -48,7 +48,7 @@
           </div>
         </th>
 
-        <th class="cursor-pointer" on:click={() => onSort("phone")}>
+        <th class="cursor-pointer" onclick={() => onSort("phone")}>
           <div class="flex items-center gap-1">
             No. HP
             {#if sortKey === "phone"}
@@ -61,7 +61,7 @@
           </div>
         </th>
 
-        <th class="cursor-pointer" on:click={() => onSort("address")}>
+        <th class="cursor-pointer" onclick={() => onSort("address")}>
           <div class="flex items-center gap-1">
             Alamat
             {#if sortKey === "address"}
@@ -74,7 +74,7 @@
           </div>
         </th>
 
-        <th class="cursor-pointer" on:click={() => onSort("role")}>
+        <th class="cursor-pointer" onclick={() => onSort("role")}>
           <div class="flex items-center gap-1">
             Role
             {#if sortKey === "role"}
@@ -120,25 +120,30 @@
             </div>
           </td>
 
-          <td class="text-right space-x-2 whitespace-nowrap">
-            {#if isAdmin || user.id === currentUserId}
-              <IconButton
-                icon={Pencil}
-                color="btn-circle btn-outline btn-success"
-                onClick={() => onEdit(user)}
-              />
-            {/if}
+          <td class="text-right whitespace-nowrap">
+            <div class="join">
+              {#if isAdmin || user.id === currentUserId}
+                <button 
+                  class="btn btn-xs btn-outline btn-warning join-item"
+                  onclick={() => onEdit(user)}
+                >
+                  Edit
+                </button>
+              {/if}
 
-            {#if isAdmin}
-              <IconButton
-                icon={Trash2}
-                color="btn-circle btn-outline btn-error"
-                onClick={() => onDelete(user)}
-              />
-            {/if}
+              {#if isAdmin}
+                <button 
+                  class="btn btn-xs btn-outline btn-error join-item"
+                  onclick={() => onDelete(user)}
+                >
+                  Hapus
+                </button>
+              {/if}
+            </div>
           </td>
         </tr>
       {/each}
     </tbody>
   </table>
 </div>
+
