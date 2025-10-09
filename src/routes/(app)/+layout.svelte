@@ -16,6 +16,7 @@
     { href: "/categories", label: "Categories", icon: "🏷️" },
     { href: "/products", label: "Products", icon: "📦" },
     { href: "/orders", label: "Orders", icon: "📝" },
+    { href: "/expenses", label: "Expenses", icon: "💰" },
     { href: "/settings", label: "Settings", icon: "⚙️" },
   ];
 
@@ -27,10 +28,10 @@
 >
   <div class="navbar-start">
     <!-- Mobile Menu Toggle -->
-    <!-- svelte-ignore a11y_consider_explicit_label -->
     <button
       class="btn btn-ghost btn-square sm:hidden"
       on:click={() => (showMobileMenu = !showMobileMenu)}
+      aria-label="Toggle menu"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"

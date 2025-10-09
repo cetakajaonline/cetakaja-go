@@ -1,5 +1,8 @@
 import prisma from "$lib/server/prisma";
-import { createOrderNotification, createPaymentNotification } from "$lib/server/notificationService";
+import {
+  createOrderNotification,
+  createPaymentNotification,
+} from "$lib/server/notificationService";
 
 const orderSelect = {
   id: true,
@@ -50,6 +53,26 @@ const orderSelect = {
         select: {
           id: true,
           variantName: true,
+        },
+      },
+    },
+  },
+  payments: {
+    select: {
+      id: true,
+      method: true,
+      amount: true,
+      status: true,
+      transactionRef: true,
+      paidAt: true,
+      createdAt: true,
+      proofs: {
+        select: {
+          id: true,
+          fileName: true,
+          filePath: true,
+          fileType: true,
+          uploadedAt: true,
         },
       },
     },
@@ -125,9 +148,9 @@ const orderDetailSelect = {
           filePath: true,
           fileType: true,
           uploadedAt: true,
-        }
-      }
-    }
+        },
+      },
+    },
   },
 };
 
@@ -173,10 +196,10 @@ export async function getOrderWithPayments(id: number) {
               filePath: true,
               fileType: true,
               uploadedAt: true,
-            }
-          }
-        }
-      }
+            },
+          },
+        },
+      },
     },
   });
 }
@@ -242,9 +265,9 @@ export async function createOrder({
           method: paymentMethod,
           amount: totalAmount,
           status: "pending", // payment status starts as pending until confirmed
-        }
+        },
       });
-    } 
+    }
     // For cash payments, also create a payment record (but without proof needed)
     else if (paymentMethod === "cash") {
       await tx.payment.create({
@@ -255,7 +278,7 @@ export async function createOrder({
           method: paymentMethod,
           amount: totalAmount,
           status: "confirmed", // cash payments are typically confirmed immediately
-        }
+        },
       });
     }
 
@@ -264,9 +287,9 @@ export async function createOrder({
 
   // Create notification outside the transaction to avoid foreign key constraint
   const user = await prisma.user.findUnique({
-    where: { id: userId }
+    where: { id: userId },
   });
-  
+
   if (user) {
     await createOrderNotification(newOrder, user);
   }
@@ -309,11 +332,11 @@ export async function updateOrder(
 ) {
   // Get the current order to check for changes before updating
   const currentOrder = await prisma.order.findUnique({
-    where: { id }
+    where: { id },
   });
 
   if (!currentOrder) {
-    throw new Error('Order not found');
+    throw new Error("Order not found");
   }
 
   const updatedOrder = await prisma.$transaction(async (tx) => {
@@ -362,11 +385,14 @@ export async function updateOrder(
     });
 
     // If payment method changed to transfer/qris and no payment exists, create a payment record
-    if (paymentMethod && (paymentMethod === "transfer" || paymentMethod === "qris")) {
+    if (
+      paymentMethod &&
+      (paymentMethod === "transfer" || paymentMethod === "qris")
+    ) {
       const existingPayment = await tx.payment.findFirst({
-        where: { orderId: id }
+        where: { orderId: id },
       });
-      
+
       if (!existingPayment) {
         await tx.payment.create({
           data: {
@@ -376,7 +402,7 @@ export async function updateOrder(
             method: paymentMethod,
             amount: totalAmount || result.totalAmount,
             status: paymentStatus || "pending", // payment status starts as pending until confirmed
-          }
+          },
         });
       } else {
         // Update existing payment if method changed
@@ -386,16 +412,16 @@ export async function updateOrder(
             method: paymentMethod,
             amount: totalAmount || result.totalAmount,
             status: paymentStatus || existingPayment.status,
-          }
+          },
         });
       }
-    } 
+    }
     // For cash payments, create or update payment record as confirmed
     else if (paymentMethod && paymentMethod === "cash") {
       const existingPayment = await tx.payment.findFirst({
-        where: { orderId: id }
+        where: { orderId: id },
       });
-      
+
       if (!existingPayment) {
         await tx.payment.create({
           data: {
@@ -405,7 +431,7 @@ export async function updateOrder(
             method: paymentMethod,
             amount: totalAmount || result.totalAmount,
             status: "confirmed", // cash payments are typically confirmed immediately
-          }
+          },
         });
       } else {
         // Update existing payment
@@ -415,7 +441,7 @@ export async function updateOrder(
             method: paymentMethod,
             amount: totalAmount || result.totalAmount,
             status: "confirmed",
-          }
+          },
         });
       }
     }
@@ -425,15 +451,15 @@ export async function updateOrder(
 
   // Create notification outside the transaction to avoid foreign key constraint
   const user = await prisma.user.findUnique({
-    where: { id: updatedOrder.userId }
+    where: { id: updatedOrder.userId },
   });
-  
+
   if (user) {
     // Create notification if order status changed
     if (status && currentOrder.status !== status) {
       await createOrderNotification(updatedOrder, user);
     }
-    
+
     // Create notification if payment status changed
     if (paymentStatus && currentOrder.paymentStatus !== paymentStatus) {
       await createPaymentNotification(updatedOrder, user, paymentStatus);
@@ -467,28 +493,28 @@ export async function getOrdersByUserId(userId: number) {
 export async function getNextOrderNumberForToday() {
   const today = new Date();
   const year = today.getFullYear().toString().slice(-2);
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const day = String(today.getDate()).padStart(2, '0');
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
   const datePrefix = `ORD-${year}${month}${day}`;
-  
+
   // Find the highest order number with today's prefix
   const lastOrder = await prisma.order.findFirst({
     where: {
       orderNumber: {
-        startsWith: datePrefix
-      }
+        startsWith: datePrefix,
+      },
     },
     orderBy: {
-      orderNumber: 'desc'
-    }
+      orderNumber: "desc",
+    },
   });
-  
+
   let nextNumber = 1;
   if (lastOrder) {
     // Extract the number part after the date (e.g., from ORD-251008-0005 get 0005)
-    const lastNumber = parseInt(lastOrder.orderNumber.split('-')[2], 10);
+    const lastNumber = parseInt(lastOrder.orderNumber.split("-")[2], 10);
     nextNumber = lastNumber + 1;
   }
-  
-  return `${datePrefix}-${String(nextNumber).padStart(4, '0')}`;
+
+  return `${datePrefix}-${String(nextNumber).padStart(4, "0")}`;
 }

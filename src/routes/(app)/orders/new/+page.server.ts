@@ -2,7 +2,9 @@
 import { getAllUsers } from "$lib/server/userService";
 import { getAllProducts } from "$lib/server/productService";
 
-export const load = async (event: any) => {
+import type { PageServerLoad } from "./$types";
+
+export const load: PageServerLoad = async (event) => {
   const user = event.locals.user;
 
   if (!user) {

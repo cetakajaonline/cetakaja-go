@@ -13,17 +13,20 @@ export async function createUser(
 
   if (!res.ok) {
     const errorData = await res.json();
-    
+
     // If it's a validation error with detailed field errors, concatenate all messages
     if (errorData.errors && Array.isArray(errorData.errors)) {
-      const validationMessages = errorData.errors.map((err: any) => err.message);
+      const validationMessages = errorData.errors.map(
+        (err: { message: string }) => err.message,
+      );
       throw new Error(validationMessages.join(", "));
     }
-    
+
     throw new Error(errorData.message || "Failed to create user");
   }
 
-  return (await res.json()) as User;
+  const responseUser: User = await res.json();
+  return responseUser;
 }
 
 export async function updateUser(
@@ -40,17 +43,20 @@ export async function updateUser(
 
   if (!res.ok) {
     const errorData = await res.json();
-    
+
     // If it's a validation error with detailed field errors, concatenate all messages
     if (errorData.errors && Array.isArray(errorData.errors)) {
-      const validationMessages = errorData.errors.map((err: any) => err.message);
+      const validationMessages = errorData.errors.map(
+        (err: { message: string }) => err.message,
+      );
       throw new Error(validationMessages.join(", "));
     }
-    
+
     throw new Error(errorData.message || "Failed to update user");
   }
 
-  return (await res.json()) as User;
+  const responseUser: User = await res.json();
+  return responseUser;
 }
 
 export async function deleteUser(id: number): Promise<boolean> {

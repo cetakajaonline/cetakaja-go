@@ -15,15 +15,17 @@
 </script>
 
 <div class="form-control w-full">
-  <!-- svelte-ignore a11y_label_has_associated_control -->
-  <label class="label py-2">
-    <span class="label-text font-medium">{label}{required ? ' *' : ''}</span>
-  </label>
+  {#if label}
+    <label class="label py-2" for="form-input-{name || Math.random().toString(36).substring(2, 9)}">
+      <span class="label-text font-medium">{label}{required ? ' *' : ''}</span>
+    </label>
+  {/if}
 
   <Input
     {type}
     {placeholder}
     {required}
+    id="form-input-{name || Math.random().toString(36).substring(2, 9)}"
     {name}
     {readonly}
     className={`input input-bordered w-full ${className}`}
@@ -32,9 +34,8 @@
   />
 
   {#if hint}
-    <!-- svelte-ignore a11y_label_has_associated_control -->
-    <label class="label">
+    <div class="label">
       <span class="label-text-alt text-xs text-gray-500">{hint}</span>
-    </label>
+    </div>
   {/if}
 </div>

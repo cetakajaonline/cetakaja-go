@@ -39,6 +39,13 @@ enum ShippingMethod {
   delivery
 }
 
+enum ExpenseCategory {
+  operasional
+  marketing
+  gaji
+  lainnya
+}
+
 model User {
   id        Int      @id @default(autoincrement())
   name      String   @db.VarChar(100)
@@ -191,6 +198,20 @@ model Notification {
 
   @@index([userId])
   @@index([status])
+}
+
+model Expense {
+  id          Int            @id @default(autoincrement())
+  nominal     Int            // Amount of the expense
+  category    ExpenseCategory // Category of the expense (operasional, marketing, gaji, lainnya)
+  date        DateTime       // Date of the expense
+  description String?        @db.VarChar(255) // Optional description
+  proofFile   String?        @db.VarChar(255) // Optional proof file path
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([category])
+  @@index([date])
 }
 
 model Setting {

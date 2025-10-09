@@ -49,24 +49,29 @@ export async function createOrder(
 ): Promise<Order> {
   // Use multipart endpoint to handle file uploads along with order data
   const formData = new FormData();
-  
+
   // Add basic order data
-  formData.append('userId', orderData.userId.toString());
-  if (orderData.status) formData.append('status', orderData.status);
-  formData.append('shippingMethod', orderData.shippingMethod);
-  formData.append('paymentMethod', orderData.paymentMethod);
-  formData.append('totalAmount', orderData.totalAmount.toString());
-  if (orderData.notes) formData.append('notes', orderData.notes);
-  if (orderData.createdById) formData.append('createdById', orderData.createdById.toString());
-  
+  formData.append("userId", orderData.userId.toString());
+  if (orderData.status) formData.append("status", orderData.status);
+  formData.append("shippingMethod", orderData.shippingMethod);
+  formData.append("paymentMethod", orderData.paymentMethod);
+  formData.append("totalAmount", orderData.totalAmount.toString());
+  if (orderData.notes) formData.append("notes", orderData.notes);
+  if (orderData.createdById)
+    formData.append("createdById", orderData.createdById.toString());
+
   // Add order items as JSON string
   if (orderData.orderItems) {
-    formData.append('orderItems', JSON.stringify(orderData.orderItems));
+    formData.append("orderItems", JSON.stringify(orderData.orderItems));
   }
-  
+
   // Add payment proof file if provided and payment method is transfer or qris
-  if (orderData.paymentProofFile instanceof File && (orderData.paymentMethod === 'transfer' || orderData.paymentMethod === 'qris')) {
-    formData.append('paymentProofFile', orderData.paymentProofFile);
+  if (
+    orderData.paymentProofFile instanceof File &&
+    (orderData.paymentMethod === "transfer" ||
+      orderData.paymentMethod === "qris")
+  ) {
+    formData.append("paymentProofFile", orderData.paymentProofFile);
   }
 
   const res = await fetch("/api/orders/multipart", {
@@ -84,22 +89,26 @@ export async function createOrder(
 }
 
 // Separately handle payment proof file upload
-export async function uploadPaymentProof(paymentId: number, file: File): Promise<{ message: string; paymentProof: PaymentProof }> {
+export async function uploadPaymentProof(
+  paymentId: number,
+  file: File,
+): Promise<{ message: string; paymentProof: PaymentProof }> {
   const formData = new FormData();
-  formData.append('file', file);
-  formData.append('paymentId', paymentId.toString());
-  
-  const res = await fetch('/api/payment-proofs', {
-    method: 'POST',
-    body: formData
+  formData.append("file", file);
+  formData.append("paymentId", paymentId.toString());
+
+  const res = await fetch("/api/payment-proofs", {
+    method: "POST",
+    body: formData,
   });
-  
+
   if (!res.ok) {
     const errorData = await res.json();
     throw new Error(errorData.message || "Failed to upload payment proof");
   }
-  
-  const result: { message: string; paymentProof: PaymentProof } = await res.json();
+
+  const result: { message: string; paymentProof: PaymentProof } =
+    await res.json();
   return result;
 }
 
@@ -111,25 +120,33 @@ export async function updateOrder(
   if (orderData.paymentProofFile instanceof File) {
     // Use multipart endpoint to handle file uploads along with order data
     const formData = new FormData();
-    
+
     // Add all data fields
-    if (orderData.userId) formData.append('userId', orderData.userId.toString());
-    if (orderData.orderNumber) formData.append('orderNumber', orderData.orderNumber);
-    if (orderData.status) formData.append('status', orderData.status);
-    if (orderData.shippingMethod) formData.append('shippingMethod', orderData.shippingMethod);
-    if (orderData.paymentMethod) formData.append('paymentMethod', orderData.paymentMethod);
-    if (orderData.paymentStatus) formData.append('paymentStatus', orderData.paymentStatus);
-    if (orderData.totalAmount) formData.append('totalAmount', orderData.totalAmount.toString());
-    if (orderData.notes !== undefined) formData.append('notes', orderData.notes);
-    if (orderData.createdById) formData.append('createdById', orderData.createdById.toString());
-    
+    if (orderData.userId)
+      formData.append("userId", orderData.userId.toString());
+    if (orderData.orderNumber)
+      formData.append("orderNumber", orderData.orderNumber);
+    if (orderData.status) formData.append("status", orderData.status);
+    if (orderData.shippingMethod)
+      formData.append("shippingMethod", orderData.shippingMethod);
+    if (orderData.paymentMethod)
+      formData.append("paymentMethod", orderData.paymentMethod);
+    if (orderData.paymentStatus)
+      formData.append("paymentStatus", orderData.paymentStatus);
+    if (orderData.totalAmount)
+      formData.append("totalAmount", orderData.totalAmount.toString());
+    if (orderData.notes !== undefined)
+      formData.append("notes", orderData.notes);
+    if (orderData.createdById)
+      formData.append("createdById", orderData.createdById.toString());
+
     // Add order items as JSON string if provided
     if (orderData.orderItems) {
-      formData.append('orderItems', JSON.stringify(orderData.orderItems));
+      formData.append("orderItems", JSON.stringify(orderData.orderItems));
     }
-    
+
     // Add payment proof file
-    formData.append('paymentProofFile', orderData.paymentProofFile);
+    formData.append("paymentProofFile", orderData.paymentProofFile);
 
     const res = await fetch(`/api/orders/${id}/multipart`, {
       method: "PUT",

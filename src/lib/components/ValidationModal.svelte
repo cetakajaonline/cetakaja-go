@@ -32,12 +32,20 @@
 </script>
 
 {#if show}
-  <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onclick={onClose}>
+  <div 
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" 
+    role="button" 
+    onclick={onClose}
+    onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && onClose()}
+    tabindex="0"
+  >
     <div
       class="bg-base-100 p-6 rounded-xl shadow-2xl max-w-md w-full animate-fade-in transform transition-all duration-200"
+      role="dialog"
+      aria-modal="true"
       onclick={handleClickInside}
+      onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && handleClickInside(e)}
+      tabindex="0"
     >
       <div class="flex items-center justify-center mb-4">
         <div class="text-md mr-3">{getIcon()}</div>

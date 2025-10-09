@@ -6,6 +6,7 @@
   export let className: string = '';
   export let required: boolean = false;
   export let name: string = '';
+  export let id: string = '';
   export let readonly: boolean = false;
   export let disabled: boolean = false;
   export let multiline: boolean = false; // ✅ textarea jika true
@@ -16,8 +17,8 @@
 </script>
 
 {#if multiline}
-  <!-- svelte-ignore element_invalid_self_closing_tag -->
   <textarea
+    id={id}
     name={name}
     class={`textarea textarea-bordered w-full ${className}`}
     placeholder={placeholder}
@@ -27,9 +28,10 @@
     disabled={disabled}
     rows={rows}
     on:input={() => dispatch('input', value)}
-  />
+  ></textarea>
 {:else}
   <input
+    id={id}
     type={type}
     name={name}
     class={`input input-bordered w-full ${className}`}

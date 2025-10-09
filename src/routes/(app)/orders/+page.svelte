@@ -136,25 +136,18 @@
 
     try {
       let result: Order;
-      // Extract paymentProofFile if it exists
-      const { paymentProofFile, ...orderData } = payload;
+      const orderData = payload;
 
       if (isEditMode && selectedOrder) {
-        // Update order with payment proof file if provided
-        const updatePayload = { ...orderData };
-        if (paymentProofFile instanceof File) {
-          updatePayload.paymentProofFile = paymentProofFile;
-        }
-        
-        // Validate if needed - but updateOrder will handle validation
-        result = await updateOrder(selectedOrder.id, updatePayload);
+        // Update order (payment proof handling would be separate)
+        result = await updateOrder(selectedOrder.id, orderData);
         orders = orders.map((o) =>
           o.id === selectedOrder!.id ? { ...o, ...result } : o
         );
       } else {
-        // Create order with payment proof if provided
+        // Create order (payment proof handling would be separate)
         const validated = orderSchema.parse(orderData);
-        result = await createOrder({ ...validated, paymentProofFile });
+        result = await createOrder({ ...validated });
         orders = [...orders, result];
       }
       closeFormModal();

@@ -96,9 +96,9 @@
 
       {#if isAdmin}
         <div>
-          <!-- svelte-ignore a11y_label_has_associated_control -->
-          <label class="label font-medium py-2">Logo</label>
+          <label class="label font-medium py-2" for="logo-input">Logo</label>
           <input
+            id="logo-input"
             bind:this={fileInput}
             type="file"
             accept="image/*"

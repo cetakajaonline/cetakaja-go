@@ -4,8 +4,8 @@ import type { RequestHandler } from "./$types";
 import { saveFile } from "$lib/server/uploadService";
 import { requireAnyRole, requireAdmin } from "$lib/server/auth";
 import { settingSchema } from "$lib/validations/settingSchema";
-import fs from 'fs';
-import path from 'path';
+import fs from "fs";
+import path from "path";
 
 export const GET: RequestHandler = async (event) => {
   requireAnyRole(event);
@@ -52,7 +52,7 @@ export const POST: RequestHandler = async (event) => {
   // Get the old setting to access the old logo path
   const oldSetting = await getSetting();
   const oldLogoPath = oldSetting?.logo;
-  
+
   const setting = await updateSetting({
     ...parsed.data,
     ...(logoUrl ? { logo: logoUrl } : {}),
@@ -61,7 +61,7 @@ export const POST: RequestHandler = async (event) => {
   // Delete the old logo file if it exists and a new one was uploaded
   if (oldLogoPath && logoUrl) {
     try {
-      const fullPath = path.join(process.cwd(), 'static', oldLogoPath);
+      const fullPath = path.join(process.cwd(), "static", oldLogoPath);
       if (fs.existsSync(fullPath)) {
         fs.unlinkSync(fullPath);
       }

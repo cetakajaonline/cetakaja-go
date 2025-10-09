@@ -65,8 +65,7 @@
   />
   <button class="btn btn-primary w-full" type="submit" disabled={isLoading}>
     {#if isLoading}
-      <!-- svelte-ignore element_invalid_self_closing_tag -->
-      <span class="loading loading-spinner" /> Loading...
+      <span class="loading loading-spinner"></span> Loading...
     {:else}
       Login
     {/if}

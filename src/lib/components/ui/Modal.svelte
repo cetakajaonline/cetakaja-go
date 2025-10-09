@@ -13,19 +13,24 @@
       'w-96'; // Default
 </script>
 
-<!-- svelte-ignore a11y_click_events_have_key_events -->
-<!-- svelte-ignore a11y_no_static_element_interactions -->
 {#if show}
-  <!-- svelte-ignore a11y_click_events_have_key_events -->
-  <!-- Tambahkan  on:click={handleClose} Klo mau close klik diluar modal -->
+  <!-- Tambahkan  onclick={handleClose} Klo mau close klik diluar modal -->
   <div
     class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-2"
+    role="button"
+    onclick={() => dispatch('close')}
+    onkeydown={(e) => e.key === 'Escape' && dispatch('close')}
+    tabindex="0"
   >
     <!-- Berhenti agar klik dalam modal tidak close -->
     <div
       class="bg-base-100 rounded-lg shadow-lg overflow-y-auto p-6 {sizeClass}"
       style="max-height: 80vh;"
-      on:click|stopPropagation
+      role="dialog"
+      aria-modal="true"
+      tabindex="-1"
+      onclick={(e) => e.stopPropagation()}
+      onkeydown={(e) => e.stopPropagation()}
     >
       <slot />
     </div>

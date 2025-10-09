@@ -7,10 +7,10 @@ export async function getAllCategories(): Promise<Category[]> {
   if (!response.ok) {
     throw new Error("Gagal mengambil kategori");
   }
-  const categories = await response.json();
+  const categories: Category[] = await response.json();
   return categories.map((category: Category) => ({
     ...category,
-    createdAt: category.createdAt ? new Date(category.createdAt) : new Date()
+    createdAt: category.createdAt ? new Date(category.createdAt) : new Date(),
   }));
 }
 
@@ -20,10 +20,10 @@ export async function getCategoryById(id: number): Promise<Category> {
   if (!response.ok) {
     throw new Error("Gagal mengambil kategori");
   }
-  const category = await response.json();
+  const category: Category = await response.json();
   return {
     ...category,
-    createdAt: category.createdAt ? new Date(category.createdAt) : new Date()
+    createdAt: category.createdAt ? new Date(category.createdAt) : new Date(),
   };
 }
 
@@ -41,20 +41,22 @@ export async function createCategory(
 
   if (!response.ok) {
     const errorData = await response.json();
-    
+
     // If it's a validation error with detailed field errors, concatenate all messages
     if (errorData.errors && Array.isArray(errorData.errors)) {
-      const validationMessages = errorData.errors.map((err: any) => err.message);
+      const validationMessages = errorData.errors.map(
+        (err: { message: string }) => err.message,
+      );
       throw new Error(validationMessages.join(", "));
     }
-    
+
     throw new Error(errorData.message || "Gagal membuat kategori");
   }
 
-  const result = await response.json();
+  const result: Category = await response.json();
   return {
     ...result,
-    createdAt: result.createdAt ? new Date(result.createdAt) : new Date()
+    createdAt: result.createdAt ? new Date(result.createdAt) : new Date(),
   };
 }
 
@@ -73,20 +75,22 @@ export async function updateCategory(
 
   if (!response.ok) {
     const errorData = await response.json();
-    
+
     // If it's a validation error with detailed field errors, concatenate all messages
     if (errorData.errors && Array.isArray(errorData.errors)) {
-      const validationMessages = errorData.errors.map((err: any) => err.message);
+      const validationMessages = errorData.errors.map(
+        (err: { message: string }) => err.message,
+      );
       throw new Error(validationMessages.join(", "));
     }
-    
+
     throw new Error(errorData.message || "Gagal mengupdate kategori");
   }
 
-  const result = await response.json();
+  const result: Category = await response.json();
   return {
     ...result,
-    createdAt: result.createdAt ? new Date(result.createdAt) : new Date()
+    createdAt: result.createdAt ? new Date(result.createdAt) : new Date(),
   };
 }
 

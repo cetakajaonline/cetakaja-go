@@ -141,6 +141,31 @@ export interface RegisterFormData {
   password: string;
 }
 
+// ✅ Expense
+export interface Expense {
+  id: number;
+  nominal: number; // Amount of the expense
+  category: string; // Category of the expense (operasional, marketing, gaji, lainnya)
+  date: Date; // Date of the expense
+  description: string | null; // Optional description
+  proofFile: string | null; // Optional proof file path
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// ✅ Notification
+export interface Notification {
+  id: number;
+  toNumber: string;
+  message: string;
+  status: string;
+  sentAt: Date | null;
+  userId: number;
+  orderId: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // ✅ Tipe standar response dari API
 export interface ApiResponse<T = unknown> {
   success: boolean;

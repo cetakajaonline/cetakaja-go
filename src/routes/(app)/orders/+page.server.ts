@@ -4,7 +4,9 @@ import { getAllUsers } from "$lib/server/userService";
 import { getAllProducts } from "$lib/server/productService";
 import type { Order, User, Product } from "$lib/types";
 
-export const load = async (event: any) => {
+import type { PageServerLoad } from "./$types";
+
+export const load: PageServerLoad = async (event) => {
   const user = event.locals.user;
   if (!user) {
     throw new Error("Unauthorized: user tidak ditemukan");

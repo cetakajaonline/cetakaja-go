@@ -68,11 +68,10 @@
       />
       {#if isAdmin}
         <div class="form-control">
-          <!-- svelte-ignore a11y_label_has_associated_control -->
-          <label class="label py-2">
+          <label class="label py-2" for="role-select">
             <span class="label-text font-medium">Role</span>
           </label>
-          <select bind:value={role} class="select select-bordered w-full">
+          <select id="role-select" bind:value={role} class="select select-bordered w-full">
             <option value="customer">Customer</option>
             <option value="staff">Staff</option>
             <option value="admin">Admin</option>

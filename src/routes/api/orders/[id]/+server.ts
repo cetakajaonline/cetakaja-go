@@ -1,14 +1,13 @@
 // src/routes/api/orders/[id]/+server.ts
-import { json } from "@sveltejs/kit";
+import { json, type RequestEvent } from "@sveltejs/kit";
 import {
   updateOrder,
   deleteOrder,
-  getOrderById,
   getOrderWithPayments,
 } from "$lib/server/orderService";
 import { orderUpdateSchema } from "$lib/validations/orderSchema";
 
-export async function PUT(event: any) {
+export async function PUT(event: RequestEvent) {
   try {
     const id = Number(event.params.id);
 
@@ -48,7 +47,7 @@ export async function PUT(event: any) {
   }
 }
 
-export async function DELETE(event: any) {
+export async function DELETE(event: RequestEvent) {
   try {
     const id = Number(event.params.id);
 
@@ -65,7 +64,7 @@ export async function DELETE(event: any) {
   }
 }
 
-export async function GET(event: any) {
+export async function GET(event: RequestEvent) {
   try {
     const id = Number(event.params.id);
 

@@ -1,12 +1,12 @@
 // prisma/seed.ts
-import { fakerID_ID as faker } from '@faker-js/faker';
-import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import { fakerID_ID as faker } from "@faker-js/faker";
+import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Seeding database for printing order management system...');
+  console.log("🌱 Seeding database for printing order management system...");
 
   // Clear old data
   await prisma.notification.deleteMany();
@@ -23,36 +23,37 @@ async function main() {
   // Setting
   await prisma.setting.create({
     data: {
-      name: 'Sistem Pemesanan Percetakan',
-      description: 'Aplikasi manajemen order dan pembayaran untuk usaha percetakan',
-      logo: '/uploads/logo.png',
+      name: "Sistem Pemesanan Percetakan",
+      description:
+        "Aplikasi manajemen order dan pembayaran untuk usaha percetakan",
+      logo: "/uploads/logo.png",
     },
   });
 
   // Hash passwords
-  const adminPassword = await bcrypt.hash('admin123', 10);
-  const staffPassword = await bcrypt.hash('staff123', 10);
-  const customerPassword = await bcrypt.hash('customer123', 10);
+  const adminPassword = await bcrypt.hash("admin123", 10);
+  const staffPassword = await bcrypt.hash("staff123", 10);
+  const customerPassword = await bcrypt.hash("customer123", 10);
 
   // Create Admin and Staff with addresses
   const admin = await prisma.user.create({
     data: {
-      name: 'Admin Percetakan',
-      username: 'admin',
+      name: "Admin Percetakan",
+      username: "admin",
       phone: `08${Math.floor(100000000 + Math.random() * 900000000)}`, // Generates 08 followed by 9 digits
       password: adminPassword,
-      role: 'admin',
+      role: "admin",
       address: faker.location.streetAddress(),
     },
   });
 
   const staff = await prisma.user.create({
     data: {
-      name: 'Staff Operasional',
-      username: 'staff1',
+      name: "Staff Operasional",
+      username: "staff1",
       phone: `08${Math.floor(100000000 + Math.random() * 900000000)}`, // Generates 08 followed by 9 digits
       password: staffPassword,
-      role: 'staff',
+      role: "staff",
       address: faker.location.streetAddress(),
     },
   });
@@ -67,41 +68,43 @@ async function main() {
           username: `${faker.person.firstName().toLowerCase()}_${i}`,
           phone: `08${Math.floor(100000000 + Math.random() * 900000000)}`, // Generates 08 followed by 9 digits
           password: customerPassword,
-          role: 'customer',
+          role: "customer",
           address: faker.location.streetAddress(),
         },
-      })
+      }),
     );
   }
 
-  console.log(`✅ Created ${customers.length + 2} users (1 admin, 1 staff, ${customers.length} customers)`);
+  console.log(
+    `✅ Created ${customers.length + 2} users (1 admin, 1 staff, ${customers.length} customers)`,
+  );
 
   // Create categories for printing products
   const categories = [
     {
-      name: 'Desain Grafis',
-      code: 'DSN',
-      description: 'Berbagai layanan desain grafis untuk kebutuhan bisnis',
+      name: "Desain Grafis",
+      code: "DSN",
+      description: "Berbagai layanan desain grafis untuk kebutuhan bisnis",
     },
     {
-      name: 'Cetak Offset',
-      code: 'CTK',
-      description: 'Cetak produksi massal dengan kualitas tinggi',
+      name: "Cetak Offset",
+      code: "CTK",
+      description: "Cetak produksi massal dengan kualitas tinggi",
     },
     {
-      name: 'Cetak Digital',
-      code: 'DIG',
-      description: 'Cetak digital dengan berbagai jenis kertas',
+      name: "Cetak Digital",
+      code: "DIG",
+      description: "Cetak digital dengan berbagai jenis kertas",
     },
     {
-      name: 'Cetak Large Format',
-      code: 'LFG',
-      description: 'Print besar seperti banner, x-banner, dll',
+      name: "Cetak Large Format",
+      code: "LFG",
+      description: "Print besar seperti banner, x-banner, dll",
     },
     {
-      name: 'Binding & Finishing',
-      code: 'BND',
-      description: 'Layanan penjilidan dan finishing',
+      name: "Binding & Finishing",
+      code: "BND",
+      description: "Layanan penjilidan dan finishing",
     },
   ];
 
@@ -110,7 +113,7 @@ async function main() {
     createdCategories.push(
       await prisma.category.create({
         data: category,
-      })
+      }),
     );
   }
 
@@ -119,64 +122,72 @@ async function main() {
   // Create printing products with variants
   const printingProducts = [
     {
-      name: 'Kartu Nama',
-      baseCode: 'KTN',
-      description: 'Kartu nama premium dengan berbagai finishing',
-      categoryId: createdCategories.find(c => c.name === 'Cetak Offset')!.id,
+      name: "Kartu Nama",
+      baseCode: "KTN",
+      description: "Kartu nama premium dengan berbagai finishing",
+      categoryId: createdCategories.find((c) => c.name === "Cetak Offset")!.id,
     },
     {
-      name: 'Flyer',
-      baseCode: 'FLY',
-      description: 'Flyer promosi dengan berbagai ukuran dan finishing',
-      categoryId: createdCategories.find(c => c.name === 'Cetak Offset')!.id,
+      name: "Flyer",
+      baseCode: "FLY",
+      description: "Flyer promosi dengan berbagai ukuran dan finishing",
+      categoryId: createdCategories.find((c) => c.name === "Cetak Offset")!.id,
     },
     {
-      name: 'Brosur',
-      baseCode: 'BRS',
-      description: 'Brosur dengan berbagai jumlah halaman',
-      categoryId: createdCategories.find(c => c.name === 'Cetak Offset')!.id,
+      name: "Brosur",
+      baseCode: "BRS",
+      description: "Brosur dengan berbagai jumlah halaman",
+      categoryId: createdCategories.find((c) => c.name === "Cetak Offset")!.id,
     },
     {
-      name: 'Katalog Produk',
-      baseCode: 'KTG',
-      description: 'Katalog produk dengan kualitas cetak tinggi',
-      categoryId: createdCategories.find(c => c.name === 'Cetak Offset')!.id,
+      name: "Katalog Produk",
+      baseCode: "KTG",
+      description: "Katalog produk dengan kualitas cetak tinggi",
+      categoryId: createdCategories.find((c) => c.name === "Cetak Offset")!.id,
     },
     {
-      name: 'Spanduk',
-      baseCode: 'SPD',
-      description: 'Spanduk untuk promosi outdoor dan indoor',
-      categoryId: createdCategories.find(c => c.name === 'Cetak Large Format')!.id,
+      name: "Spanduk",
+      baseCode: "SPD",
+      description: "Spanduk untuk promosi outdoor dan indoor",
+      categoryId: createdCategories.find(
+        (c) => c.name === "Cetak Large Format",
+      )!.id,
     },
     {
-      name: 'Banner',
-      baseCode: 'BNR',
-      description: 'Banner untuk berbagai keperluan promosi',
-      categoryId: createdCategories.find(c => c.name === 'Cetak Large Format')!.id,
+      name: "Banner",
+      baseCode: "BNR",
+      description: "Banner untuk berbagai keperluan promosi",
+      categoryId: createdCategories.find(
+        (c) => c.name === "Cetak Large Format",
+      )!.id,
     },
     {
-      name: 'X-Banner',
-      baseCode: 'XBN',
-      description: 'X-banner portable untuk pameran dan promosi',
-      categoryId: createdCategories.find(c => c.name === 'Cetak Large Format')!.id,
+      name: "X-Banner",
+      baseCode: "XBN",
+      description: "X-banner portable untuk pameran dan promosi",
+      categoryId: createdCategories.find(
+        (c) => c.name === "Cetak Large Format",
+      )!.id,
     },
     {
-      name: 'Stiker',
-      baseCode: 'STK',
-      description: 'Stiker berbagai ukuran dan finishing',
-      categoryId: createdCategories.find(c => c.name === 'Cetak Digital')!.id,
+      name: "Stiker",
+      baseCode: "STK",
+      description: "Stiker berbagai ukuran dan finishing",
+      categoryId: createdCategories.find((c) => c.name === "Cetak Digital")!.id,
     },
     {
-      name: 'Kalender',
-      baseCode: 'KLM',
-      description: 'Kalender meja dan dinding untuk tahun baru',
-      categoryId: createdCategories.find(c => c.name === 'Cetak Offset')!.id,
+      name: "Kalender",
+      baseCode: "KLM",
+      description: "Kalender meja dan dinding untuk tahun baru",
+      categoryId: createdCategories.find((c) => c.name === "Cetak Offset")!.id,
     },
     {
-      name: 'Buku',
-      baseCode: 'BKK',
-      description: 'Jasa cetak dan penjilidan buku',
-      categoryId: createdCategories.find(c => c.name === 'Binding & Finishing')!.id,
+      name: "Buku",
+      baseCode: "BKK",
+      description: "Jasa cetak dan penjilidan buku",
+      categoryId: createdCategories.find(
+        (c) => c.name === "Binding & Finishing",
+      )!.id,
     },
   ];
 
@@ -184,19 +195,19 @@ async function main() {
   for (const product of printingProducts) {
     const variants = [
       {
-        variantName: 'A4',
+        variantName: "A4",
         price: 50000,
       },
       {
-        variantName: 'A3',
+        variantName: "A3",
         price: 75000,
       },
       {
-        variantName: 'A2',
+        variantName: "A2",
         price: 120000,
       },
       {
-        variantName: 'Custom',
+        variantName: "Custom",
         price: 150000,
       },
     ];
@@ -217,35 +228,27 @@ async function main() {
   console.log(`✅ Created ${createdProducts.length} products with variants`);
 
   // Create sample orders with all status combinations
-  const orderStatuses: Array<'pending' | 'processing' | 'finished' | 'canceled'> = [
-    'pending',
-    'processing',
-    'finished',
-    'canceled',
+  const orderStatuses: Array<
+    "pending" | "processing" | "finished" | "canceled"
+  > = ["pending", "processing", "finished", "canceled"];
+
+  const paymentMethods: Array<"transfer" | "qris" | "cash"> = [
+    "transfer",
+    "qris",
+    "cash",
   ];
 
-  const paymentMethods: Array<'transfer' | 'qris' | 'cash'> = [
-    'transfer',
-    'qris',
-    'cash',
-  ];
+  const paymentStatuses: Array<
+    "pending" | "confirmed" | "failed" | "refunded"
+  > = ["pending", "confirmed", "failed", "refunded"];
 
-  const paymentStatuses: Array<'pending' | 'confirmed' | 'failed' | 'refunded'> = [
-    'pending',
-    'confirmed',
-    'failed',
-    'refunded',
-  ];
-
-  const shippingMethods: Array<'pickup' | 'delivery'> = [
-    'pickup',
-    'delivery',
-  ];
+  const shippingMethods: Array<"pickup" | "delivery"> = ["pickup", "delivery"];
 
   for (let i = 0; i < 50; i++) {
     const customer = faker.helpers.arrayElement(customers);
     const product = faker.helpers.arrayElement(createdProducts);
-    const variant: { id: number; variantName: string; price: number } = faker.helpers.arrayElement(product.variants);
+    const variant: { id: number; variantName: string; price: number } =
+      faker.helpers.arrayElement(product.variants);
 
     // Create order item
     const qty = faker.number.int({ min: 1, max: 10 });
@@ -262,13 +265,16 @@ async function main() {
     const createdByUser = i % 2 === 0 ? staff : admin;
 
     // Generate order number
-    const orderNumber = `ORD-${String(i + 1).padStart(4, '0')}`;
+    const orderNumber = `ORD-${String(i + 1).padStart(4, "0")}`;
 
     // Calculate total amount
     const totalAmount = subtotal;
 
     // Determine paidAt based on payment status
-    const paidAt = paymentStatus === 'confirmed' ? new Date(faker.date.recent({ days: 30 })) : null;
+    const paidAt =
+      paymentStatus === "confirmed"
+        ? new Date(faker.date.recent({ days: 30 }))
+        : null;
 
     const order = await prisma.order.create({
       data: {
@@ -304,13 +310,13 @@ async function main() {
         method: paymentMethod,
         amount: totalAmount,
         status: paymentStatus,
-        transactionRef: `TXN-${String(i + 1).padStart(6, '0')}`,
+        transactionRef: `TXN-${String(i + 1).padStart(6, "0")}`,
         paidAt,
         proofs: {
           create: {
             fileName: `payment_proof_${orderNumber}.jpg`,
             filePath: `/uploads/payments/${orderNumber}_proof.jpg`,
-            fileType: 'image/jpeg',
+            fileType: "image/jpeg",
           },
         },
       },
@@ -323,18 +329,18 @@ async function main() {
         orderId: order.id,
         toNumber: customer.phone,
         message: `Pesanan ${orderNumber} (${orderStatus}) dengan pembayaran ${paymentStatus}`,
-        status: 'sent',
+        status: "sent",
       },
     });
   }
 
-  console.log('✅ Created 50 sample orders with all statuses');
-  console.log('✅ Seeding completed successfully!');
+  console.log("✅ Created 50 sample orders with all statuses");
+  console.log("✅ Seeding completed successfully!");
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Error:', e);
+    console.error("❌ Error:", e);
     process.exit(1);
   })
   .finally(() => {

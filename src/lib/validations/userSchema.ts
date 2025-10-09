@@ -6,7 +6,10 @@ export const userSchema = z.object({
   password: z.string().min(6, "Minimal 6 karakter"),
   phone: z
     .string()
-    .regex(/^08\d{8,}$/, "Nomor telepon harus diawali dengan 08 dan hanya berisi angka"),
+    .regex(
+      /^08\d{8,}$/,
+      "Nomor telepon harus diawali dengan 08 dan hanya berisi angka",
+    ),
   address: z.string().optional(),
   role: z.enum(["admin", "staff", "customer"]),
 });
@@ -19,7 +22,10 @@ export const userUpdateSchema = userSchema.partial().extend({
   ),
   phone: z
     .string()
-    .regex(/^08\d{8,}$/, "Nomor telepon harus diawali dengan 08 dan hanya berisi angka")
+    .regex(
+      /^08\d{8,}$/,
+      "Nomor telepon harus diawali dengan 08 dan hanya berisi angka",
+    )
     .optional(),
 });
 

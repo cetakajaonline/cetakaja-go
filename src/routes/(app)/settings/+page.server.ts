@@ -1,7 +1,9 @@
 import { getSetting } from "$lib/server/settingService";
 
-export async function load(event: any) {
+import type { PageServerLoad } from "./$types";
+
+export const load: PageServerLoad = async (event) => {
   const user = event.locals.user;
   const setting = await getSetting();
   return { setting, user };
-}
+};

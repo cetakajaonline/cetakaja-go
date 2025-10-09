@@ -1,5 +1,5 @@
 // src/routes/api/orders/+server.ts
-import { json } from "@sveltejs/kit";
+import { json, type RequestEvent } from "@sveltejs/kit";
 import {
   getAllOrders,
   createOrder,
@@ -8,7 +8,7 @@ import {
 } from "$lib/server/orderService";
 import { orderSchema } from "$lib/validations/orderSchema";
 
-export async function GET(event: any) {
+export async function GET(event: RequestEvent) {
   try {
     // Anyone authenticated can view orders
     if (!event.locals.user) {
@@ -23,7 +23,7 @@ export async function GET(event: any) {
   }
 }
 
-export async function POST(event: any) {
+export async function POST(event: RequestEvent) {
   try {
     // Only admin and staff can create orders
     const userRole = event.locals.user?.role;
@@ -50,7 +50,7 @@ export async function POST(event: any) {
 
     // Auto-generate order number for the day
     const orderNumber = await getNextOrderNumberForToday();
-    
+
     // Check if order number already exists (shouldn't happen with our logic, but just in case)
     const existing = await getOrderByOrderNumber(orderNumber);
     if (existing) {
