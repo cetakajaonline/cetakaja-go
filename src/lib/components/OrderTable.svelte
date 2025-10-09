@@ -48,7 +48,7 @@
       <tr>
         <th onclick={() => onSort('orderNumber')}>
           <div class="flex items-center gap-2">
-            <span>Order #</span>
+            <span>OrderID</span>
             {#if sortKey === 'orderNumber'}
               {#if sortDirection === 'asc'} ↑ {:else} ↓ {/if}
             {/if}
@@ -62,22 +62,6 @@
             {/if}
           </div>
         </th>
-        <th onclick={() => onSort('status')}>
-          <div class="flex items-center gap-2">
-            <span>Status</span>
-            {#if sortKey === 'status'}
-              {#if sortDirection === 'asc'} ↑ {:else} ↓ {/if}
-            {/if}
-          </div>
-        </th>
-        <th onclick={() => onSort('paymentStatus')}>
-          <div class="flex items-center gap-2">
-            <span>Pembayaran</span>
-            {#if sortKey === 'paymentStatus'}
-              {#if sortDirection === 'asc'} ↑ {:else} ↓ {/if}
-            {/if}
-          </div>
-        </th>
         <th onclick={() => onSort('totalAmount')}>
           <div class="flex items-center gap-2">
             <span>Total</span>
@@ -86,18 +70,34 @@
             {/if}
           </div>
         </th>
-        <th onclick={() => onSort('createdAt')}>
+        <th onclick={() => onSort('paymentMethod')}>
           <div class="flex items-center gap-2">
-            <span>Tanggal</span>
-            {#if sortKey === 'createdAt'}
+            <span>Metode Pembayaran</span>
+            {#if sortKey === 'paymentMethod'}
+              {#if sortDirection === 'asc'} ↑ {:else} ↓ {/if}
+            {/if}
+          </div>
+        </th>
+        <th onclick={() => onSort('paymentStatus')}>
+          <div class="flex items-center gap-2">
+            <span>Status Pembayaran</span>
+            {#if sortKey === 'paymentStatus'}
               {#if sortDirection === 'asc'} ↑ {:else} ↓ {/if}
             {/if}
           </div>
         </th>
         <th onclick={() => onSort('shippingMethod')}>
           <div class="flex items-center gap-2">
-            <span>Pengiriman</span>
+            <span>Metode Pengiriman</span>
             {#if sortKey === 'shippingMethod'}
+              {#if sortDirection === 'asc'} ↑ {:else} ↓ {/if}
+            {/if}
+          </div>
+        </th>
+        <th onclick={() => onSort('status')}>
+          <div class="flex items-center gap-2">
+            <span>Status Order</span>
+            {#if sortKey === 'status'}
               {#if sortDirection === 'asc'} ↑ {:else} ↓ {/if}
             {/if}
           </div>
@@ -111,10 +111,40 @@
           <tr class="hover">
             <td>
               <div class="font-medium">{order.orderNumber}</div>
+              <div class="text-sm opacity-70">{formatDate(order.createdAt)}</div>
             </td>
             <td>
               <div class="font-medium">{order.user.name}</div>
-              <div class="text-sm opacity-70">{order.user.username}</div>
+              <div class="text-sm opacity-70">{order.user.phone}</div>
+            </td>
+            <td>
+              {formatCurrency(order.totalAmount)}
+            </td>
+            <td>
+              <span class={`badge ${
+                order.paymentMethod === 'transfer' ? 'badge-primary' :
+                order.paymentMethod === 'qris' ? 'badge-info' :
+                'badge-warning'
+              }`}>
+                {order.paymentMethod.charAt(0).toUpperCase() + order.paymentMethod.slice(1)}
+              </span>
+            </td>
+            <td>
+              <span class={`badge ${
+                order.paymentStatus === 'confirmed' ? 'badge-success' :
+                order.paymentStatus === 'failed' ? 'badge-error' :
+                order.paymentStatus === 'refunded' ? 'badge-info' :
+                'badge-warning'
+              }`}>
+                {order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)}
+              </span>
+            </td>
+            <td>
+              <span class={`badge ${
+                order.shippingMethod === 'pickup' ? 'badge-info' : 'badge-success'
+              }`}>
+                {order.shippingMethod.charAt(0).toUpperCase() + order.shippingMethod.slice(1)}
+              </span>
             </td>
             <td>
               <span class={`badge ${
@@ -125,25 +155,6 @@
               }`}>
                 {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
               </span>
-            </td>
-            <td>
-              <span class={`badge ${
-                order.paymentStatus === 'confirmed' ? 'badge-success' :
-                order.paymentStatus === 'failed' ? 'badge-error' :
-                order.paymentStatus === 'refunded' ? 'badge-neutral' :
-                'badge-warning'
-              }`}>
-                {order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)}
-              </span>
-            </td>
-            <td>
-              {formatCurrency(order.totalAmount)}
-            </td>
-            <td>
-              {formatDate(order.createdAt)}
-            </td>
-            <td>
-              {order.shippingMethod.charAt(0).toUpperCase() + order.shippingMethod.slice(1)}
             </td>
             <td class="text-right">
               <div class="join">
@@ -173,7 +184,7 @@
         {/each}
       {:else}
         <tr>
-          <td colspan="7" class="text-center py-8">
+          <td colspan="8" class="text-center py-8">
             <div class="text-center">
               <div class="text-lg">Tidak ada order ditemukan</div>
             </div>

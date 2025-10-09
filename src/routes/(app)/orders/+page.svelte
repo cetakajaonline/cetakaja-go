@@ -41,7 +41,7 @@
   let sortDirection: "asc" | "desc" = "desc"; // Default to descending for latest orders
 
   let orderForm = {
-    userId: users[0]?.id ?? 0,
+    userId: 0,
     orderNumber: "",
     status: "pending",
     shippingMethod: "pickup",
@@ -85,7 +85,7 @@
     const newOrderNumber = await generateOrderNumber();
     
     orderForm = {
-      userId: users[0]?.id ?? 0,
+      userId: 0,
       orderNumber: newOrderNumber,
       status: "pending",
       shippingMethod: "pickup",
@@ -250,7 +250,7 @@
     onAdd={openAddModal}
   />
 
-  <TableToolbar on:search={(e) => handleSearch(e.detail)} />
+  <TableToolbar on:search={(e: CustomEvent<string>) => handleSearch(e.detail)} />
 
   <OrderTable
     orders={paginatedOrders}

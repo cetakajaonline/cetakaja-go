@@ -49,34 +49,53 @@
   <!-- Order Info -->
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
     <div class="bg-white p-6 rounded-lg shadow">
-      <h2 class="text-lg font-semibold mb-4">Informasi Order</h2>
+      <h2 class="text-lg font-semibold mb-4">Pelanggan</h2>
       <div class="space-y-2">
         <div class="flex">
-          <span class="w-40 text-gray-600">Nomor Order:</span>
-          <span class="font-medium">{order.orderNumber}</span>
+          <span class="w-40 text-gray-600">Nama:</span>
+          <span class="font-medium">{order.user.name}</span>
         </div>
         <div class="flex">
-          <span class="w-40 text-gray-600">Status:</span>
-          <span class={`font-medium ${
-            order.status === 'pending' ? 'text-yellow-600' :
-            order.status === 'processing' ? 'text-blue-600' :
-            order.status === 'finished' ? 'text-green-600' :
-            'text-red-600'
+          <span class="w-40 text-gray-600">No Telp:</span>
+          <span class="font-medium">{order.user.phone}</span>
+        </div>
+        <div class="flex">
+          <span class="w-40 text-gray-600">Username:</span>
+          <span class="font-medium">{order.user.username}</span>
+        </div>
+        {#if order.createdBy}
+        <div class="flex">
+          <span class="w-40 text-gray-600">Dibuat oleh:</span>
+          <span class="font-medium">{order.createdBy.name} ({order.createdBy.username})</span>
+        </div>
+        {/if}
+      </div>
+    </div>
+
+    <div class="bg-white p-6 rounded-lg shadow">
+      <h2 class="text-lg font-semibold mb-4">Pengiriman</h2>
+      <div class="space-y-2">
+        <div class="flex">
+          <span class="w-40 text-gray-600">Metode:</span>
+          <span class={`font-medium badge ${
+            order.shippingMethod === 'pickup' ? 'badge-neutral' : 'badge-info'
           }`}>
-            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+            {order.shippingMethod === 'pickup' ? 'Pickup' : 'Delivery'}
           </span>
         </div>
         <div class="flex">
-          <span class="w-40 text-gray-600">Metode Pengiriman:</span>
-          <span class="font-medium">{order.shippingMethod === 'pickup' ? 'Ambil Sendiri' : 'Dikirim'}</span>
-        </div>
-        <div class="flex">
-          <span class="w-40 text-gray-600">Alamat Pengiriman:</span>
+          <span class="w-40 text-gray-600">Alamat:</span>
           <span class="font-medium">{order.user.address || 'Tidak ada alamat'}</span>
         </div>
         <div class="flex">
           <span class="w-40 text-gray-600">Metode Pembayaran:</span>
-          <span class="font-medium">{order.paymentMethod === 'transfer' ? 'Transfer Bank' : order.paymentMethod === 'qris' ? 'QRIS' : 'Tunai'}</span>
+          <span class={`font-medium badge ${
+            order.paymentMethod === 'transfer' ? 'badge-primary' :
+            order.paymentMethod === 'qris' ? 'badge-info' :
+            'badge-warning'
+          }`}>
+            {order.paymentMethod === 'transfer' ? 'Transfer' : order.paymentMethod === 'qris' ? 'Qris' : 'Tunai'}
+          </span>
         </div>
         <div class="flex">
           <span class="w-40 text-gray-600">Status Pembayaran:</span>
@@ -90,33 +109,28 @@
           </span>
         </div>
         <div class="flex">
+          <span class="w-40 text-gray-600">Status:</span>
+          <span class={`font-medium ${
+            order.status === 'pending' ? 'text-yellow-600' :
+            order.status === 'processing' ? 'text-blue-600' :
+            order.status === 'finished' ? 'text-green-600' :
+            'text-red-600'
+          }`}>
+            {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+          </span>
+        </div>
+        <div class="flex">
           <span class="w-40 text-gray-600">Total:</span>
           <span class="font-medium text-lg">{formatCurrency(order.totalAmount)}</span>
+        </div>
+        <div class="flex">
+          <span class="w-40 text-gray-600">Order Number:</span>
+          <span class="font-medium">{order.orderNumber}</span>
         </div>
         <div class="flex">
           <span class="w-40 text-gray-600">Tanggal:</span>
           <span class="font-medium">{formatDate(order.createdAt)}</span>
         </div>
-      </div>
-    </div>
-
-    <div class="bg-white p-6 rounded-lg shadow">
-      <h2 class="text-lg font-semibold mb-4">Informasi Pelanggan</h2>
-      <div class="space-y-2">
-        <div class="flex">
-          <span class="w-40 text-gray-600">Nama:</span>
-          <span class="font-medium">{order.user.name}</span>
-        </div>
-        <div class="flex">
-          <span class="w-40 text-gray-600">Username:</span>
-          <span class="font-medium">{order.user.username}</span>
-        </div>
-        {#if order.createdBy}
-        <div class="flex">
-          <span class="w-40 text-gray-600">Dibuat oleh:</span>
-          <span class="font-medium">{order.createdBy.name} ({order.createdBy.username})</span>
-        </div>
-        {/if}
       </div>
     </div>
   </div>

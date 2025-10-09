@@ -81,10 +81,10 @@ export interface Order {
   orderNumber: string;
   status: string; // OrderStatus enum
   shippingMethod: string; // ShippingMethod enum
-
   paymentMethod: string; // PaymentMethod enum
   paymentStatus: string; // PaymentStatus enum
   totalAmount: number;
+  notes: string | null | undefined;
   createdAt: Date;
   updatedAt: Date;
   userId: number;
@@ -93,6 +93,8 @@ export interface Order {
     id: number;
     name: string;
     username: string;
+    phone: string;
+    address: string | null;
   };
   createdBy?: {
     id: number;

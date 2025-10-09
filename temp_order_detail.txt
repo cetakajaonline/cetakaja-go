@@ -47,7 +47,7 @@
           onclick={closeModal}
           aria-label="Close"
         >
-          âœ•
+          ƒo
         </button>
       </div>
 
@@ -70,15 +70,7 @@
           <div class="bg-base-200 p-4 rounded-lg">
             <h4 class="font-semibold mb-2">Pembayaran</h4>
             <div class="space-y-1 text-sm">
-              <div><span class="font-medium">Metode:</span> 
-                <span class={`badge ${
-                  order.paymentMethod === 'transfer' ? 'badge-primary' :
-                  order.paymentMethod === 'qris' ? 'badge-info' :
-                  'badge-warning'
-                }`}>
-                  {order.paymentMethod === 'transfer' ? 'Transfer' : order.paymentMethod === 'qris' ? 'Qris' : 'Tunai'}
-                </span>
-              </div>
+              <div><span class="font-medium">Metode:</span> {order.paymentMethod}</div>
               <div><span class="font-medium">Status:</span> 
                 <span class={`ml-2 badge ${order.paymentStatus === 'confirmed' ? 'badge-success' : order.paymentStatus === 'failed' ? 'badge-error' : order.paymentStatus === 'refunded' ? 'badge-neutral' : 'badge-warning'}`}>
                   {order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)}
@@ -89,28 +81,21 @@
           </div>
         </div>
 
-        <!-- Customer Info and Shipping Info in 1 row, 2 columns -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="bg-base-200 p-4 rounded-lg">
-            <h4 class="font-semibold mb-2">Pelanggan</h4>
-            <div class="space-y-1 text-sm">
-              <div><span class="font-medium">Nama:</span> {order.user.name}</div>
-              <div><span class="font-medium">No Telp:</span> {order.user.phone}</div>
-            </div>
+        <!-- Customer Info -->
+        <div class="bg-base-200 p-4 rounded-lg">
+          <h4 class="font-semibold mb-2">Pelanggan</h4>
+          <div class="space-y-1 text-sm">
+            <div><span class="font-medium">Nama:</span> {order.user.name}</div>
+            <div><span class="font-medium">Username:</span> {order.user.username}</div>
           </div>
+        </div>
 
-          <div class="bg-base-200 p-4 rounded-lg">
-            <h4 class="font-semibold mb-2">Pengiriman</h4>
-            <div class="space-y-1 text-sm">
-              <div><span class="font-medium">Metode:</span> 
-                <span class={`badge ${
-                  order.shippingMethod === 'pickup' ? 'badge-neutral' : 'badge-info'
-                }`}>
-                  {order.shippingMethod === 'pickup' ? 'Pickup' : 'Delivery'}
-                </span>
-              </div>
-              <div><span class="font-medium">Alamat:</span> {order.user.address || 'Tidak ada alamat'}</div>
-            </div>
+        <!-- Shipping Info -->
+        <div class="bg-base-200 p-4 rounded-lg">
+          <h4 class="font-semibold mb-2">Pengiriman</h4>
+          <div class="space-y-1 text-sm">
+            <div><span class="font-medium">Metode:</span> {order.shippingMethod}</div>
+            <div><span class="font-medium">Alamat:</span> {order.user.address || 'Tidak ada alamat'}</div>
           </div>
         </div>
 
@@ -148,14 +133,6 @@
             </table>
           </div>
         </div>
-
-        <!-- Notes -->
-        {#if order.notes}
-          <div class="bg-base-200 p-4 rounded-lg">
-            <h4 class="font-semibold mb-2">Catatan</h4>
-            <div class="text-sm">{order.notes}</div>
-          </div>
-        {/if}
       </div>
 
       <div class="modal-action flex justify-end">

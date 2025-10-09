@@ -71,8 +71,9 @@
     if (show && !previousShow) { // Only run when modal opens (show becomes true from false)
       formData = { ...initial };
       orderItems = [...initial.orderItems || []];
-      // Set default values for shipping
+      // Set default values for shipping and payment
       if (!formData.shippingMethod) formData.shippingMethod = 'delivery';
+      if (!formData.paymentMethod) formData.paymentMethod = 'transfer';
       
       previousShow = show;
     } else if (!show && previousShow) { // When modal closes
@@ -144,6 +145,13 @@
 
   async function handleSubmit(e: SubmitEvent) {
     e.preventDefault();
+    
+    // Validate payment method based on shipping method
+    if (formData.paymentMethod === 'cash' && formData.shippingMethod !== 'pickup') {
+      alert('Pembayaran tunai hanya dapat digunakan dengan metode pengiriman pickup (ambil sendiri)');
+      return;
+    }
+    
     // Update form data with order items
     const finalFormData = {
       ...formData,
@@ -261,19 +269,6 @@
         </select>
       </div>
       
-      <div class="form-control w-full md:col-span-2">
-        <label class="label" for="notes">
-          <span class="label-text">Catatan</span>
-        </label>
-        <textarea
-          id="notes"
-          class="textarea textarea-bordered w-full"
-          bind:value={formData.notes}
-          placeholder="Catatan tambahan untuk pesanan"
-          rows="2"
-        ></textarea>
-      </div>
-      
       <div class="form-control w-full">
         <label class="label" for="paymentStatus">
           <span class="label-text">Status Pembayaran</span>
@@ -293,8 +288,6 @@
 
     <!-- Order Items Section -->
     <div class="pt-4">
-      <h4 class="font-semibold text-md mb-2">Item Pesanan</h4>
-      
       <!-- Add New Item -->
       <div class="p-4 border rounded-lg mb-4">
         <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
@@ -428,6 +421,22 @@
       {/if}
     </div>
 
+    <!-- Notes Section -->
+    <div class="pt-4">
+      <div class="form-control w-full md:col-span-2">
+        <label class="label" for="notes">
+          <span class="label-text">Catatan</span>
+        </label>
+        <textarea
+          id="notes"
+          class="textarea textarea-bordered w-full"
+          bind:value={formData.notes}
+          placeholder="Catatan tambahan untuk pesanan"
+          rows="2"
+        ></textarea>
+      </div>
+    </div>
+
     <div class="flex justify-center gap-4 mt-6">
       <Button type="submit" className="btn-primary" loading={loading}>
         {isEditMode ? 'Simpan Perubahan' : 'Tambah Order'}
@@ -438,3 +447,7 @@
     </div>
   </form>
 </Modal>
+
+
+
+

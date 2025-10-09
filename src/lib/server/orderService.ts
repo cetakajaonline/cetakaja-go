@@ -20,6 +20,8 @@ const orderSelect = {
       id: true,
       name: true,
       username: true,
+      phone: true,
+      address: true,
     },
   },
   createdBy: {
