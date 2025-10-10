@@ -30,7 +30,6 @@ export const PUT: RequestHandler = async (event) => {
     const updated = await updateCategory(id, parsed.data);
     return json(updated);
   } catch (err) {
-    console.error(err);
     return json(
       {
         message:
@@ -50,7 +49,6 @@ export const DELETE: RequestHandler = async (event) => {
     await deleteCategory(id);
     return json({ success: true });
   } catch (err) {
-    console.error(err);
     return json(
       {
         message:
@@ -73,7 +71,6 @@ export const GET: RequestHandler = async (event) => {
     }
     return json(category);
   } catch (err) {
-    console.error(err);
     return json({ message: "Gagal mengambil data kategori" }, { status: 500 });
   }
 };

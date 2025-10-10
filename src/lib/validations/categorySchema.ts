@@ -10,3 +10,4 @@ export const categoryUpdateSchema = categorySchema.partial();
 
 export type CategoryFormSchema = z.infer<typeof categorySchema>;
 export type CategoryUpdateSchema = z.infer<typeof categoryUpdateSchema>;
+

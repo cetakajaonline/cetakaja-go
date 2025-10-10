@@ -8,31 +8,54 @@
   import ConfirmModal from "$lib/components/ConfirmModal.svelte";
   import ValidationModal from "$lib/components/ValidationModal.svelte";
 
+  import { products, currentProduct, loading as productLoading, error as productError } from "$lib/stores/product";
   import { productSchema, productUpdateSchema } from "$lib/validations/productSchema";
   import { createProduct, updateProduct, deleteProduct } from "$lib/services/productClient";
   import { z } from "zod";
   import { tick } from "svelte";
+  import { onDestroy } from "svelte";
   import type { Product, ProductSortKey } from "$lib/types";
 
   export let data: {
-    products: Product[];
     isAdmin: boolean;
+    users: User[]; // Keep users as it's still needed for some functionality
   };
 
-  const { products: initialProducts, isAdmin } = data;
+  const { isAdmin, users } = data;
 
-  let products = [...initialProducts];
+  // Initialize the product store with server data from layout
+  import { page } from "$app/stores";
+  import { onMount } from "svelte";
+  import { initializeProductStore } from "$lib/stores/initializer";
+
+  onMount(() => {
+    // Get layout data which contains the initial products
+    const layoutData = $page.data;
+    if (layoutData.products) {
+      initializeProductStore(layoutData.products);
+    }
+  });
+
+  // Subscribe to the products store
+  let localProducts: Product[] = [];
+  const unsubscribe = products.subscribe((value) => {
+    localProducts = value;
+  });
   let productToDelete: Product | null = null;
   let selectedProduct: Product | null = null;
   let showProductModal = false;
   let isEditMode = false;
-  let loading = false;
   let currentPage = 1;
   const pageSize = 7;
   const confirmModalId = "delete-product-confirm";
   let searchKeyword = "";
   let sortKey: ProductSortKey = "name";
   let sortDirection: "asc" | "desc" = "asc";
+
+  // Unsubscribe from store on component destroy
+  onDestroy(() => {
+    unsubscribe();
+  });
 
   let productForm = {
     name: "",
@@ -88,7 +111,7 @@
   }
 
   async function onSubmit(payload: typeof productForm) {
-    loading = true;
+    productLoading.set(true);
     validationMessages = [];
 
     try {
@@ -111,9 +134,9 @@
           })
         };
         result = await updateProduct(selectedProduct.id, validatedWithCreatedAt);
-        products = products.map((p) =>
+        products.update(items => items.map((p) =>
           p.id === selectedProduct!.id ? { ...p, ...result } : p
-        );
+        ));
       } else {
         // Ensure required fields are present and not undefined
         const createPayload = {
@@ -131,7 +154,7 @@
           }))
         };
         result = await createProduct(createPayload);
-        products = [...products, result];
+        products.update(items => [...items, result]);
       }
       closeFormModal();
     } catch (err) {
@@ -146,7 +169,7 @@
       }
       showValidationModal = true;
     } finally {
-      loading = false;
+      productLoading.set(false);
     }
   }
 
@@ -155,7 +178,7 @@
     
     try {
       await deleteProduct(productToDelete.id);
-      products = products.filter((p) => p.id !== productToDelete?.id);
+      products.update(items => items.filter((p) => p.id !== productToDelete?.id));
     } catch (err) {
       if (err instanceof Error) {
         validationMessages = [err.message];
@@ -194,12 +217,22 @@
     }
   }
 
-  $: filteredProducts = products.filter(
+  $: filteredProducts = localProducts.filter(
     (p) =>
       p.name.toLowerCase().includes(searchKeyword) ||
       p.baseCode.toLowerCase().includes(searchKeyword) ||
       p.category?.name.toLowerCase().includes(searchKeyword)
   );
+
+  // Subscribe to loading state
+  let localLoading = false;
+  const unsubscribeLoading = productLoading.subscribe((value) => {
+    localLoading = value;
+  });
+
+  onDestroy(() => {
+    unsubscribeLoading();
+  });
 
   $: sortedProducts = [...filteredProducts].sort((a, b) => {
     if (sortKey === "name") {
@@ -266,7 +299,7 @@
   <ProductFormModal
     show={showProductModal}
     {isEditMode}
-    {loading}
+    {localLoading}
     initial={productForm}
     {isAdmin}
     on:submit={(e) => onSubmit(e.detail)}

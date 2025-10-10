@@ -38,7 +38,7 @@
         showErrorModal = true;
       }
     } catch (err) {
-      console.error('Login error:', err);
+
       isLoading = false;
       errorMessages = ['Terjadi kesalahan jaringan.'];
       showErrorModal = true;

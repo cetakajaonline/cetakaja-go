@@ -9,36 +9,66 @@
   import ConfirmModal from "$lib/components/ConfirmModal.svelte";
   import ValidationModal from "$lib/components/ValidationModal.svelte";
 
+  import { orders, currentOrder, loading as orderLoading, error as orderError } from "$lib/stores/order";
   import { orderSchema } from "$lib/validations/orderSchema";
   import { createOrder, updateOrder, deleteOrder, getOrder, getNextOrderNumber } from "$lib/services/orderClient";
   import { z } from "zod";
   import { tick } from "svelte";
+  import { onDestroy } from "svelte";
   import type { Order, User, Product } from "$lib/types";
 
   export let data: {
-    orders: Order[];
     users: User[];
     products: Product[];
     isAdmin: boolean;
     isStaff: boolean;
+    isCustomer: boolean;
+    user: any; // Keep the current user data
   };
 
-  const { orders: initialOrders, users, products, isAdmin, isStaff } = data;
+  const { users, products, isAdmin, isStaff, isCustomer, user: currentUser } = data;
 
-  let orders = [...initialOrders];
+  // Initialize the order store with server data from layout
+  import { page } from "$app/stores";
+  import { onMount } from "svelte";
+  import { initializeOrderStore } from "$lib/stores/initializer";
+
+  onMount(() => {
+    // Get layout data which contains the initial orders
+    const layoutData = $page.data;
+    if (layoutData.orders) {
+      initializeOrderStore(layoutData.orders);
+    }
+  });
+
+  // Subscribe to the orders store
+  let localOrders: Order[] = [];
+  const unsubscribe = orders.subscribe((value) => {
+    // If user is customer, only show their orders
+    if (isCustomer) {
+      localOrders = value.filter(order => order.userId === currentUser.id);
+    } else {
+      // Admin and staff see all orders
+      localOrders = value;
+    }
+  });
   let orderToDelete: Order | null = null;
   let selectedOrder: Order | null = null;
   let selectedOrderDetail: Order | null = null;
   let showOrderModal = false;
   let showOrderDetailModal = false;
   let isEditMode = false;
-  let loading = false;
   let currentPage = 1;
   const pageSize = 7;
   const confirmModalId = "delete-order-confirm";
   let searchKeyword = "";
   let sortKey: keyof Order = "createdAt";
   let sortDirection: "asc" | "desc" = "desc"; // Default to descending for latest orders
+
+  // Unsubscribe from store on component destroy
+  onDestroy(() => {
+    unsubscribe();
+  });
 
   let orderForm = {
     userId: 0,
@@ -134,7 +164,7 @@
   }
 
   async function onSubmit(payload: typeof orderForm) {
-    loading = true;
+    orderLoading.set(true);
     validationMessages = [];
 
     try {
@@ -144,9 +174,9 @@
       if (isEditMode && selectedOrder) {
         // Update order (payment proof handling would be separate)
         result = await updateOrder(selectedOrder.id, orderData);
-        orders = orders.map((o) =>
+        orders.update(items => items.map((o) =>
           o.id === selectedOrder!.id ? { ...o, ...result } : o
-        );
+        ));
       } else {
         // Create order - extract paymentProofFile before validation to preserve it
         const { paymentProofFile, ...orderDataWithoutFile } = orderData;
@@ -157,7 +187,7 @@
           ...validated, 
           ...(paymentProofFile && { paymentProofFile }) 
         });
-        orders = [...orders, result];
+        orders.update(items => [...items, result]);
       }
       closeFormModal();
     } catch (err) {
@@ -172,7 +202,7 @@
       }
       showValidationModal = true;
     } finally {
-      loading = false;
+      orderLoading.set(false);
     }
   }
 
@@ -182,7 +212,7 @@
     try {
       const success = await deleteOrder(orderToDelete.id);
       if (success) {
-        orders = orders.filter((o) => o.id !== orderToDelete?.id);
+        orders.update(items => items.filter((o) => o.id !== orderToDelete?.id));
       }
     } catch (err) {
       // Handle error silently or show in UI if needed
@@ -236,11 +266,21 @@
     }
   }
 
-  $: filteredOrders = orders.filter(
+  $: filteredOrders = localOrders.filter(
     (o) =>
       o.orderNumber.toLowerCase().includes(searchKeyword) ||
       o.user.name.toLowerCase().includes(searchKeyword)
   );
+
+  // Subscribe to loading state
+  let localLoading = false;
+  const unsubscribeLoading = orderLoading.subscribe((value) => {
+    localLoading = value;
+  });
+
+  onDestroy(() => {
+    unsubscribeLoading();
+  });
 
   $: sortedOrders = [...filteredOrders].sort((a, b) => {
     const aVal = a[sortKey] ?? "";
@@ -295,7 +335,7 @@
   <OrderFormModal
     show={showOrderModal}
     {isEditMode}
-    {loading}
+    {localLoading}
     initial={orderForm}
     {users}
     {products}

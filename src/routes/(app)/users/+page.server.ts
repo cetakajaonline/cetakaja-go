@@ -28,3 +28,4 @@ export const load: PageServerLoad = async (event) => {
     currentUserId: user.id,
   };
 };
+

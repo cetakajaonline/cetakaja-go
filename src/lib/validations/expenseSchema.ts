@@ -31,3 +31,4 @@ export const expenseUpdateSchema = expenseSchema.partial().extend({
 
 export type ExpenseFormSchema = z.infer<typeof expenseSchema>;
 export type ExpenseUpdateSchema = z.infer<typeof expenseUpdateSchema>;
+

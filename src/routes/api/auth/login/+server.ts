@@ -47,10 +47,11 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 
     return json({ success: true });
   } catch (error) {
-    console.error("Login Error:", error);
+
     return json(
       { success: false, message: "Terjadi kesalahan saat login" },
       { status: 500 },
     );
   }
 };
+

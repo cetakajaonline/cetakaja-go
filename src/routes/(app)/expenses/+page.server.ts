@@ -1,6 +1,5 @@
 import { redirect } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
-import { getAllExpenses } from "$lib/server/expenseService";
 
 export const load: PageServerLoad = async (event) => {
   // Check if user is authenticated
@@ -15,11 +14,9 @@ export const load: PageServerLoad = async (event) => {
     throw redirect(302, "/unauthorized");
   }
 
-  const expenses = await getAllExpenses();
-
   return {
-    expenses,
     isAdmin: userRole === "admin",
     isStaff: userRole === "staff",
   };
 };
+

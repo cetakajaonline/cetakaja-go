@@ -12,7 +12,7 @@ import fs from "fs";
 import path from "path";
 
 export async function POST(event: RequestEvent) {
-  console.log("Received request to /api/orders/multipart endpoint");
+
 
   try {
     // Only admin and staff can create orders
@@ -121,16 +121,7 @@ export async function POST(event: RequestEvent) {
     // Process payment proof if provided and payment method is transfer or qris
     const paymentProofFile = formData.get("paymentProofFile") as File | null;
 
-    // Debug logging
-    console.log("Processing payment proof:", {
-      hasFile: !!paymentProofFile,
-      fileType: paymentProofFile?.type,
-      fileName: paymentProofFile?.name,
-      fileSize: paymentProofFile?.size,
-      paymentMethod,
-      isTransferOrQris:
-        paymentMethod === "transfer" || paymentMethod === "qris",
-    });
+  
 
     if (
       paymentProofFile &&
@@ -230,3 +221,4 @@ export async function POST(event: RequestEvent) {
     return json({ message: "Gagal membuat order" }, { status: 500 });
   }
 }
+

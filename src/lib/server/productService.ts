@@ -249,3 +249,4 @@ export async function deleteProduct(id: number) {
 
   return deletedProduct;
 }
+

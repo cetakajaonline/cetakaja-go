@@ -16,7 +16,6 @@ export async function GET(event: RequestEvent) {
     const expenses = await getAllExpenses();
     return json(expenses);
   } catch (error) {
-    console.error("Error fetching expenses:", error);
     return json(
       { message: "Gagal mengambil data pengeluaran" },
       { status: 500 },
@@ -58,7 +57,7 @@ export async function POST(event: RequestEvent) {
 
     return json(newExpense);
   } catch (error) {
-    console.error("Error creating expense:", error);
     return json({ message: "Gagal membuat pengeluaran" }, { status: 500 });
   }
 }
+

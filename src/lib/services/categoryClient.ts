@@ -105,3 +105,4 @@ export async function deleteCategory(id: number): Promise<void> {
     throw new Error(errorData.message || "Gagal menghapus kategori");
   }
 }
+

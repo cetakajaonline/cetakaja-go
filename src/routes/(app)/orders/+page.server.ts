@@ -1,8 +1,7 @@
 // src/routes/(app)/orders/+page.server.ts
-import { getAllOrders, getOrdersByUserId } from "$lib/server/orderService";
 import { getAllUsers } from "$lib/server/userService";
 import { getAllProducts } from "$lib/server/productService";
-import type { Order, User, Product } from "$lib/types";
+import type { User, Product } from "$lib/types";
 
 import type { PageServerLoad } from "./$types";
 
@@ -17,16 +16,6 @@ export const load: PageServerLoad = async (event) => {
   const isStaff = user.role === "staff";
   const isCustomer = user.role === "customer";
 
-  let orders: Order[] = [];
-
-  if (isAdmin || isStaff) {
-    // Admin and staff can view all orders
-    orders = await getAllOrders();
-  } else if (isCustomer) {
-    // Customer can only view their own orders
-    orders = await getOrdersByUserId(user.id);
-  }
-
   // Get users and products for the modal
   let users: User[] = [];
   let products: Product[] = [];
@@ -37,7 +26,6 @@ export const load: PageServerLoad = async (event) => {
   }
 
   return {
-    orders,
     user,
     users,
     products,

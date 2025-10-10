@@ -9,34 +9,56 @@
   import ConfirmModal from "$lib/components/ConfirmModal.svelte";
   import ValidationModal from "$lib/components/ValidationModal.svelte";
 
+  import { expenses, currentExpense, loading as expenseLoading, error as expenseError } from "$lib/stores/expense";
   import { expenseSchema, expenseUpdateSchema } from "$lib/validations/expenseSchema";
   import { createExpense, updateExpense, deleteExpense, getExpense } from "$lib/services/expenseClient";
   import { z } from "zod";
   import { tick } from "svelte";
+  import { onDestroy } from "svelte";
   import type { Expense } from "$lib/types";
 
   export let data: {
-    expenses: Expense[];
     isAdmin: boolean;
     isStaff: boolean;
   };
 
-  const { expenses: initialExpenses, isAdmin, isStaff } = data;
+  const { isAdmin, isStaff } = data;
 
-  let expenses = [...initialExpenses];
+  // Initialize the expense store with server data from layout
+  import { page } from "$app/stores";
+  import { onMount } from "svelte";
+  import { initializeExpenseStore } from "$lib/stores/initializer";
+
+  onMount(() => {
+    // Get layout data which contains the initial expenses
+    const layoutData = $page.data;
+    if (layoutData.expenses) {
+      initializeExpenseStore(layoutData.expenses);
+    }
+  });
+
+  // Subscribe to the expenses store
+  let localExpenses: Expense[] = [];
+  const unsubscribe = expenses.subscribe((value) => {
+    localExpenses = value;
+  });
   let expenseToDelete: Expense | null = null;
   let selectedExpense: Expense | null = null;
   let selectedExpenseDetail: Expense | null = null;
   let showExpenseModal = false;
   let showExpenseDetailModal = false;
   let isEditMode = false;
-  let loading = false;
   let currentPage = 1;
   const pageSize = 7;
   const confirmModalId = "delete-expense-confirm";
   let searchKeyword = "";
   let sortKey: keyof Expense = "date";
   let sortDirection: "asc" | "desc" = "desc"; // Default to descending for latest expenses
+
+  // Unsubscribe from store on component destroy
+  onDestroy(() => {
+    unsubscribe();
+  });
 
   let expenseForm = {
     nominal: 0,
@@ -105,7 +127,7 @@
   }
 
   async function onSubmit(payload: typeof expenseForm) {
-    loading = true;
+    expenseLoading.set(true);
     validationMessages = [];
 
     try {
@@ -114,14 +136,14 @@
       if (isEditMode && selectedExpense) {
         // Update expense
         result = await updateExpense(selectedExpense.id, { ...payload });
-        expenses = expenses.map((e) =>
+        expenses.update(items => items.map((e) =>
           e.id === selectedExpense!.id ? { ...e, ...result } : e
-        );
+        ));
       } else {
         // Create expense
         const validated = expenseSchema.parse(payload);
         result = await createExpense({ ...validated });
-        expenses = [...expenses, result];
+        expenses.update(items => [...items, result]);
       }
       closeFormModal();
     } catch (err) {
@@ -136,7 +158,7 @@
       }
       showValidationModal = true;
     } finally {
-      loading = false;
+      expenseLoading.set(false);
     }
   }
 
@@ -146,11 +168,11 @@
     try {
       const success = await deleteExpense(expenseToDelete.id);
       if (success) {
-        expenses = expenses.filter((e) => e.id !== expenseToDelete?.id);
+        expenses.update(items => items.filter((e) => e.id !== expenseToDelete?.id));
       }
     } catch (err) {
       // Handle error silently or show in UI if needed
-      console.error("Failed to delete expense:", err);
+    
     } finally {
       expenseToDelete = null;
     }
@@ -170,7 +192,7 @@
       selectedExpenseDetail = detailedExpense;
       showExpenseDetailModal = true;
     } catch (error) {
-      console.error('Error fetching detailed expense:', error);
+
       // Fallback to the basic expense if detailed fetch fails
       selectedExpenseDetail = expense;
       showExpenseDetailModal = true;
@@ -200,12 +222,22 @@
     }
   }
 
-  $: filteredExpenses = expenses.filter(
+  $: filteredExpenses = localExpenses.filter(
     (e) =>
       e.category.toLowerCase().includes(searchKeyword) ||
       e.description?.toLowerCase().includes(searchKeyword) || 
       formatCurrency(e.nominal).toLowerCase().includes(searchKeyword)
   );
+
+  // Subscribe to loading state
+  let localLoading = false;
+  const unsubscribeLoading = expenseLoading.subscribe((value) => {
+    localLoading = value;
+  });
+
+  onDestroy(() => {
+    unsubscribeLoading();
+  });
 
   $: sortedExpenses = [...filteredExpenses].sort((a, b) => {
     const aVal = a[sortKey] ?? "";
@@ -260,7 +292,7 @@
   <ExpenseFormModal
     show={showExpenseModal}
     {isEditMode}
-    {loading}
+    {localLoading}
     initial={expenseForm}
     on:submit={(e: CustomEvent<typeof expenseForm>) => onSubmit(e.detail)}
     on:close={closeFormModal}

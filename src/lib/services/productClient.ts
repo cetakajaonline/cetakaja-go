@@ -62,3 +62,4 @@ export async function getAllProducts(): Promise<Product[]> {
 
   return (await res.json()) as Product[];
 }
+

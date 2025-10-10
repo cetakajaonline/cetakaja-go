@@ -43,7 +43,7 @@
       categories = await getAllCategories();
       isLoadingCategories = false;
     } catch (err) {
-      console.error('Failed to load categories:', err);
+
       isLoadingCategories = false;
     }
   }

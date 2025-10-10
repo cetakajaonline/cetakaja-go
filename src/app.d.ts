@@ -17,3 +17,4 @@ declare module "*.svelte" {
 }
 
 export {};
+

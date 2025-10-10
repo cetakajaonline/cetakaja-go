@@ -18,7 +18,6 @@ export async function GET(event: RequestEvent) {
     const orders = await getAllOrders();
     return json(orders);
   } catch (error) {
-    console.error("Error fetching orders:", error);
     return json({ message: "Gagal mengambil data orders" }, { status: 500 });
   }
 }
@@ -71,7 +70,7 @@ export async function POST(event: RequestEvent) {
 
     return json(newOrder);
   } catch (error) {
-    console.error("Error creating order:", error);
     return json({ message: "Gagal membuat order" }, { status: 500 });
   }
 }
+

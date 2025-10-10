@@ -37,11 +37,11 @@ export const handle: Handle = async ({ event, resolve }) => {
       if (user) {
         event.locals.user = user;
       } else {
-        console.warn("User not found for decoded token ID");
+      
         event.cookies.delete("token", { path: "/" });
       }
     } catch (err) {
-      console.error("Invalid JWT cookie:", err);
+    
       event.cookies.delete("token", { path: "/" }); // 🔥 Hapus token rusak
       event.locals.user = undefined;
     }
@@ -49,3 +49,4 @@ export const handle: Handle = async ({ event, resolve }) => {
 
   return resolve(event);
 };
+

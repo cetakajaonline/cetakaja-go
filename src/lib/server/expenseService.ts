@@ -115,7 +115,7 @@ export async function updateExpense(
           await unlink(fullPath);
         }
       } catch (error) {
-        console.error("Error deleting old proof file:", error);
+      
         // Continue with the update even if file deletion fails
       }
     }
@@ -189,3 +189,4 @@ export async function getTotalExpensesByDateRange(
   });
   return (result._sum.nominal as number) || 0;
 }
+

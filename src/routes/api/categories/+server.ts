@@ -49,7 +49,8 @@ export const POST: RequestHandler = async (event) => {
     });
     return json(newCategory);
   } catch (err) {
-    console.error(err);
+
     return json({ message: "Gagal membuat kategori" }, { status: 500 });
   }
 };
+

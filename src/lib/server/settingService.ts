@@ -14,3 +14,4 @@ export function updateSetting(data: {
     data,
   });
 }
+

@@ -36,3 +36,4 @@ export async function updateSetting(
 
   return response.json() as Promise<Setting>;
 }
+

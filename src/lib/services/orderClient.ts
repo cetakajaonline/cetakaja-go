@@ -48,12 +48,7 @@ export async function createOrder(
     paymentProofFile?: File;
   },
 ): Promise<Order> {
-  console.log("Creating order with data:", {
-    hasPaymentProof: !!orderData.paymentProofFile,
-    paymentProofName: orderData.paymentProofFile?.name,
-    paymentProofSize: orderData.paymentProofFile?.size,
-    paymentMethod: orderData.paymentMethod,
-  });
+
 
   // Always use multipart endpoint for creating orders, regardless of whether there's a file
   const formData = new FormData();
@@ -77,13 +72,7 @@ export async function createOrder(
 
   // Add payment proof file if provided
   if (orderData.paymentProofFile instanceof File) {
-    console.log(
-      "Appending payment proof file to form data:",
-      orderData.paymentProofFile.name,
-    );
     formData.append("paymentProofFile", orderData.paymentProofFile);
-  } else {
-    console.log("No payment proof file to append");
   }
 
   const res = await fetch("/api/orders/multipart", {
@@ -250,3 +239,4 @@ export async function getAllOrders(): Promise<Order[]> {
   const result: Order[] = await res.json();
   return result;
 }
+
