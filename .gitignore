@@ -88,4 +88,3 @@ lerna-lock.json
 
 build
 .eslintcache
-/static/uploads
