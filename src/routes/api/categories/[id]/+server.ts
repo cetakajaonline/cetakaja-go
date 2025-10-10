@@ -70,7 +70,7 @@ export const GET: RequestHandler = async (event) => {
       return json({ message: "Kategori tidak ditemukan" }, { status: 404 });
     }
     return json(category);
-  } catch (err) {
+  } catch {
     return json({ message: "Gagal mengambil data kategori" }, { status: 500 });
   }
 };

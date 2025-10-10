@@ -7,7 +7,7 @@ export interface User {
   username: string;
   phone: string;
   address: string | null;
-  role?: string;
+  role: string;
   createdAt: Date;
 }
 
@@ -172,4 +172,3 @@ export interface ApiResponse<T = unknown> {
   message: string;
   data?: T;
 }
-

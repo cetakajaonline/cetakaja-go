@@ -12,4 +12,3 @@ export type User = {
 };
 
 export const user = writable<User | null>(null);
-

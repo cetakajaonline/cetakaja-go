@@ -12,8 +12,6 @@ import fs from "fs";
 import path from "path";
 
 export async function POST(event: RequestEvent) {
-
-
   try {
     // Only admin and staff can create orders
     const userRole = event.locals.user?.role;
@@ -121,8 +119,6 @@ export async function POST(event: RequestEvent) {
     // Process payment proof if provided and payment method is transfer or qris
     const paymentProofFile = formData.get("paymentProofFile") as File | null;
 
-  
-
     if (
       paymentProofFile &&
       (paymentMethod === "transfer" || paymentMethod === "qris")
@@ -221,4 +217,3 @@ export async function POST(event: RequestEvent) {
     return json({ message: "Gagal membuat order" }, { status: 500 });
   }
 }
-

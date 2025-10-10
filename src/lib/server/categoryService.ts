@@ -105,4 +105,3 @@ export async function deleteCategory(id: number) {
     where: { id },
   });
 }
-

@@ -15,6 +15,7 @@
   import { tick } from "svelte";
   import { onDestroy } from "svelte";
   import type { Product, ProductSortKey } from "$lib/types";
+  import type { User } from "@prisma/client";
 
   export let data: {
     isAdmin: boolean;
@@ -299,7 +300,7 @@
   <ProductFormModal
     show={showProductModal}
     {isEditMode}
-    {localLoading}
+    loading={localLoading}
     initial={productForm}
     {isAdmin}
     on:submit={(e) => onSubmit(e.detail)}

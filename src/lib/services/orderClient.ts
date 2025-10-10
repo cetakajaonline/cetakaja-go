@@ -48,8 +48,6 @@ export async function createOrder(
     paymentProofFile?: File;
   },
 ): Promise<Order> {
-
-
   // Always use multipart endpoint for creating orders, regardless of whether there's a file
   const formData = new FormData();
 
@@ -239,4 +237,3 @@ export async function getAllOrders(): Promise<Order[]> {
   const result: Order[] = await res.json();
   return result;
 }
-

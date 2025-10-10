@@ -93,14 +93,15 @@
         );
       } else {
         // Pastikan tipe yang dikirim ke createUser sesuai dengan tipe yang diharapkan
-        result = await createUser({
+        const userData = {
           name: validated.name!,
           username: validated.username!,
           password: validated.password!,
           phone: validated.phone!,
-          address: validated.address ?? null, // Konversi undefined ke null
-          role: validated.role
-        });
+          address: validated.address || null,
+          role: validated.role!  // Since role is required in the schema, use non-null assertion
+        };
+        result = await createUser(userData);
         users = [...users, result];
       }
       closeFormModal();

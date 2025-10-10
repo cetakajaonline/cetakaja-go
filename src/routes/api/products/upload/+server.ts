@@ -30,4 +30,3 @@ export const POST: RequestHandler = async (event) => {
     return json({ message: "Gagal mengupload foto" }, { status: 500 });
   }
 };
-

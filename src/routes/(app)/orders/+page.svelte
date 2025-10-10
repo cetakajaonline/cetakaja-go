@@ -335,7 +335,7 @@
   <OrderFormModal
     show={showOrderModal}
     {isEditMode}
-    {localLoading}
+    loading={localLoading}
     initial={orderForm}
     {users}
     {products}

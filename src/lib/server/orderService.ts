@@ -543,4 +543,3 @@ export async function getNextOrderNumberForToday() {
 
   return `${datePrefix}-${String(nextNumber).padStart(4, "0")}`;
 }
-

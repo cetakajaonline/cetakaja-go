@@ -85,4 +85,3 @@ export async function savePaymentFile(
 ): Promise<string> {
   return saveFile(buffer, originalName, "payments");
 }
-

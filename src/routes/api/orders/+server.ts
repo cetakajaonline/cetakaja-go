@@ -17,7 +17,7 @@ export async function GET(event: RequestEvent) {
 
     const orders = await getAllOrders();
     return json(orders);
-  } catch (error) {
+  } catch {
     return json({ message: "Gagal mengambil data orders" }, { status: 500 });
   }
 }
@@ -69,8 +69,7 @@ export async function POST(event: RequestEvent) {
     });
 
     return json(newOrder);
-  } catch (error) {
+  } catch {
     return json({ message: "Gagal membuat order" }, { status: 500 });
   }
 }
-

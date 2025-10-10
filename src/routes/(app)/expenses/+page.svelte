@@ -292,7 +292,7 @@
   <ExpenseFormModal
     show={showExpenseModal}
     {isEditMode}
-    {localLoading}
+    loading={localLoading}
     initial={expenseForm}
     on:submit={(e: CustomEvent<typeof expenseForm>) => onSubmit(e.detail)}
     on:close={closeFormModal}

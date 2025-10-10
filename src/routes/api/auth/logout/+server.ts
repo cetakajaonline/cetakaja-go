@@ -12,4 +12,3 @@ export const POST: RequestHandler = ({ cookies }) => {
 
   return json({ success: true, message: "Logout berhasil" });
 };
-

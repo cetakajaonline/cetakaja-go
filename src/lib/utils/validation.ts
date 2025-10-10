@@ -13,4 +13,3 @@ export function isStrongPassword(password: string): boolean {
 export function isNotEmpty(value: string): boolean {
   return value.trim().length > 0;
 }
-

@@ -70,4 +70,3 @@ export async function POST(event: RequestEvent) {
     return json({ message: "Gagal membuat pengeluaran" }, { status: 500 });
   }
 }
-

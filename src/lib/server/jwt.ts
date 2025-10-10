@@ -14,4 +14,3 @@ export function verifyJwt<T>(token: string): T | null {
     return null;
   }
 }
-

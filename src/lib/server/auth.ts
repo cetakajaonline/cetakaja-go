@@ -66,4 +66,3 @@ export function requireAnyRole(event: { locals: App.Locals }) {
 export function isAdmin(event: RequestEvent): boolean {
   return event.locals.user?.role === "admin";
 }
-

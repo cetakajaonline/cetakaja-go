@@ -27,7 +27,7 @@ export const load: LayoutServerLoad = async ({ locals }) => {
     const [expenses, orders, products] = await Promise.all([
       getAllExpenses(),
       getAllOrders(),
-      getAllProducts()
+      getAllProducts(),
     ]);
 
     return {
@@ -56,4 +56,3 @@ export const load: LayoutServerLoad = async ({ locals }) => {
     isStaff: locals.user.role === "staff",
   };
 };
-

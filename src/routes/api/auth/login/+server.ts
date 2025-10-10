@@ -46,12 +46,10 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
     });
 
     return json({ success: true });
-  } catch (error) {
-
+  } catch {
     return json(
       { success: false, message: "Terjadi kesalahan saat login" },
       { status: 500 },
     );
   }
 };
-

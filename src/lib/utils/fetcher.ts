@@ -28,4 +28,3 @@ export async function fetcher<T>(
   // fallback, dianggap unsafe jika tanpa validator
   return json as T;
 }
-

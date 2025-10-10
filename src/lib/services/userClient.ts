@@ -76,4 +76,3 @@ export async function getUser(id: number): Promise<User> {
 
   return (await res.json()) as User;
 }
-

@@ -37,11 +37,9 @@ export const handle: Handle = async ({ event, resolve }) => {
       if (user) {
         event.locals.user = user;
       } else {
-      
         event.cookies.delete("token", { path: "/" });
       }
-    } catch (err) {
-    
+    } catch {
       event.cookies.delete("token", { path: "/" }); // 🔥 Hapus token rusak
       event.locals.user = undefined;
     }
@@ -49,4 +47,3 @@ export const handle: Handle = async ({ event, resolve }) => {
 
   return resolve(event);
 };
-

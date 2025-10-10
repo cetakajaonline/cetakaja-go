@@ -7,4 +7,3 @@ export const load: PageServerLoad = async (event) => {
   const setting = await getSetting();
   return { setting, user };
 };
-

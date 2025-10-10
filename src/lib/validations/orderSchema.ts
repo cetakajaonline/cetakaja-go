@@ -36,4 +36,3 @@ export const orderUpdateSchema = orderSchema.partial().extend({
 
 export type OrderFormSchema = z.infer<typeof orderSchema>;
 export type OrderUpdateSchema = z.infer<typeof orderUpdateSchema>;
-

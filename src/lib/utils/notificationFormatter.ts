@@ -41,4 +41,3 @@ export function prepareForEvolutionAPI(notifications: Notification[]) {
     orderId: notification.orderId, // Include order ID for reference
   }));
 }
-

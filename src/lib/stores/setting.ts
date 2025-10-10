@@ -8,4 +8,3 @@ export type Setting = {
 };
 
 export const setting = writable<Setting | null>(null);
-

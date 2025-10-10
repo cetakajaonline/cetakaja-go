@@ -31,4 +31,3 @@ export const userUpdateSchema = userSchema.partial().extend({
 
 export type UserFormSchema = z.infer<typeof userSchema>;
 export type UserUpdateSchema = z.infer<typeof userUpdateSchema>;
-

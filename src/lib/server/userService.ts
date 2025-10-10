@@ -155,4 +155,3 @@ export async function validatePassword(
     role: user.role,
   };
 }
-

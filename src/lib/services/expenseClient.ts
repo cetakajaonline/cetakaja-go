@@ -167,4 +167,3 @@ export async function getAllExpenses(): Promise<Expense[]> {
   const result: Expense[] = await res.json();
   return result;
 }
-

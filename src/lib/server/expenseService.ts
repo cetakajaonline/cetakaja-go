@@ -114,8 +114,7 @@ export async function updateExpense(
         if (await fileExists(fullPath)) {
           await unlink(fullPath);
         }
-      } catch (error) {
-      
+      } catch {
         // Continue with the update even if file deletion fails
       }
     }
@@ -189,4 +188,3 @@ export async function getTotalExpensesByDateRange(
   });
   return (result._sum.nominal as number) || 0;
 }
-

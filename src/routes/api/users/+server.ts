@@ -56,4 +56,3 @@ export const POST: RequestHandler = async (event) => {
     return json({ message: "Gagal membuat user" }, { status: 500 });
   }
 };
-

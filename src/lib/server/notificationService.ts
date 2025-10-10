@@ -148,4 +148,3 @@ export async function updateNotificationStatus(
     data: { status, sentAt: new Date() },
   });
 }
-
