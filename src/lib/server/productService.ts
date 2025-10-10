@@ -211,6 +211,12 @@ export async function updateProduct(
 }
 
 export async function deleteProduct(id: number) {
+  // Get the current product to access the photo path before deleting
+  const currentProduct = await prisma.product.findUnique({
+    where: { id },
+    select: { photo: true },
+  });
+
   // Check if product has associated order items
   const orderItems = await prisma.orderItem.findMany({
     where: { productId: id },
@@ -221,7 +227,25 @@ export async function deleteProduct(id: number) {
     throw new Error("Produk tidak bisa dihapus karena memiliki order terkait");
   }
 
-  return prisma.product.delete({
+  const deletedProduct = await prisma.product.delete({
     where: { id },
   });
+
+  // Delete the photo file if it exists
+  if (currentProduct?.photo) {
+    try {
+      const fullPath = path.join(process.cwd(), "static", currentProduct.photo);
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+      }
+    } catch (err) {
+      console.error(
+        `Gagal menghapus file foto produk: ${currentProduct.photo}`,
+        err,
+      );
+      // Continue even if file deletion fails
+    }
+  }
+
+  return deletedProduct;
 }

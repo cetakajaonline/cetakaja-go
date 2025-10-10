@@ -3,6 +3,8 @@ import {
   createOrderNotification,
   createPaymentNotification,
 } from "$lib/server/notificationService";
+import fs from "fs";
+import path from "path";
 
 const orderSelect = {
   id: true,
@@ -204,6 +206,47 @@ export async function getOrderWithPayments(id: number) {
   });
 }
 
+// Helper function to handle payment creation/updates consistently
+async function handlePaymentForOrder(
+  tx: any,
+  orderId: number,
+  userId: number,
+  createdById: number | null | undefined,
+  paymentMethod: "transfer" | "qris" | "cash",
+  totalAmount: number,
+  paymentStatus?: "pending" | "confirmed" | "failed" | "refunded"
+) {
+  // Check if payment record already exists
+  const existingPayment = await tx.payment.findFirst({
+    where: { orderId },
+  });
+
+  if (!existingPayment) {
+    // Create new payment record
+    await tx.payment.create({
+      data: {
+        orderId,
+        userId,
+        createdById: createdById || null,
+        method: paymentMethod,
+        amount: totalAmount,
+        status: paymentMethod === "cash" ? "confirmed" : paymentStatus || "pending",
+      },
+    });
+  } else {
+    // Update existing payment record
+    await tx.payment.update({
+      where: { id: existingPayment.id },
+      data: {
+        method: paymentMethod,
+        amount: totalAmount,
+        status: paymentMethod === "cash" ? "confirmed" : paymentStatus || existingPayment.status,
+        createdById: createdById || null,
+      },
+    });
+  }
+}
+
 export async function createOrder({
   userId,
   createdById,
@@ -255,32 +298,8 @@ export async function createOrder({
       select: orderSelect,
     });
 
-    // If payment method is transfer or qris, create a payment record
-    if (paymentMethod === "transfer" || paymentMethod === "qris") {
-      await tx.payment.create({
-        data: {
-          orderId: createdOrder.id,
-          userId, // customer who made the payment
-          createdById, // staff/admin who created the order
-          method: paymentMethod,
-          amount: totalAmount,
-          status: "pending", // payment status starts as pending until confirmed
-        },
-      });
-    }
-    // For cash payments, also create a payment record (but without proof needed)
-    else if (paymentMethod === "cash") {
-      await tx.payment.create({
-        data: {
-          orderId: createdOrder.id,
-          userId,
-          createdById,
-          method: paymentMethod,
-          amount: totalAmount,
-          status: "confirmed", // cash payments are typically confirmed immediately
-        },
-      });
-    }
+    // Handle payment creation consistently using the helper function
+    await handlePaymentForOrder(tx, createdOrder.id, userId, createdById, paymentMethod, totalAmount);
 
     return createdOrder;
   });
@@ -384,66 +403,17 @@ export async function updateOrder(
       select: orderSelect,
     });
 
-    // If payment method changed to transfer/qris and no payment exists, create a payment record
-    if (
-      paymentMethod &&
-      (paymentMethod === "transfer" || paymentMethod === "qris")
-    ) {
-      const existingPayment = await tx.payment.findFirst({
-        where: { orderId: id },
-      });
-
-      if (!existingPayment) {
-        await tx.payment.create({
-          data: {
-            orderId: id,
-            userId: result.userId, // customer who made the payment
-            createdById: result.createdById, // staff/admin who created the order
-            method: paymentMethod,
-            amount: totalAmount || result.totalAmount,
-            status: paymentStatus || "pending", // payment status starts as pending until confirmed
-          },
-        });
-      } else {
-        // Update existing payment if method changed
-        await tx.payment.update({
-          where: { id: existingPayment.id }, // Use the payment's ID instead of orderId
-          data: {
-            method: paymentMethod,
-            amount: totalAmount || result.totalAmount,
-            status: paymentStatus || existingPayment.status,
-          },
-        });
-      }
-    }
-    // For cash payments, create or update payment record as confirmed
-    else if (paymentMethod && paymentMethod === "cash") {
-      const existingPayment = await tx.payment.findFirst({
-        where: { orderId: id },
-      });
-
-      if (!existingPayment) {
-        await tx.payment.create({
-          data: {
-            orderId: id,
-            userId: result.userId,
-            createdById: result.createdById,
-            method: paymentMethod,
-            amount: totalAmount || result.totalAmount,
-            status: "confirmed", // cash payments are typically confirmed immediately
-          },
-        });
-      } else {
-        // Update existing payment
-        await tx.payment.update({
-          where: { id: existingPayment.id }, // Use the payment's ID instead of orderId
-          data: {
-            method: paymentMethod,
-            amount: totalAmount || result.totalAmount,
-            status: "confirmed",
-          },
-        });
-      }
+    // Handle payment creation/updates consistently using the helper function if payment method is provided
+    if (paymentMethod) {
+      await handlePaymentForOrder(
+        tx, 
+        id, 
+        result.userId, 
+        result.createdById, 
+        paymentMethod, 
+        totalAmount || result.totalAmount, 
+        paymentStatus
+      );
     }
 
     return result;
@@ -470,6 +440,48 @@ export async function updateOrder(
 }
 
 export async function deleteOrder(id: number) {
+  // Get all payment proofs associated with this order to delete their files
+  const orderWithPayments = await prisma.order.findUnique({
+    where: { id },
+    include: {
+      payments: {
+        select: {
+          proofs: {
+            select: {
+              id: true,
+              filePath: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!orderWithPayments) {
+    throw new Error("Order not found");
+  }
+
+  // Delete all payment proof files from the filesystem
+  for (const payment of orderWithPayments.payments) {
+    for (const proof of payment.proofs) {
+      if (proof.filePath) {
+        try {
+          const fullPath = path.join(process.cwd(), "static", proof.filePath);
+          if (fs.existsSync(fullPath)) {
+            fs.unlinkSync(fullPath);
+          }
+        } catch (err) {
+          console.error(
+            `Gagal menghapus file bukti pembayaran: ${proof.filePath}`,
+            err,
+          );
+          // Continue with deletion even if file deletion fails
+        }
+      }
+    }
+  }
+
+  // Now delete the order (this will cascade delete payments and proofs due to Prisma schema)
   return prisma.order.delete({
     where: { id },
   });

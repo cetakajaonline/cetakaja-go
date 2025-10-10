@@ -1,7 +1,7 @@
 import { json } from "@sveltejs/kit";
 import type { RequestEvent } from "./$types";
 import prisma from "$lib/server/prisma";
-import { saveFile } from "$lib/server/uploadService";
+import { savePaymentFile } from "$lib/server/uploadService";
 import fs from "fs";
 import path from "path";
 
@@ -85,8 +85,8 @@ export async function POST(event: RequestEvent) {
       where: { paymentId: Number(paymentId) },
     });
 
-    // Upload file using the upload service
-    const filePath = await saveFile(
+    // Upload file using the payment upload service
+    const filePath = await savePaymentFile(
       Buffer.from(await file.arrayBuffer()),
       file.name,
     );
@@ -109,6 +109,69 @@ export async function POST(event: RequestEvent) {
     console.error("Error uploading payment proof:", error);
     return json(
       { message: "Gagal mengupload bukti pembayaran" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(event: RequestEvent) {
+  try {
+    // Only admin and staff can delete payment proofs
+    const userRole = event.locals.user?.role;
+    if (userRole !== "admin" && userRole !== "staff") {
+      return json(
+        {
+          message:
+            "Forbidden: hanya admin dan staff yang dapat menghapus bukti pembayaran",
+        },
+        { status: 403 },
+      );
+    }
+
+    const paymentProofId = Number(event.url.searchParams.get("id"));
+
+    if (!paymentProofId) {
+      return json(
+        { message: "ID bukti pembayaran wajib disertakan" },
+        { status: 400 },
+      );
+    }
+
+    // Get the payment proof to access the file path before deletion
+    const paymentProof = await prisma.paymentProof.findUnique({
+      where: { id: paymentProofId },
+    });
+
+    if (!paymentProof) {
+      return json({ message: "Bukti pembayaran tidak ditemukan" }, { status: 404 });
+    }
+
+    // Delete the file from disk
+    try {
+      const fullPath = path.join(process.cwd(), "static", paymentProof.filePath);
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+      }
+    } catch (err) {
+      console.error(
+        `Gagal menghapus file bukti pembayaran: ${paymentProof.filePath}`,
+        err,
+      );
+      // Continue with database deletion even if file deletion fails
+    }
+
+    // Delete the payment proof from database
+    await prisma.paymentProof.delete({
+      where: { id: paymentProofId },
+    });
+
+    return json({
+      message: "Bukti pembayaran berhasil dihapus",
+    });
+  } catch (error) {
+    console.error("Error deleting payment proof:", error);
+    return json(
+      { message: "Gagal menghapus bukti pembayaran" },
       { status: 500 },
     );
   }

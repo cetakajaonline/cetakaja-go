@@ -6,7 +6,7 @@ interface OrderCreationData {
   status?: string;
   shippingMethod: string;
   paymentMethod: string;
-  paymentStatus?: string;
+  paymentStatus?: "pending" | "confirmed" | "failed" | "refunded";
   totalAmount: number;
   notes?: string;
   orderItems?: Array<{
@@ -17,6 +17,7 @@ interface OrderCreationData {
     subtotal: number;
   }>;
   createdById?: number | null;
+  paymentProofFile?: File;
 }
 
 // Define types for order update (with optional fields)
@@ -26,7 +27,7 @@ interface OrderUpdateData {
   status?: string;
   shippingMethod?: string;
   paymentMethod?: string;
-  paymentStatus?: string;
+  paymentStatus?: "pending" | "confirmed" | "failed" | "refunded";
   totalAmount?: number;
   notes?: string;
   orderItems?: Array<{
@@ -47,7 +48,14 @@ export async function createOrder(
     paymentProofFile?: File;
   },
 ): Promise<Order> {
-  // Use multipart endpoint to handle file uploads along with order data
+  console.log("Creating order with data:", {
+    hasPaymentProof: !!orderData.paymentProofFile,
+    paymentProofName: orderData.paymentProofFile?.name,
+    paymentProofSize: orderData.paymentProofFile?.size,
+    paymentMethod: orderData.paymentMethod
+  });
+  
+  // Always use multipart endpoint for creating orders, regardless of whether there's a file
   const formData = new FormData();
 
   // Add basic order data
@@ -55,6 +63,7 @@ export async function createOrder(
   if (orderData.status) formData.append("status", orderData.status);
   formData.append("shippingMethod", orderData.shippingMethod);
   formData.append("paymentMethod", orderData.paymentMethod);
+  if (orderData.paymentStatus) formData.append("paymentStatus", orderData.paymentStatus);
   formData.append("totalAmount", orderData.totalAmount.toString());
   if (orderData.notes) formData.append("notes", orderData.notes);
   if (orderData.createdById)
@@ -65,13 +74,12 @@ export async function createOrder(
     formData.append("orderItems", JSON.stringify(orderData.orderItems));
   }
 
-  // Add payment proof file if provided and payment method is transfer or qris
-  if (
-    orderData.paymentProofFile instanceof File &&
-    (orderData.paymentMethod === "transfer" ||
-      orderData.paymentMethod === "qris")
-  ) {
+  // Add payment proof file if provided
+  if (orderData.paymentProofFile instanceof File) {
+    console.log("Appending payment proof file to form data:", orderData.paymentProofFile.name);
     formData.append("paymentProofFile", orderData.paymentProofFile);
+  } else {
+    console.log("No payment proof file to append");
   }
 
   const res = await fetch("/api/orders/multipart", {
@@ -112,9 +120,29 @@ export async function uploadPaymentProof(
   return result;
 }
 
+// Delete a payment proof
+export async function deletePaymentProof(
+  paymentProofId: number,
+): Promise<{ message: string }> {
+  const res = await fetch(`/api/payment-proofs?id=${paymentProofId}`, {
+    method: "DELETE",
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.message || "Failed to delete payment proof");
+  }
+
+  const result: { message: string } = await res.json();
+  return result;
+}
+
 export async function updateOrder(
   id: number,
-  orderData: Partial<OrderUpdateData>,
+  orderData: Omit<Partial<OrderUpdateData>, "orderItems"> & {
+    orderItems?: OrderUpdateData["orderItems"];
+    paymentProofFile?: File;
+  },
 ): Promise<Order> {
   // Check if payment proof file is being included
   if (orderData.paymentProofFile instanceof File) {

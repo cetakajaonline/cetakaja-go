@@ -55,6 +55,10 @@ export async function saveSettingFile(buffer: Buffer, originalName: string): Pro
   return saveFile(buffer, originalName, "settings");
 }
 
+export async function saveLogoFile(buffer: Buffer, originalName: string): Promise<string> {
+  return saveFile(buffer, originalName, "logo");
+}
+
 export async function saveProductFile(buffer: Buffer, originalName: string): Promise<string> {
   return saveFile(buffer, originalName, "products");
 }

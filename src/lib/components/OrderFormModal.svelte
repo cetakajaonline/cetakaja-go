@@ -13,9 +13,7 @@
     loading, 
     initial, 
     users, 
-    products, 
-    isAdmin
-  }: { 
+    products  }: { 
     show: boolean;
     isEditMode: boolean;
     loading: boolean;

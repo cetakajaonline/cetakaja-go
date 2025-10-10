@@ -1,6 +1,6 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { saveFile } from "$lib/server/uploadService";
+import { saveProductFile } from "$lib/server/uploadService";
 import { requireAdmin } from "$lib/server/auth";
 
 export const POST: RequestHandler = async (event) => {
@@ -23,7 +23,7 @@ export const POST: RequestHandler = async (event) => {
 
   try {
     const buffer = Buffer.from(await file.arrayBuffer());
-    const photoPath = await saveFile(buffer, file.name);
+    const photoPath = await saveProductFile(buffer, file.name);
     return json({ photoPath });
   } catch (error) {
     console.error("Upload error:", error);

@@ -9,8 +9,8 @@
   import ConfirmModal from "$lib/components/ConfirmModal.svelte";
   import ValidationModal from "$lib/components/ValidationModal.svelte";
 
-  import { orderSchema, orderUpdateSchema } from "$lib/validations/orderSchema";
-  import { createOrder, updateOrder, deleteOrder, getOrder, uploadPaymentProof, getNextOrderNumber } from "$lib/services/orderClient";
+  import { orderSchema } from "$lib/validations/orderSchema";
+  import { createOrder, updateOrder, deleteOrder, getOrder, getNextOrderNumber } from "$lib/services/orderClient";
   import { z } from "zod";
   import { tick } from "svelte";
   import type { Order, User, Product } from "$lib/types";
@@ -145,9 +145,15 @@
           o.id === selectedOrder!.id ? { ...o, ...result } : o
         );
       } else {
-        // Create order (payment proof handling would be separate)
-        const validated = orderSchema.parse(orderData);
-        result = await createOrder({ ...validated });
+        // Create order - extract paymentProofFile before validation to preserve it
+        const { paymentProofFile, ...orderDataWithoutFile } = orderData;
+        const validated = orderSchema.parse(orderDataWithoutFile);
+        
+        // Re-add the paymentProofFile to the validated data
+        result = await createOrder({ 
+          ...validated, 
+          ...(paymentProofFile && { paymentProofFile }) 
+        });
         orders = [...orders, result];
       }
       closeFormModal();

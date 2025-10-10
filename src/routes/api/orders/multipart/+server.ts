@@ -7,11 +7,13 @@ import {
   getNextOrderNumberForToday,
   getOrderByOrderNumber,
 } from "$lib/server/orderService";
-import { saveFile } from "$lib/server/uploadService";
+import { savePaymentFile } from "$lib/server/uploadService";
 import fs from "fs";
 import path from "path";
 
 export async function POST(event: RequestEvent) {
+  console.log("Received request to /api/orders/multipart endpoint");
+  
   try {
     // Only admin and staff can create orders
     const userRole = event.locals.user?.role;
@@ -36,6 +38,12 @@ export async function POST(event: RequestEvent) {
       | "transfer"
       | "qris"
       | "cash";
+    const paymentStatus = formData.get("paymentStatus") as
+      | "pending"
+      | "confirmed"
+      | "failed"
+      | "refunded"
+      | undefined;
     const totalAmount = Number(formData.get("totalAmount"));
     const notes = (formData.get("notes") as string) || "";
     const orderItemsString = formData.get("orderItems") as string;
@@ -85,7 +93,7 @@ export async function POST(event: RequestEvent) {
       return json({ message: "Order number sudah terdaftar" }, { status: 400 });
     }
 
-    // Create the order (this will also create the payment record if needed)
+    // Create the order 
     const newOrder = await createOrderService({
       userId: data.userId,
       createdById: event.locals.user?.id,
@@ -98,58 +106,60 @@ export async function POST(event: RequestEvent) {
       orderItems: data.orderItems || [],
     });
 
+    // Update payment status if provided (payment record is created by createOrderService)
+    if (paymentStatus) {
+      await prisma.payment.updateMany({
+        where: { 
+          orderId: newOrder.id 
+        },
+        data: { 
+          status: paymentStatus 
+        },
+      });
+    }
+
     // Process payment proof if provided and payment method is transfer or qris
     const paymentProofFile = formData.get("paymentProofFile") as File | null;
+    
+    // Debug logging
+    console.log("Processing payment proof:", {
+      hasFile: !!paymentProofFile,
+      fileType: paymentProofFile?.type,
+      fileName: paymentProofFile?.name,
+      fileSize: paymentProofFile?.size,
+      paymentMethod,
+      isTransferOrQris: paymentMethod === "transfer" || paymentMethod === "qris"
+    });
+    
     if (
       paymentProofFile &&
       (paymentMethod === "transfer" || paymentMethod === "qris")
     ) {
-      // Get the payment record that was created with the order
-      // Use a more specific query to ensure we get the right payment
-      const payment = await prisma.payment.findFirst({
+      // Get the payment record for this order - it should exist because createOrderService creates it
+      let payment = await prisma.payment.findFirst({
         where: {
           orderId: newOrder.id,
-          method: paymentMethod,
         },
         orderBy: {
           createdAt: "desc", // Get the most recently created payment for this order
         },
       });
 
+      // If no payment exists, create one (this should not happen since createOrderService creates it)
       if (!payment) {
-        return json(
-          { message: "Gagal menemukan record pembayaran untuk order ini" },
-          { status: 500 },
-        );
+        payment = await prisma.payment.create({
+          data: {
+            orderId: newOrder.id,
+            userId: data.userId,
+            createdById: data.createdById || null,
+            method: paymentMethod,
+            amount: data.totalAmount,
+            status: "pending",
+          },
+        });
       }
 
-      // Check if there are existing payment proofs for this payment (in case of retry)
-      const existingProofs = await prisma.paymentProof.findMany({
-        where: { paymentId: payment.id },
-      });
-
-      // Delete old files from disk
-      for (const proof of existingProofs) {
-        try {
-          const fullPath = path.join(process.cwd(), "static", proof.filePath);
-          if (fs.existsSync(fullPath)) {
-            fs.unlinkSync(fullPath);
-          }
-        } catch (err) {
-          console.error(
-            `Gagal menghapus file bukti pembayaran lama: ${proof.filePath}`,
-            err,
-          );
-          // Continue even if file deletion fails
-        }
-      }
-
-      // Delete existing payment proofs from database
-      await prisma.paymentProof.deleteMany({
-        where: { paymentId: payment.id },
-      });
-
-      // Validate file type
+      // Validate file type before processing
       const validTypes = [
         "image/jpeg",
         "image/jpg",
@@ -170,8 +180,34 @@ export async function POST(event: RequestEvent) {
         return json({ message: "Ukuran file maksimal 5MB" }, { status: 400 });
       }
 
-      // Upload file using the upload service
-      const filePath = await saveFile(
+      // Check if there are existing payment proofs for this payment (in case of retry)
+      const existingProofs = await prisma.paymentProof.findMany({
+        where: { paymentId: payment.id },
+      });
+
+      // Delete old files from disk first
+      for (const proof of existingProofs) {
+        try {
+          const fullPath = path.join(process.cwd(), "static", proof.filePath);
+          if (fs.existsSync(fullPath)) {
+            fs.unlinkSync(fullPath);
+          }
+        } catch (err) {
+          console.error(
+            `Gagal menghapus file bukti pembayaran lama: ${proof.filePath}`,
+            err,
+          );
+          // Continue even if file deletion fails
+        }
+      }
+
+      // Delete existing payment proofs from database
+      await prisma.paymentProof.deleteMany({
+        where: { paymentId: payment.id },
+      });
+
+      // Upload file using the payment upload service
+      const filePath = await savePaymentFile(
         Buffer.from(await paymentProofFile.arrayBuffer()),
         paymentProofFile.name,
       );

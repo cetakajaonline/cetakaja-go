@@ -1,7 +1,7 @@
 import { json } from "@sveltejs/kit";
 import { getSetting, updateSetting } from "$lib/server/settingService";
 import type { RequestHandler } from "./$types";
-import { saveFile } from "$lib/server/uploadService";
+import { saveFile, saveLogoFile } from "$lib/server/uploadService";
 import { requireAnyRole, requireAdmin } from "$lib/server/auth";
 import { settingSchema } from "$lib/validations/settingSchema";
 import fs from "fs";
@@ -45,8 +45,8 @@ export const POST: RequestHandler = async (event) => {
   if (file instanceof File && file.size > 0) {
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    // Validasi ekstensi file di `saveFile`, atau lakukan di sini
-    logoUrl = await saveFile(buffer, file.name); // saveFile bisa kembalikan `/uploads/filename`
+    // Save logo to the dedicated 'logo' folder
+    logoUrl = await saveLogoFile(buffer, file.name);
   }
 
   // Get the old setting to access the old logo path
