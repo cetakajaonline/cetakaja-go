@@ -12,10 +12,12 @@ export async function saveFile(
 ): Promise<string> {
   // Base directory
   const baseUploadDir = path.resolve("static/uploads");
-  
+
   // Full upload directory path
-  const uploadDir = subdirectory ? path.join(baseUploadDir, subdirectory) : baseUploadDir;
-  
+  const uploadDir = subdirectory
+    ? path.join(baseUploadDir, subdirectory)
+    : baseUploadDir;
+
   // Pastikan folder upload tersedia
   if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
@@ -40,29 +42,46 @@ export async function saveFile(
   await fs.promises.writeFile(filepath, buffer);
 
   // Build the return path based on subdirectory
-  const returnPath = subdirectory ? `/uploads/${subdirectory}/${filename}` : `/uploads/${filename}`;
-  
+  const returnPath = subdirectory
+    ? `/uploads/${subdirectory}/${filename}`
+    : `/uploads/${filename}`;
+
   // Return path relatif untuk digunakan di <img src="/uploads/..." />
   return returnPath;
 }
 
 // Specialized functions for different file types
-export async function saveExpenseFile(buffer: Buffer, originalName: string): Promise<string> {
+export async function saveExpenseFile(
+  buffer: Buffer,
+  originalName: string,
+): Promise<string> {
   return saveFile(buffer, originalName, "expenses");
 }
 
-export async function saveSettingFile(buffer: Buffer, originalName: string): Promise<string> {
+export async function saveSettingFile(
+  buffer: Buffer,
+  originalName: string,
+): Promise<string> {
   return saveFile(buffer, originalName, "settings");
 }
 
-export async function saveLogoFile(buffer: Buffer, originalName: string): Promise<string> {
+export async function saveLogoFile(
+  buffer: Buffer,
+  originalName: string,
+): Promise<string> {
   return saveFile(buffer, originalName, "logo");
 }
 
-export async function saveProductFile(buffer: Buffer, originalName: string): Promise<string> {
+export async function saveProductFile(
+  buffer: Buffer,
+  originalName: string,
+): Promise<string> {
   return saveFile(buffer, originalName, "products");
 }
 
-export async function savePaymentFile(buffer: Buffer, originalName: string): Promise<string> {
+export async function savePaymentFile(
+  buffer: Buffer,
+  originalName: string,
+): Promise<string> {
   return saveFile(buffer, originalName, "payments");
 }

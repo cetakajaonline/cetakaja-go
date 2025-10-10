@@ -32,9 +32,10 @@ export async function createExpense(
     formData.append("nominal", expenseData.nominal.toString());
     formData.append("category", expenseData.category);
     // Ensure date is a Date object before calling toISOString
-    const dateValue = expenseData.date instanceof Date 
-      ? expenseData.date.toISOString() 
-      : new Date(expenseData.date).toISOString();
+    const dateValue =
+      expenseData.date instanceof Date
+        ? expenseData.date.toISOString()
+        : new Date(expenseData.date).toISOString();
     formData.append("date", dateValue);
     if (expenseData.description)
       formData.append("description", expenseData.description);
@@ -92,9 +93,10 @@ export async function updateExpense(
     if (expenseData.category) formData.append("category", expenseData.category);
     if (expenseData.date) {
       // Ensure date is a Date object before calling toISOString
-      const dateValue = expenseData.date instanceof Date 
-        ? expenseData.date.toISOString() 
-        : new Date(expenseData.date).toISOString();
+      const dateValue =
+        expenseData.date instanceof Date
+          ? expenseData.date.toISOString()
+          : new Date(expenseData.date).toISOString();
       formData.append("date", dateValue);
     }
     if (expenseData.description !== undefined)

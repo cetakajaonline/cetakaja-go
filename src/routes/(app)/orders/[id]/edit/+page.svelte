@@ -14,11 +14,11 @@
   let formData = $state({
     userId: order.user.id,
     orderNumber: order.orderNumber,
-    status: order.status,
-    shippingMethod: "delivery", // Changed to delivery by default
+    status: order.status as "pending" | "processing" | "finished" | "canceled",
+    shippingMethod: "delivery" as "pickup" | "delivery", // Changed to delivery by default
 
-    paymentMethod: order.paymentMethod,
-    paymentStatus: order.paymentStatus,
+    paymentMethod: order.paymentMethod as "transfer" | "qris" | "cash",
+    paymentStatus: order.paymentStatus as "pending" | "confirmed" | "failed" | "refunded",
     totalAmount: order.totalAmount,
     orderItems: order.orderItems.map(item => ({
       id: item.id,

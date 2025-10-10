@@ -143,12 +143,19 @@ export async function DELETE(event: RequestEvent) {
     });
 
     if (!paymentProof) {
-      return json({ message: "Bukti pembayaran tidak ditemukan" }, { status: 404 });
+      return json(
+        { message: "Bukti pembayaran tidak ditemukan" },
+        { status: 404 },
+      );
     }
 
     // Delete the file from disk
     try {
-      const fullPath = path.join(process.cwd(), "static", paymentProof.filePath);
+      const fullPath = path.join(
+        process.cwd(),
+        "static",
+        paymentProof.filePath,
+      );
       if (fs.existsSync(fullPath)) {
         fs.unlinkSync(fullPath);
       }

@@ -13,7 +13,7 @@ import path from "path";
 
 export async function POST(event: RequestEvent) {
   console.log("Received request to /api/orders/multipart endpoint");
-  
+
   try {
     // Only admin and staff can create orders
     const userRole = event.locals.user?.role;
@@ -93,7 +93,7 @@ export async function POST(event: RequestEvent) {
       return json({ message: "Order number sudah terdaftar" }, { status: 400 });
     }
 
-    // Create the order 
+    // Create the order
     const newOrder = await createOrderService({
       userId: data.userId,
       createdById: event.locals.user?.id,
@@ -109,18 +109,18 @@ export async function POST(event: RequestEvent) {
     // Update payment status if provided (payment record is created by createOrderService)
     if (paymentStatus) {
       await prisma.payment.updateMany({
-        where: { 
-          orderId: newOrder.id 
+        where: {
+          orderId: newOrder.id,
         },
-        data: { 
-          status: paymentStatus 
+        data: {
+          status: paymentStatus,
         },
       });
     }
 
     // Process payment proof if provided and payment method is transfer or qris
     const paymentProofFile = formData.get("paymentProofFile") as File | null;
-    
+
     // Debug logging
     console.log("Processing payment proof:", {
       hasFile: !!paymentProofFile,
@@ -128,9 +128,10 @@ export async function POST(event: RequestEvent) {
       fileName: paymentProofFile?.name,
       fileSize: paymentProofFile?.size,
       paymentMethod,
-      isTransferOrQris: paymentMethod === "transfer" || paymentMethod === "qris"
+      isTransferOrQris:
+        paymentMethod === "transfer" || paymentMethod === "qris",
     });
-    
+
     if (
       paymentProofFile &&
       (paymentMethod === "transfer" || paymentMethod === "qris")

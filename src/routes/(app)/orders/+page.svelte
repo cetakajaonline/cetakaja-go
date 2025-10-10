@@ -43,12 +43,13 @@
   let orderForm = {
     userId: 0,
     orderNumber: "",
-    status: "pending",
-    shippingMethod: "pickup",
-    paymentMethod: "transfer",
-    paymentStatus: "pending",
+    status: "pending" as "pending" | "processing" | "finished" | "canceled",
+    shippingMethod: "pickup" as "pickup" | "delivery",
+    paymentMethod: "transfer" as "transfer" | "qris" | "cash",
+    paymentStatus: "pending" as "pending" | "confirmed" | "failed" | "refunded",
     notes: "",
     totalAmount: 0,
+    paymentProofFile: undefined as File | undefined,
     orderItems: [] as {
       productId: number;
       variantId?: number;
@@ -87,12 +88,13 @@
     orderForm = {
       userId: 0,
       orderNumber: newOrderNumber,
-      status: "pending",
-      shippingMethod: "pickup",
-      paymentMethod: "transfer",
-      paymentStatus: "pending",
+      status: "pending" as "pending" | "processing" | "finished" | "canceled",
+      shippingMethod: "pickup" as "pickup" | "delivery",
+      paymentMethod: "transfer" as "transfer" | "qris" | "cash",
+      paymentStatus: "pending" as "pending" | "confirmed" | "failed" | "refunded",
       notes: "",
       totalAmount: 0,
+      paymentProofFile: undefined,
       orderItems: [],
     };
     showOrderModal = true;
@@ -104,12 +106,13 @@
     orderForm = {
       userId: order.userId,
       orderNumber: order.orderNumber,
-      status: order.status,
-      shippingMethod: order.shippingMethod,
-      paymentMethod: order.paymentMethod,
-      paymentStatus: order.paymentStatus,
+      status: order.status as "pending" | "processing" | "finished" | "canceled",
+      shippingMethod: order.shippingMethod as "pickup" | "delivery",
+      paymentMethod: order.paymentMethod as "transfer" | "qris" | "cash",
+      paymentStatus: order.paymentStatus as "pending" | "confirmed" | "failed" | "refunded",
       notes: order.notes ?? "",
       totalAmount: order.totalAmount,
+      paymentProofFile: undefined,
       orderItems: order.orderItems.map(item => ({
         productId: item.productId,
         variantId: item.variantId || undefined,

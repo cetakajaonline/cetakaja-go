@@ -3,9 +3,9 @@ import type { Order, PaymentProof } from "$lib/types";
 // Define types for order creation (with required fields)
 interface OrderCreationData {
   userId: number; // Required for creation
-  status?: string;
-  shippingMethod: string;
-  paymentMethod: string;
+  status?: "pending" | "processing" | "finished" | "canceled";
+  shippingMethod: "pickup" | "delivery";
+  paymentMethod: "transfer" | "qris" | "cash";
   paymentStatus?: "pending" | "confirmed" | "failed" | "refunded";
   totalAmount: number;
   notes?: string;
@@ -24,9 +24,9 @@ interface OrderCreationData {
 interface OrderUpdateData {
   userId?: number;
   orderNumber?: string;
-  status?: string;
-  shippingMethod?: string;
-  paymentMethod?: string;
+  status?: "pending" | "processing" | "finished" | "canceled";
+  shippingMethod?: "pickup" | "delivery";
+  paymentMethod?: "transfer" | "qris" | "cash";
   paymentStatus?: "pending" | "confirmed" | "failed" | "refunded";
   totalAmount?: number;
   notes?: string;
@@ -52,9 +52,9 @@ export async function createOrder(
     hasPaymentProof: !!orderData.paymentProofFile,
     paymentProofName: orderData.paymentProofFile?.name,
     paymentProofSize: orderData.paymentProofFile?.size,
-    paymentMethod: orderData.paymentMethod
+    paymentMethod: orderData.paymentMethod,
   });
-  
+
   // Always use multipart endpoint for creating orders, regardless of whether there's a file
   const formData = new FormData();
 
@@ -63,7 +63,8 @@ export async function createOrder(
   if (orderData.status) formData.append("status", orderData.status);
   formData.append("shippingMethod", orderData.shippingMethod);
   formData.append("paymentMethod", orderData.paymentMethod);
-  if (orderData.paymentStatus) formData.append("paymentStatus", orderData.paymentStatus);
+  if (orderData.paymentStatus)
+    formData.append("paymentStatus", orderData.paymentStatus);
   formData.append("totalAmount", orderData.totalAmount.toString());
   if (orderData.notes) formData.append("notes", orderData.notes);
   if (orderData.createdById)
@@ -76,7 +77,10 @@ export async function createOrder(
 
   // Add payment proof file if provided
   if (orderData.paymentProofFile instanceof File) {
-    console.log("Appending payment proof file to form data:", orderData.paymentProofFile.name);
+    console.log(
+      "Appending payment proof file to form data:",
+      orderData.paymentProofFile.name,
+    );
     formData.append("paymentProofFile", orderData.paymentProofFile);
   } else {
     console.log("No payment proof file to append");

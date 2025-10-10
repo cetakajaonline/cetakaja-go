@@ -14,11 +14,11 @@
   let formData = $state({
     userId: 0, // Changed from users[0]?.id || 0 to 0 (require selection)
     orderNumber: "",
-    status: "pending",
-    shippingMethod: "delivery", // Changed from "pickup" to "delivery" by default
+    status: "pending" as "pending" | "processing" | "finished" | "canceled",
+    shippingMethod: "delivery" as "pickup" | "delivery", // Changed from "pickup" to "delivery" by default
 
-    paymentMethod: "transfer",
-    paymentStatus: "pending",
+    paymentMethod: "transfer" as "transfer" | "qris" | "cash",
+    paymentStatus: "pending" as "pending" | "confirmed" | "failed" | "refunded",
     totalAmount: 0,
     orderItems: [] as {
       productId: number;

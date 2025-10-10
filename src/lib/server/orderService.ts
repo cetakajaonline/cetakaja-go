@@ -206,15 +206,17 @@ export async function getOrderWithPayments(id: number) {
   });
 }
 
+import type { Prisma } from "@prisma/client";
+
 // Helper function to handle payment creation/updates consistently
 async function handlePaymentForOrder(
-  tx: any,
+  tx: Prisma.TransactionClient,
   orderId: number,
   userId: number,
   createdById: number | null | undefined,
   paymentMethod: "transfer" | "qris" | "cash",
   totalAmount: number,
-  paymentStatus?: "pending" | "confirmed" | "failed" | "refunded"
+  paymentStatus?: "pending" | "confirmed" | "failed" | "refunded",
 ) {
   // Check if payment record already exists
   const existingPayment = await tx.payment.findFirst({
@@ -230,7 +232,8 @@ async function handlePaymentForOrder(
         createdById: createdById || null,
         method: paymentMethod,
         amount: totalAmount,
-        status: paymentMethod === "cash" ? "confirmed" : paymentStatus || "pending",
+        status:
+          paymentMethod === "cash" ? "confirmed" : paymentStatus || "pending",
       },
     });
   } else {
@@ -240,7 +243,10 @@ async function handlePaymentForOrder(
       data: {
         method: paymentMethod,
         amount: totalAmount,
-        status: paymentMethod === "cash" ? "confirmed" : paymentStatus || existingPayment.status,
+        status:
+          paymentMethod === "cash"
+            ? "confirmed"
+            : paymentStatus || existingPayment.status,
         createdById: createdById || null,
       },
     });
@@ -299,7 +305,14 @@ export async function createOrder({
     });
 
     // Handle payment creation consistently using the helper function
-    await handlePaymentForOrder(tx, createdOrder.id, userId, createdById, paymentMethod, totalAmount);
+    await handlePaymentForOrder(
+      tx,
+      createdOrder.id,
+      userId,
+      createdById,
+      paymentMethod,
+      totalAmount,
+    );
 
     return createdOrder;
   });
@@ -406,13 +419,13 @@ export async function updateOrder(
     // Handle payment creation/updates consistently using the helper function if payment method is provided
     if (paymentMethod) {
       await handlePaymentForOrder(
-        tx, 
-        id, 
-        result.userId, 
-        result.createdById, 
-        paymentMethod, 
-        totalAmount || result.totalAmount, 
-        paymentStatus
+        tx,
+        id,
+        result.userId,
+        result.createdById,
+        paymentMethod,
+        totalAmount || result.totalAmount,
+        paymentStatus,
       );
     }
 

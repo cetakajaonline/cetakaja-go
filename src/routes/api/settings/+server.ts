@@ -1,7 +1,7 @@
 import { json } from "@sveltejs/kit";
 import { getSetting, updateSetting } from "$lib/server/settingService";
 import type { RequestHandler } from "./$types";
-import { saveFile, saveLogoFile } from "$lib/server/uploadService";
+import { saveLogoFile } from "$lib/server/uploadService";
 import { requireAnyRole, requireAdmin } from "$lib/server/auth";
 import { settingSchema } from "$lib/validations/settingSchema";
 import fs from "fs";

@@ -83,7 +83,7 @@ export async function updateExpense(
   // Get the current expense to access the old proofFile before updating
   const currentExpense = await prisma.expense.findUnique({
     where: { id },
-    select: { proofFile: true }
+    select: { proofFile: true },
   });
 
   const data: {
@@ -98,15 +98,19 @@ export async function updateExpense(
   if (category) data.category = category;
   if (date) data.date = date;
   if (description !== undefined) data.description = description || null;
-  
+
   // Handle proof file update and delete old file if needed
   if (proofFile !== undefined) {
     data.proofFile = proofFile || null;
-    
+
     // Delete the old proof file if it exists and a new one is being uploaded
     if (currentExpense?.proofFile && proofFile) {
       try {
-        const fullPath = join(process.cwd(), "static", currentExpense.proofFile);
+        const fullPath = join(
+          process.cwd(),
+          "static",
+          currentExpense.proofFile,
+        );
         if (await fileExists(fullPath)) {
           await unlink(fullPath);
         }
@@ -128,7 +132,7 @@ export async function deleteExpense(id: number): Promise<Expense> {
   // Get the expense first to access the proof file before deletion
   const expense = await prisma.expense.findUnique({
     where: { id },
-    select: { proofFile: true }
+    select: { proofFile: true },
   });
 
   // Delete the expense record
@@ -145,7 +149,10 @@ export async function deleteExpense(id: number): Promise<Expense> {
         await unlink(fullPath);
       }
     } catch (error) {
-      console.error("Error deleting proof file during expense deletion:", error);
+      console.error(
+        "Error deleting proof file during expense deletion:",
+        error,
+      );
       // Continue with the deletion even if file deletion fails
     }
   }
