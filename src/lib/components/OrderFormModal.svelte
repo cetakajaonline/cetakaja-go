@@ -38,7 +38,8 @@
     variantId: undefined as number | undefined,
     qty: 1,
     price: 0,
-    subtotal: 0
+    subtotal: 0,
+    notes: ''
   });
 
   // State for product variants - computed based on selected product
@@ -158,6 +159,7 @@
       qty: newOrderItem.qty,
       price: newOrderItem.price,
       subtotal: newOrderItem.subtotal,
+      notes: newOrderItem.notes || null,
       product: {
         id: product.id,
         name: product.name
@@ -176,7 +178,8 @@
       variantId: undefined,
       qty: 1,
       price: 0,
-      subtotal: 0
+      subtotal: 0,
+      notes: ''
     };
   }
 
@@ -367,7 +370,7 @@
     <div class="pt-4">
       <!-- Add New Item -->
       <div class="p-4 border rounded-lg mb-4">
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-2">
+        <div class="grid grid-cols-1 md:grid-cols-6 gap-2">
           <div class="form-control w-full">
             <label class="label" for="newItemProduct">
               <span class="label-text">Produk</span>
@@ -443,6 +446,19 @@
             />
           </div>
           
+          <div class="form-control w-full">
+            <label class="label" for="newItemNotes">
+              <span class="label-text">Link Desain</span>
+            </label>
+            <input
+              id="newItemNotes"
+              type="text"
+              class="input input-bordered w-full text-sm"
+              bind:value={newOrderItem.notes}
+              placeholder="Google Drive, dll"
+            />
+          </div>
+          
           <div class="flex items-end">
             <button
               type="button"
@@ -467,6 +483,7 @@
               <th>Jumlah</th>
               <th>Harga</th>
               <th>Subtotal</th>
+              <th>Link Desain</th>
               <th class="text-right">Aksi</th>
             </tr>
           </thead>
@@ -478,6 +495,15 @@
                 <td>{item.qty}</td>
                 <td>{formatCurrency(item.price)}</td>
                 <td>{formatCurrency(item.subtotal)}</td>
+                <td>
+                  {#if item.notes}
+                    <a href="{item.notes}" target="_blank" class="text-blue-600 hover:underline break-all">
+                      Lihat Desain
+                    </a>
+                  {:else}
+                    -
+                  {/if}
+                </td>
                 <td class="text-right">
                   <button
                     onclick={() => removeOrderItem(index)}
@@ -489,7 +515,7 @@
               </tr>
             {/each}
             <tr class="font-bold">
-              <td colspan="4" class="text-right">Total</td>
+              <td colspan="5" class="text-right">Total</td>
               <td>{formatCurrency(calculateTotal())}</td>
               <td></td>
             </tr>

@@ -27,6 +27,7 @@
       qty: item.qty,
       price: item.price,
       subtotal: item.subtotal,
+      notes: item.notes || ''
     }))
   });
 
@@ -38,6 +39,7 @@
     qty: number;
     price: number;
     subtotal: number;
+    notes: string;
   };
 
   let loading = $state(false);
@@ -49,7 +51,8 @@
     variantId: undefined as number | undefined,
     qty: 1,
     price: 0,
-    subtotal: 0
+    subtotal: 0,
+    notes: ''
   });
 
   // State for product variants - computed based on selected product
@@ -111,7 +114,8 @@
       variantId: newOrderItem.variantId,
       qty: newOrderItem.qty,
       price: newOrderItem.price,
-      subtotal: newOrderItem.qty * newOrderItem.price
+      subtotal: newOrderItem.qty * newOrderItem.price,
+      notes: newOrderItem.notes || ''
     };
 
     formData.orderItems = [...formData.orderItems, item] as FormOrderItem[];
@@ -123,7 +127,8 @@
       variantId: undefined,
       qty: 1,
       price: 0,
-      subtotal: 0
+      subtotal: 0,
+      notes: ''
     };
     error = null;
   }
@@ -289,7 +294,7 @@
       <!-- Add New Item -->
       <div class="mb-6 p-4 border border-gray-200 rounded-lg">
         <h3 class="font-medium text-gray-700 mb-3">Tambah Item Baru</h3>
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
+        <div class="grid grid-cols-1 md:grid-cols-6 gap-3">
           <div>
             <label for="newOrderItemProduct" class="block text-sm font-medium text-gray-700 mb-1">Produk</label>
             <SearchSelect
@@ -316,6 +321,17 @@
                 }).format(variant.price)}</option>
               {/each}
             </select>
+          </div>
+          
+          <div>
+            <label for="newOrderItemNotes" class="block text-sm font-medium text-gray-700 mb-1">Link Desain</label>
+            <input
+              id="newOrderItemNotes"
+              type="text"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              bind:value={newOrderItem.notes}
+              placeholder="Google Drive, dll"
+            />
           </div>
           
           <div>
@@ -364,6 +380,7 @@
             <tr>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produk</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Varian</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Link Desain</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Jumlah</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Harga</th>
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
@@ -388,6 +405,17 @@
                           {/if}
                         {/each}
                       {/if}
+                    {:else}
+                      -
+                    {/if}
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm text-gray-900">
+                    {#if item.notes}
+                      <a href="{item.notes}" target="_blank" class="text-blue-600 hover:underline break-all">
+                        Lihat Desain
+                      </a>
                     {:else}
                       -
                     {/if}
@@ -421,7 +449,7 @@
               </tr>
             {/each}
             <tr class="bg-gray-50">
-              <td colspan="4" class="px-6 py-3 text-right text-sm font-medium text-gray-900">Total</td>
+              <td colspan="5" class="px-6 py-3 text-right text-sm font-medium text-gray-900">Total</td>
               <td class="px-6 py-3 text-sm font-medium text-gray-900">
                 {new Intl.NumberFormat('id-ID', {
                   style: 'currency',

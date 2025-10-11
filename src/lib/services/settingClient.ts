@@ -1,7 +1,7 @@
 // src/lib/services/settingClient.ts
 import type { Setting } from "$lib/types";
 
-// Get current setting
+// Get current setting (requires authentication)
 export async function getSettings(): Promise<{
   success: boolean;
   data?: Setting;
@@ -9,6 +9,26 @@ export async function getSettings(): Promise<{
 }> {
   try {
     const response = await fetch("/api/settings");
+    if (!response.ok) {
+      throw new Error("Gagal mengambil pengaturan");
+    }
+    const data = await response.json();
+    return { success: true, data };
+  } catch (error: unknown) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Gagal mengambil pengaturan";
+    return { success: false, message: errorMessage };
+  }
+}
+
+// Get public setting (no authentication required)
+export async function getPublicSettings(): Promise<{
+  success: boolean;
+  data?: Partial<Setting>;
+  message?: string;
+}> {
+  try {
+    const response = await fetch("/api/public/settings");
     if (!response.ok) {
       throw new Error("Gagal mengambil pengaturan");
     }

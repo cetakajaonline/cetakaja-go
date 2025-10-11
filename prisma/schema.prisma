@@ -95,6 +95,7 @@ model OrderItem {
   qty       Int
   price     Int
   subtotal  Int
+  notes     String?         @db.VarChar(500)
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
   order     Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)

@@ -7,26 +7,54 @@ import path from "path";
 
 export async function POST(event: RequestEvent) {
   try {
-    // Only admin and staff can upload payment proofs
-    const userRole = event.locals.user?.role;
-    if (userRole !== "admin" && userRole !== "staff") {
-      return json(
-        {
-          message:
-            "Forbidden: hanya admin dan staff yang dapat upload bukti pembayaran",
-        },
-        { status: 403 },
-      );
-    }
-
     const formData = await event.request.formData();
     const file = formData.get("file") as File | null;
     const paymentId = formData.get("paymentId") as string | null;
 
-    if (!file || !paymentId) {
+    if (!paymentId) {
       return json(
-        { message: "File dan ID pembayaran wajib disertakan" },
+        { message: "ID pembayaran wajib disertakan" },
         { status: 400 },
+      );
+    }
+
+    if (!file) {
+      return json(
+        { message: "File bukti pembayaran wajib disertakan" },
+        { status: 400 },
+      );
+    }
+
+    // Verify payment exists and belongs to an order
+    const payment = await prisma.payment.findUnique({
+      where: { id: Number(paymentId) },
+      include: { 
+        order: {
+          select: { userId: true }
+        }
+      },
+    });
+
+    if (!payment) {
+      return json({ message: "Pembayaran tidak ditemukan" }, { status: 404 });
+    }
+
+    // Check if user is authenticated and authorized
+    const userId = event.locals.user?.id;
+    const userRole = event.locals.user?.role;
+    
+    // Allow access if user is admin/staff or if it's the user's own order
+    if (
+      userRole !== "admin" && 
+      userRole !== "staff" && 
+      userId !== payment.order.userId
+    ) {
+      return json(
+        {
+          message:
+            "Forbidden: hanya admin, staff, atau pemilik order yang dapat upload bukti pembayaran",
+        },
+        { status: 403 },
       );
     }
 
@@ -47,16 +75,6 @@ export async function POST(event: RequestEvent) {
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       return json({ message: "Ukuran file maksimal 5MB" }, { status: 400 });
-    }
-
-    // Verify payment exists and belongs to an order
-    const payment = await prisma.payment.findUnique({
-      where: { id: Number(paymentId) },
-      include: { order: true },
-    });
-
-    if (!payment) {
-      return json({ message: "Pembayaran tidak ditemukan" }, { status: 404 });
     }
 
     // Check if there are existing payment proofs for this payment

@@ -24,6 +24,7 @@ export const orderSchema = z.object({
         subtotal: z
           .number()
           .min(0, "Subtotal harus lebih dari atau sama dengan 0"),
+        notes: z.string().max(500, "Catatan maksimal 500 karakter").optional(),
       }),
     )
     .optional(),

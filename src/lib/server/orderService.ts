@@ -43,6 +43,7 @@ const orderSelect = {
       qty: true,
       price: true,
       subtotal: true,
+      notes: true,
       productId: true,
       variantId: true,
       product: {
@@ -118,6 +119,7 @@ const orderDetailSelect = {
       qty: true,
       price: true,
       subtotal: true,
+      notes: true,
       productId: true,
       variantId: true,
       product: {
@@ -278,6 +280,7 @@ export async function createOrder({
     qty: number;
     price: number;
     subtotal: number;
+    notes?: string;
   }[];
 }) {
   const newOrder = await prisma.$transaction(async (tx) => {
@@ -298,6 +301,7 @@ export async function createOrder({
             qty: item.qty,
             price: item.price,
             subtotal: item.subtotal,
+            notes: item.notes || null,
           })),
         },
       },
@@ -359,6 +363,7 @@ export async function updateOrder(
       qty: number;
       price: number;
       subtotal: number;
+      notes?: string;
     }[];
   },
 ) {
@@ -409,6 +414,7 @@ export async function updateOrder(
               qty: item.qty,
               price: item.price,
               subtotal: item.subtotal,
+              notes: item.notes || null,
             })),
           },
         }),

@@ -70,6 +70,7 @@ export interface OrderItem {
   qty: number;
   price: number;
   subtotal: number;
+  notes: string | null;
   product: {
     id: number;
     name: string;

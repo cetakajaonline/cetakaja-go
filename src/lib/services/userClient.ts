@@ -32,6 +32,27 @@ export async function registerUser(
   return data;
 }
 
+// Public registration function for self-ordering customers
+export async function registerPublicUser(
+  userData: {
+    name: string;
+    username: string;
+    phone: string;
+    password: string;
+  }
+): Promise<ApiResponse<{ user: User }>> {
+  const res = await fetch("/api/auth/register", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(userData),
+  });
+
+  const data: ApiResponse<{ user: User }> = await res.json();
+  return data;
+}
+
 export async function createUser(
   userData: Omit<User, "id" | "createdAt"> & { password: string },
 ): Promise<User> {

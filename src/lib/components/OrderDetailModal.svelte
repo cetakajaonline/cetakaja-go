@@ -126,6 +126,7 @@
                   <th class="text-right">Qty</th>
                   <th class="text-right">Harga</th>
                   <th class="text-right">Subtotal</th>
+                  <th>Link Desain</th>
                 </tr>
               </thead>
               <tbody>
@@ -136,12 +137,21 @@
                     <td class="text-right">{item.qty}</td>
                     <td class="text-right">{formatCurrency(item.price)}</td>
                     <td class="text-right">{formatCurrency(item.subtotal)}</td>
+                    <td>
+                      {#if item.notes}
+                        <a href="{item.notes}" target="_blank" class="text-blue-600 hover:underline break-all">
+                          Lihat Desain
+                        </a>
+                      {:else}
+                        -
+                      {/if}
+                    </td>
                   </tr>
                 {/each}
               </tbody>
               <tfoot>
                 <tr>
-                  <td colspan="4" class="text-right font-semibold">Total:</td>
+                  <td colspan="5" class="text-right font-semibold">Total:</td>
                   <td class="text-right font-bold">{formatCurrency(order.totalAmount)}</td>
                 </tr>
               </tfoot>

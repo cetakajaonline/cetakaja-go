@@ -11,7 +11,8 @@ export const load: PageServerLoad = (event) => {
 
   // Only admin and staff can access expenses
   if (userRole !== "admin" && userRole !== "staff") {
-    throw redirect(302, "/unauthorized");
+    // Only admins can access expenses page
+    throw redirect(302, "/dashboard");
   }
 
   return {

@@ -26,7 +26,18 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 
     const { username, password } = parsed.data;
 
-    const user = await prisma.user.findUnique({ where: { username } });
+    // Check if the input looks like a phone number (starts with 08 and has 10-15 digits total)
+    // Phone numbers would be in format 08xxxxxxxxx (where x is a digit) 
+    const isPhoneInput = /^08\d{8,13}$/.test(username);
+    
+    let user;
+    if (isPhoneInput) {
+      // If it looks like a phone number, search by phone
+      user = await prisma.user.findUnique({ where: { phone: username } });
+    } else {
+      // Otherwise, search by username
+      user = await prisma.user.findUnique({ where: { username } });
+    }
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return json(
@@ -45,8 +56,9 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
       maxAge: 60 * 60 * 24 * 7,
     });
 
-    return json({ success: true });
-  } catch {
+    return json({ success: true, data: { user: { id: user.id, name: user.name, username: user.username, phone: user.phone } } });
+  } catch (error) {
+    console.error('Login error:', error);
     return json(
       { success: false, message: "Terjadi kesalahan saat login" },
       { status: 500 },
