@@ -85,3 +85,10 @@ export async function savePaymentFile(
 ): Promise<string> {
   return saveFile(buffer, originalName, "payments");
 }
+
+export async function saveQrisImageFile(
+  buffer: Buffer,
+  originalName: string,
+): Promise<string> {
+  return saveFile(buffer, originalName, "qris");
+}

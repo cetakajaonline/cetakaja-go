@@ -1,4 +1,36 @@
 import type { User } from "$lib/types";
+import type { ApiResponse } from "$lib/types";
+
+export async function loginUser(credentials: {
+  username: string;
+  password: string;
+}): Promise<ApiResponse<{ user: User }>> {
+  const res = await fetch("/api/auth/login", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(credentials),
+  });
+
+  const data: ApiResponse<{ user: User }> = await res.json();
+  return data;
+}
+
+export async function registerUser(
+  userData: Omit<User, "id" | "createdAt"> & { password: string },
+): Promise<ApiResponse<User>> {
+  const res = await fetch("/api/users", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(userData),
+  });
+
+  const data: ApiResponse<User> = await res.json();
+  return data;
+}
 
 export async function createUser(
   userData: Omit<User, "id" | "createdAt"> & { password: string },

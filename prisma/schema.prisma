@@ -8,6 +8,177 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id              Int            @id @default(autoincrement())
+  name            String         @db.VarChar(100)
+  username        String         @unique @db.VarChar(50)
+  phone           String         @unique @db.VarChar(20)
+  password        String
+  role            Role
+  address         String?        @db.VarChar(255)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  notifications   Notification[]
+  createdOrders   Order[]        @relation("OrderCreatedBy")
+  orders          Order[]        @relation("UserOrders")
+  createdPayments Payment[]      @relation("PaymentCreatedBy")
+  payments        Payment[]      @relation("UserPayments")
+}
+
+model Category {
+  id          Int       @id @default(autoincrement())
+  name        String    @db.VarChar(100)
+  code        String    @unique @db.VarChar(50)
+  description String?   @db.VarChar(255)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
+}
+
+model Product {
+  id          Int              @id @default(autoincrement())
+  categoryId  Int
+  name        String           @db.VarChar(150)
+  description String?
+  baseCode    String           @db.VarChar(50)
+  photo       String?          @db.VarChar(255)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  orderItems  OrderItem[]
+  category    Category         @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  variants    ProductVariant[]
+
+  @@unique([baseCode, categoryId])
+  @@index([categoryId])
+}
+
+model ProductVariant {
+  id          Int         @id @default(autoincrement())
+  productId   Int
+  variantName String      @db.VarChar(100)
+  price       Int
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  orderItems  OrderItem[]
+  product     Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+}
+
+model Order {
+  id             Int            @id @default(autoincrement())
+  userId         Int
+  createdById    Int?
+  orderNumber    String         @unique @db.VarChar(50)
+  status         OrderStatus    @default(pending)
+  shippingMethod ShippingMethod
+  paymentMethod  PaymentMethod
+  paymentStatus  PaymentStatus  @default(pending)
+  totalAmount    Int
+  notes          String?        @db.VarChar(500)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  notifications  Notification[]
+  createdBy      User?          @relation("OrderCreatedBy", fields: [createdById], references: [id])
+  user           User           @relation("UserOrders", fields: [userId], references: [id], onDelete: Cascade)
+  orderItems     OrderItem[]
+  payments       Payment[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([paymentStatus])
+}
+
+model OrderItem {
+  id        Int             @id @default(autoincrement())
+  orderId   Int
+  productId Int
+  variantId Int?
+  qty       Int
+  price     Int
+  subtotal  Int
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  order     Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variant   ProductVariant? @relation(fields: [variantId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model Payment {
+  id             Int            @id @default(autoincrement())
+  orderId        Int
+  userId         Int
+  createdById    Int?
+  method         PaymentMethod
+  amount         Int
+  status         PaymentStatus  @default(pending)
+  transactionRef String?        @db.VarChar(100)
+  paidAt         DateTime?
+  createdAt      DateTime       @default(now())
+  createdBy      User?          @relation("PaymentCreatedBy", fields: [createdById], references: [id])
+  order          Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user           User           @relation("UserPayments", fields: [userId], references: [id], onDelete: Cascade)
+  proofs         PaymentProof[]
+
+  @@index([orderId])
+  @@index([status])
+}
+
+model PaymentProof {
+  id         Int      @id @default(autoincrement())
+  paymentId  Int
+  fileName   String   @db.VarChar(255)
+  filePath   String   @db.VarChar(255)
+  fileType   String   @db.VarChar(50)
+  uploadedAt DateTime @default(now())
+  payment    Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id       Int      @id @default(autoincrement())
+  userId   Int
+  orderId  Int?
+  toNumber String   @db.VarChar(20)
+  message  String
+  status   String   @db.VarChar(20)
+  sentAt   DateTime @default(now())
+  order    Order?   @relation(fields: [orderId], references: [id])
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Expense {
+  id          Int             @id @default(autoincrement())
+  nominal     Int
+  category    ExpenseCategory
+  date        DateTime
+  description String?         @db.VarChar(255)
+  proofFile   String?         @db.VarChar(255)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([category])
+  @@index([date])
+}
+
+model Setting {
+  id                      Int     @id @default(1)
+  name                    String  @db.VarChar(100)
+  description             String  @db.VarChar(255)
+  logo                    String? @db.VarChar(255)
+  bankAccountName         String? @db.VarChar(100)
+  bankAccountNumber       String? @db.VarChar(50)
+  bankCode                String? @db.VarChar(10)
+  bankName                String? @db.VarChar(100)
+  bankTransferInstruction String?
+  cashPaymentInstruction  String?
+  qrisImage               String? @db.VarChar(255)
+  qrisPaymentInstruction  String?
+}
+
 enum Role {
   admin
   staff
@@ -44,179 +215,4 @@ enum ExpenseCategory {
   marketing
   gaji
   lainnya
-}
-
-model User {
-  id        Int      @id @default(autoincrement())
-  name      String   @db.VarChar(100)
-  username  String   @unique @db.VarChar(50)
-  phone     String   @unique @db.VarChar(20)
-  password  String
-  role      Role
-  address   String?  @db.VarChar(255)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  orders          Order[]        @relation("UserOrders") // customer orders
-  createdOrders   Order[]        @relation("OrderCreatedBy") // staff/admin created orders
-  payments        Payment[]      @relation("UserPayments") // customer payments
-  createdPayments Payment[]      @relation("PaymentCreatedBy") // staff/admin created payments
-  notifications   Notification[]
-}
-
-model Category {
-  id          Int      @id @default(autoincrement())
-  name        String   @db.VarChar(100)
-  code        String   @unique @db.VarChar(50)
-  description String?  @db.VarChar(255)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  products Product[]
-}
-
-model Product {
-  id          Int      @id @default(autoincrement())
-  categoryId  Int
-  name        String   @db.VarChar(150)
-  description String?  @db.Text
-  baseCode    String   @db.VarChar(50)
-  photo       String?  @db.VarChar(255)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  category   Category         @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  variants   ProductVariant[]
-  orderItems OrderItem[]
-
-  @@unique([baseCode, categoryId])
-  @@index([categoryId])
-}
-
-model ProductVariant {
-  id          Int      @id @default(autoincrement())
-  productId   Int
-  variantName String   @db.VarChar(100)
-  price       Int
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
-  orderItems OrderItem[]
-}
-
-model Order {
-  id              Int            @id @default(autoincrement())
-  userId          Int // customer
-  createdById     Int? // admin/staff
-  orderNumber     String         @unique @db.VarChar(50)
-  status          OrderStatus    @default(pending)
-  shippingMethod  ShippingMethod
-  paymentMethod   PaymentMethod
-  paymentStatus   PaymentStatus  @default(pending)
-  totalAmount     Int
-  notes           String?        @db.VarChar(500) // Additional notes for the order
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-
-  // Relations
-  user          User           @relation("UserOrders", fields: [userId], references: [id], onDelete: Cascade)
-  createdBy     User?          @relation("OrderCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-  orderItems    OrderItem[]
-  payments      Payment[]
-  notifications Notification[]
-
-  @@index([userId])
-  @@index([status])
-  @@index([paymentStatus])
-}
-
-model OrderItem {
-  id        Int      @id @default(autoincrement())
-  orderId   Int
-  productId Int
-  variantId Int?
-  qty       Int
-  price     Int
-  subtotal  Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  order   Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
-  variant ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
-
-  @@index([orderId])
-  @@index([productId])
-}
-
-model Payment {
-  id             Int           @id @default(autoincrement())
-  orderId        Int
-  userId         Int // customer
-  createdById    Int? // admin/staff
-  method         PaymentMethod
-  amount         Int
-  status         PaymentStatus @default(pending)
-  transactionRef String?       @db.VarChar(100)
-  paidAt         DateTime?
-  createdAt      DateTime      @default(now())
-
-  // Relations
-  order     Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  user      User           @relation("UserPayments", fields: [userId], references: [id], onDelete: Cascade)
-  createdBy User?          @relation("PaymentCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-  proofs    PaymentProof[]
-
-  @@index([orderId])
-  @@index([status])
-}
-
-model PaymentProof {
-  id         Int      @id @default(autoincrement())
-  paymentId  Int
-  fileName   String   @db.VarChar(255)
-  filePath   String   @db.VarChar(255)
-  fileType   String   @db.VarChar(50)
-  uploadedAt DateTime @default(now())
-
-  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
-}
-
-model Notification {
-  id       Int      @id @default(autoincrement())
-  userId   Int
-  orderId  Int?
-  toNumber String   @db.VarChar(20)
-  message  String   @db.Text
-  status   String   @db.VarChar(20)
-  sentAt   DateTime @default(now())
-
-  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  order Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
-
-  @@index([userId])
-  @@index([status])
-}
-
-model Expense {
-  id          Int            @id @default(autoincrement())
-  nominal     Int            // Amount of the expense
-  category    ExpenseCategory // Category of the expense (operasional, marketing, gaji, lainnya)
-  date        DateTime       // Date of the expense
-  description String?        @db.VarChar(255) // Optional description
-  proofFile   String?        @db.VarChar(255) // Optional proof file path
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-
-  @@index([category])
-  @@index([date])
-}
-
-model Setting {
-  id          Int     @id @default(1)
-  name        String  @db.VarChar(100)
-  description String  @db.VarChar(255)
-  logo        String? @db.VarChar(255)
 }
