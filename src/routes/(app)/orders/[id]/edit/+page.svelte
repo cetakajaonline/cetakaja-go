@@ -382,7 +382,7 @@
                   <div class="text-sm text-gray-900">
                     {#if item.variantId}
                       {#if products.find(p => p.id === item.productId)}
-                        {#each products.find(p => p.id === item.productId)?.variants as variant}
+                        {#each (products.find(p => p.id === item.productId) as Product)?.variants as variant}
                           {#if variant.id === item.variantId}
                             {variant.variantName}
                           {/if}

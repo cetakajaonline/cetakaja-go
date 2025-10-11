@@ -10,6 +10,7 @@
     disabled?: boolean;
     searchEnabled?: boolean;
     id?: string;
+    autocomplete?: HTMLInputElement['autocomplete'];
   }
   
   let {
@@ -20,7 +21,8 @@
     required = false,
     disabled = false,
     searchEnabled = true,
-    id
+    id,
+    autocomplete = 'off'
   }: SearchSelectProps = $props();
   
   // Generate a unique id if not provided
@@ -145,6 +147,7 @@
       }}
       readonly={!searchEnabled}
       disabled={disabled}
+      autocomplete={autocomplete}
     />
     
     <div class="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center">

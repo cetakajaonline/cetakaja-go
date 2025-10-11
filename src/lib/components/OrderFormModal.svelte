@@ -313,6 +313,7 @@
           bind:value={formData.userId}
           options={customerOptions}
           placeholder="Cari pelanggan..."
+          autocomplete="off"
         />
       </div>
       
@@ -376,6 +377,7 @@
               bind:value={newOrderItem.productId}
               options={productOptions}
               placeholder="Cari produk..."
+              autocomplete="off"
             />
           </div>
           
