@@ -11,10 +11,10 @@
 
   import { orders, currentOrder, loading as orderLoading, error as orderError } from "$lib/stores/order";
   import { orderSchema } from "$lib/validations/orderSchema";
-  import { createOrder, updateOrder, deleteOrder, getOrder, getNextOrderNumber } from "$lib/services/orderClient";
+  import { createOrder, updateOrder, deleteOrder, getOrder, getNextOrderNumber, getAllOrders } from "$lib/services/orderClient";
   import { z } from "zod";
   import { tick } from "svelte";
-  import { onDestroy } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import type { Order, User, Product } from "$lib/types";
 
   export let data: {
@@ -28,16 +28,16 @@
 
   const { users, products, isAdmin, isStaff, isCustomer, user: currentUser } = data;
 
-  // Initialize the order store with server data from layout
-  import { page } from "$app/stores";
-  import { onMount } from "svelte";
   import { initializeOrderStore } from "$lib/stores/initializer";
 
-  onMount(() => {
-    // Get layout data which contains the initial orders
-    const layoutData = $page.data;
-    if (layoutData.orders) {
-      initializeOrderStore(layoutData.orders);
+  onMount(async () => {
+    try {
+      // Fetch orders from the API endpoint which now filters based on user role
+      const fetchedOrders = await getAllOrders();
+      initializeOrderStore(fetchedOrders);
+    } catch (error) {
+      console.error("Failed to load orders on mount:", error);
+      // Optionally, set an error state or show a notification to the user
     }
   });
 
@@ -282,6 +282,14 @@
     unsubscribeLoading();
   });
 
+  function updateOrderInStore(updatedOrder: Order) {
+    orders.update(items => 
+      items.map(order => 
+        order.id === updatedOrder.id ? updatedOrder : order
+      )
+    );
+  }
+
   $: sortedOrders = [...filteredOrders].sort((a, b) => {
     const aVal = a[sortKey] ?? "";
     const bVal = b[sortKey] ?? "";
@@ -353,6 +361,8 @@
   <OrderDetailModal
     show={showOrderDetailModal}
     order={selectedOrderDetail}
+    user={currentUser}
+    onOrderUpdate={updateOrderInStore}
     onClose={closeDetailModal}
   />
 

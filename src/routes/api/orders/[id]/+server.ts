@@ -10,13 +10,10 @@ import { orderUpdateSchema } from "$lib/validations/orderSchema";
 export async function PUT(event: RequestEvent) {
   try {
     const id = Number(event.params.id);
+    const user = event.locals.user;
 
-    // Only admin and staff can update orders
-    const userRole = event.locals.user?.role;
-    if (userRole !== "admin" && userRole !== "staff") {
-      throw new Error(
-        "Forbidden: hanya admin dan staff yang dapat mengupdate order",
-      );
+    if (!user) {
+      throw new Error("Unauthorized: user tidak ditemukan");
     }
 
     const body = await event.request.json();
@@ -34,13 +31,52 @@ export async function PUT(event: RequestEvent) {
 
     const data = parsed.data;
 
-    const updated = await updateOrder(id, {
-      ...data,
-      // Only update createdById if provided in the request (for admin use)
-      ...(data.createdById !== undefined && { createdById: data.createdById }),
-    });
+    // Check if user is admin or staff - they can update anything
+    const isAdminOrStaff = user.role === "admin" || user.role === "staff";
 
-    return json(updated);
+    if (isAdminOrStaff) {
+      // Admin and staff can update any order fields
+      const updated = await updateOrder(id, {
+        ...data,
+        // Only update createdById if provided in the request (for admin use)
+        ...(data.createdById !== undefined && { createdById: data.createdById }),
+      });
+      return json(updated);
+    } else if (user.role === "customer") {
+      // Customer can only update status to 'canceled' for their own orders
+      if (Object.keys(data).length !== 1 || data.status !== "canceled") {
+        throw new Error(
+          "Forbidden: customer hanya dapat mengupdate status order miliknya ke 'canceled'",
+        );
+      }
+
+      // Verify that the order belongs to the customer
+      const order = await getOrderWithPayments(id);
+      if (!order) {
+        return json({ message: "Order tidak ditemukan" }, { status: 404 });
+      }
+
+      if (order.userId !== user.id) {
+        throw new Error(
+          "Forbidden: Anda tidak diizinkan mengupdate order ini",
+        );
+      }
+
+      // Allow status update to 'canceled' if current status is 'pending' or 'processing'
+      if (order.status !== "pending" && order.status !== "processing") {
+        throw new Error(
+          "Forbidden: Status order tidak dapat dibatalkan karena status saat ini bukan 'pending' atau 'processing'",
+        );
+      }
+
+      const updated = await updateOrder(id, { status: "canceled" });
+      return json(updated);
+    } else {
+      // Any other role is forbidden
+      throw new Error(
+        "Forbidden: role tidak diizinkan untuk mengupdate order",
+      );
+    }
   } catch (error) {
     console.error("Error updating order:", error);
     return json({ message: "Gagal mengupdate order" }, { status: 500 });

@@ -5,6 +5,7 @@ import {
   createOrder,
   getOrderByOrderNumber,
   getNextOrderNumberForToday,
+  getOrdersByUserId,
 } from "$lib/server/orderService";
 import { orderSchema } from "$lib/validations/orderSchema";
 
@@ -15,7 +16,18 @@ export async function GET(event: RequestEvent) {
       throw new Error("Unauthorized: user tidak ditemukan");
     }
 
-    const orders = await getAllOrders();
+    let orders;
+    const userRole = event.locals.user.role;
+    const userId = event.locals.user.id;
+
+    // If user is customer, only return their orders
+    if (userRole === "customer") {
+      orders = await getOrdersByUserId(userId);
+    } else {
+      // Admin and staff can see all orders
+      orders = await getAllOrders();
+    }
+
     return json(orders);
   } catch {
     return json({ message: "Gagal mengambil data orders" }, { status: 500 });

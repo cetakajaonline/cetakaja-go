@@ -1,19 +1,89 @@
 <script lang="ts">
   import Modal from "$lib/components/ui/Modal.svelte";
-  import type { Order } from "$lib/types";
+  import type { Order, User } from "$lib/types";
+  import { updateOrder, uploadPaymentProof, getOrder } from "$lib/services/orderClient";
 
   let { 
     show = false, 
     order,
+    user, // New prop for user info
+    onOrderUpdate, // Callback to update order in parent store
     onClose
   }: {
     show: boolean;
     order: Order | null;
+    user: User; // User info passed from parent
+    onOrderUpdate: (updatedOrder: Order) => void; // Callback function
     onClose: () => void;
   } = $props();
 
+  // Derived variables for access control
+  let isAdmin = $derived(user?.role === "admin");
+  let isStaff = $derived(user?.role === "staff");
+  let isCustomer = $derived(user?.role === "customer");
+  let canCancel = $derived(isCustomer && user.id === order?.userId && (order?.status === "pending" || order?.status === "processing"));
+  let canUploadProof = $derived(isCustomer && user.id === order?.userId && 
+                     (order?.paymentMethod === 'transfer' || order?.paymentMethod === 'qris') &&
+                     (order?.status === 'pending' || order?.status === 'processing') && 
+                     order?.paymentStatus !== 'confirmed');
+
+  // State variables for actions
+  let showCancelConfirm = $state(false);
+  let showUploadProof = $state(false);
+  let selectedPaymentProofFile: File | null = $state(null);
+  let uploadProofLoading = $state(false);
+  let uploadProofError = $state("");
+
   function closeModal() {
     onClose();
+  }
+
+  async function cancelOrder() {
+    if (!order) return;
+    try {
+      const updatedOrder = await updateOrder(order.id, { status: "canceled" });
+      // Notify parent component to update the store
+      onOrderUpdate(updatedOrder);
+      closeModal(); // Close modal after successful cancel
+    } catch (error) {
+      console.error("Failed to cancel order:", error);
+      // Optionally, show an error notification
+    } finally {
+      showCancelConfirm = false;
+    }
+  }
+
+  async function handleUploadProof() {
+    if (!order || !selectedPaymentProofFile) return;
+
+    const payment = order.payments[0]; // Take the first payment associated with the order
+    if (!payment) {
+      uploadProofError = "Tidak ada pembayaran terkait dengan order ini.";
+      return;
+    }
+
+    uploadProofLoading = true;
+    uploadProofError = "";
+
+    try {
+      await uploadPaymentProof(payment.id, selectedPaymentProofFile);
+      // Fetch updated order data to reflect the new proof
+      const updatedOrder = await getOrder(order.id);
+      // Notify parent component to update the store
+      onOrderUpdate(updatedOrder);
+      closeModal(); // Close modal after successful upload
+    } catch (error) {
+      console.error("Failed to upload payment proof:", error);
+      uploadProofError = error instanceof Error ? error.message : "Gagal mengupload bukti pembayaran.";
+    } finally {
+      uploadProofLoading = false;
+    }
+  }
+
+  function openUploadProofModal() {
+    showUploadProof = true;
+    selectedPaymentProofFile = null;
+    uploadProofError = "";
   }
 
   function formatCurrency(amount: number): string {
@@ -238,7 +308,27 @@
         {/if}
       </div>
 
-      <div class="modal-action flex justify-end">
+      <div class="modal-action flex justify-end space-x-2">
+        <!-- Cancel Button for Customer -->
+        {#if canCancel}
+          <button
+            onclick={() => showCancelConfirm = true}
+            class="btn btn-error"
+          >
+            Batalkan
+          </button>
+        {/if}
+
+        <!-- Upload Payment Proof Button for Customer -->
+        {#if canUploadProof}
+          <button
+            onclick={openUploadProofModal}
+            class="btn btn-primary"
+          >
+            Upload Bukti Pembayaran
+          </button>
+        {/if}
+
         <button 
           class="btn btn-outline" 
           onclick={closeModal}
@@ -248,4 +338,67 @@
       </div>
     </div>
   </Modal>
+
+  <!-- Confirm Cancel Modal -->
+  {#if showCancelConfirm}
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-base-100 p-6 rounded-lg shadow-lg max-w-md w-full">
+        <h3 class="text-lg font-semibold mb-4">Konfirmasi Pembatalan</h3>
+        <p>Yakin ingin membatalkan order <strong>#{order?.orderNumber}</strong>?</p>
+        <div class="flex justify-end space-x-4 mt-6">
+          <button
+            onclick={() => showCancelConfirm = false}
+            class="btn btn-ghost"
+          >
+            Batal
+          </button>
+          <button
+            onclick={cancelOrder}
+            class="btn btn-error"
+          >
+            Konfirmasi
+          </button>
+        </div>
+      </div>
+    </div>
+  {/if}
+
+  <!-- Upload Payment Proof Modal -->
+  {#if showUploadProof}
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-base-100 p-6 rounded-lg shadow-lg max-w-md w-full">
+        <h3 class="text-lg font-semibold mb-4">Upload Bukti Pembayaran</h3>
+        <div class="mb-4">
+          <label class="label" for="payment-proof-file">
+            <span class="label-text">Pilih File</span>
+          </label>
+          <input
+            id="payment-proof-file"
+            type="file"
+            accept="image/jpeg, image/jpg, image/png, application/pdf"
+            onchange={(e) => selectedPaymentProofFile = (e.target as HTMLInputElement).files?.[0] || null}
+            class="file-input file-input-bordered file-input-primary w-full max-w-xs"
+          />
+        </div>
+        {#if uploadProofError}
+          <div class="mb-4 text-error text-sm">{uploadProofError}</div>
+        {/if}
+        <div class="flex justify-end space-x-4">
+          <button
+            onclick={() => showUploadProof = false}
+            class="btn btn-ghost"
+          >
+            Batal
+          </button>
+          <button
+            onclick={handleUploadProof}
+            disabled={uploadProofLoading}
+            class="btn btn-primary"
+          >
+            {uploadProofLoading ? "Mengupload..." : "Upload"}
+          </button>
+        </div>
+      </div>
+    </div>
+  {/if}
 {/if}
