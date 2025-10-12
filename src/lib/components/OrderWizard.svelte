@@ -1572,15 +1572,13 @@
           </div>
 
           <h2 class="text-3xl font-bold text-gray-900 mb-4">Terima Kasih!</h2>
-          <p class="text-xl text-gray-700 mb-8">
-            Pesanan Anda telah berhasil dibuat dan bukti pembayaran telah
-            diunggah.
-          </p>
+          <p class="text-xl text-gray-700 mb-8">Terima kasih! 🙏</p>
 
           <div class="mb-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <p class="text-gray-800 mb-2">ID Pesanan: {orderDetails?.id}</p>
-            <p class="text-gray-800">
-              Total Pembayaran: {formatCurrency(getAmountToPay())}
+            <p class="text-gray-800 mb-2">
+              Kami sedang memverifikasi pembayaranmu. Begitu dikonfirmasi, kamu
+              bisa langsung pantau progres pesanan dengan ID Pesanan: {orderDetails?.id}
+              di halaman "Lacak Pesanan".
             </p>
           </div>
 
@@ -1588,7 +1586,7 @@
             class="btn btn-primary bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-lg shadow transition duration-200 text-lg"
             onclick={() => goto("/orders")}
           >
-            Lacak Pesanan Saya
+            Lacak Pesanan
           </button>
         </div>
       {/if}
