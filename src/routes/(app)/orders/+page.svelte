@@ -339,7 +339,6 @@
     initial={orderForm}
     {users}
     {products}
-    {isAdmin}
     on:submit={(e) => onSubmit(e.detail)}
     on:close={closeFormModal}
   />

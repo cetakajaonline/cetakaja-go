@@ -3,9 +3,7 @@
   import Modal from '$lib/components/ui/Modal.svelte';
   import Button from '$lib/components/ui/Button.svelte';
   import SearchSelect from '$lib/components/ui/SearchSelect.svelte';
-  import type { User, Product, ProductVariant } from '$lib/types';
-
-  import type { Order, OrderItem } from '$lib/types';
+  import type { User, Product, ProductVariant, OrderItem } from '$lib/types';
 
   let { 
     show, 
@@ -20,7 +18,6 @@
     initial: any;
     users: User[];
     products: (Product & { variants: ProductVariant[] })[];
-    isAdmin: boolean;
   } = $props();
 
   const dispatch = createEventDispatcher();

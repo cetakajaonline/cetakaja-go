@@ -460,9 +460,12 @@
       formData.append("shippingMethod", orderData.shippingMethod);
       formData.append("paymentMethod", orderData.paymentMethod);
       formData.append("totalAmount", calculateTotal().toString());
+      if (orderData.notes) {
+        formData.append("notes", orderData.notes);
+      }
       formData.append("orderItems", JSON.stringify(orderItemsForApi));
 
-      const res = await fetch("/api/public/orders-by-phone", {
+      const res = await fetch("/api/public/orders", {
         method: "POST",
         body: formData,
       });
@@ -1338,7 +1341,7 @@
               class="mb-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200"
             >
               <h2 class="text-lg font-semibold mb-2 text-gray-900">
-                Instruksi Pembayaran
+                Bayar langsung ketika barang diambil, gampang banget 😎
               </h2>
               {#if settings?.cashPaymentInstruction}
                 <div class="prose text-gray-800">
@@ -1346,8 +1349,9 @@
                 </div>
               {:else}
                 <p class="text-gray-800">
-                  Bayar tunai saat barang diterima. Silakan lakukan pembayaran
-                  saat kurir mengantarkan pesanan.
+                  Kamu bisa bayar tunai saat mengambil hasil cetakanmu nanti.
+                  Cukup tunjukkan kode pesanan ke kita biar prosesnya lebih
+                  cepat.
                 </p>
               {/if}
             </div>
@@ -1357,7 +1361,7 @@
               class="mb-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200"
             >
               <h2 class="text-lg font-semibold mb-2 text-gray-900">
-                Instruksi Pembayaran
+                Bayar cepat pakai QRIS 🚀
               </h2>
               {#if settings?.qrisPaymentInstruction}
                 <div class="prose text-gray-800">
@@ -1365,8 +1369,9 @@
                 </div>
               {:else}
                 <p class="text-gray-800">
-                  Silakan scan QRIS di bawah ini menggunakan aplikasi dompet
-                  digital Anda untuk melakukan pembayaran.
+                  Scan kode QR di bawah ini pakai aplikasi bank atau e-wallet
+                  kesayanganmu (Gopay, DANA, ShopeePay, OVO, dll). 🔍 Pastikan
+                  nominal sesuai total tagihan sebelum dibayar ya !
                 </p>
               {/if}
             </div>
@@ -1391,6 +1396,10 @@
               <p class="mt-4 text-center font-semibold text-lg text-gray-900">
                 {formatCurrency(getAmountToPay())}
               </p>
+              <p class="text-gray-800 italic text-sm mt-2 text-center">
+                Setelah pembayaran berhasil, jangan lupa upload bukti screenshot
+                pembayaran biar langsung kami proses 🙌
+              </p>
             </div>
           {:else if orderData.paymentMethod === "transfer"}
             <!-- Bank Transfer Instructions -->
@@ -1398,7 +1407,7 @@
               class="mb-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200"
             >
               <h2 class="text-lg font-semibold mb-2 text-gray-900">
-                Instruksi Pembayaran
+                Transfer dulu, nanti langsung kita proses 💪
               </h2>
               {#if settings?.bankTransferInstruction}
                 <div class="prose text-gray-800">
@@ -1406,71 +1415,14 @@
                 </div>
               {:else}
                 <p class="text-gray-800">
-                  Silakan lakukan transfer ke rekening berikut sesuai dengan
-                  total pesanan:
+                  Silakan lakukan transfer sejumlah {formatCurrency(
+                    getAmountToPay()
+                  )} ke rekening berikut : Bank : {settings?.bankName ||
+                    "Bank Belum Diatur"} Kode Bank : {settings?.bankCode ||
+                    "Kode Belum Diatur"} Atas Nama : {settings?.bankAccountName ||
+                    "Atas Nama Belum Diatur"}
                 </p>
               {/if}
-            </div>
-
-            <div class="mb-6 p-6 bg-gray-50 rounded-lg border border-gray-200">
-              <h2 class="text-lg font-semibold mb-4 text-center text-gray-900">
-                Detail Rekening
-              </h2>
-
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p class="mb-2 text-gray-800">
-                    <span class="font-medium">Nama Bank:</span>
-                  </p>
-                  <p
-                    class="text-xl font-bold bg-white p-2 rounded border border-gray-300 text-gray-900"
-                  >
-                    {settings?.bankName || "Bank Belum Diatur"}
-                  </p>
-                </div>
-
-                <div>
-                  <p class="mb-2 text-gray-800">
-                    <span class="font-medium">Kode Bank:</span>
-                  </p>
-                  <p
-                    class="text-xl font-bold bg-white p-2 rounded border border-gray-300 text-gray-900"
-                  >
-                    {settings?.bankCode || "Kode Belum Diatur"}
-                  </p>
-                </div>
-
-                <div class="md:col-span-2">
-                  <p class="mb-2 text-gray-800">
-                    <span class="font-medium">Nomor Rekening:</span>
-                  </p>
-                  <p
-                    class="text-2xl font-bold bg-white p-3 rounded border border-gray-300 text-gray-900"
-                  >
-                    {settings?.bankAccountNumber || "Rekening Belum Diatur"}
-                  </p>
-                </div>
-
-                <div class="md:col-span-2">
-                  <p class="mb-2 text-gray-800">
-                    <span class="font-medium">Atas Nama:</span>
-                  </p>
-                  <p
-                    class="text-xl font-bold bg-white p-2 rounded border border-gray-300 text-gray-900"
-                  >
-                    {settings?.bankAccountName || "Atas Nama Belum Diatur"}
-                  </p>
-                </div>
-              </div>
-
-              <div class="mt-4 p-3 bg-blue-100 rounded border border-blue-200">
-                <p class="font-semibold text-gray-900">
-                  Total yang harus ditransfer:
-                </p>
-                <p class="text-2xl font-bold text-blue-700 text-center">
-                  {formatCurrency(getAmountToPay())}
-                </p>
-              </div>
             </div>
           {/if}
 

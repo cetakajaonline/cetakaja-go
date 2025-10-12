@@ -11,20 +11,68 @@ import prisma from "$lib/server/prisma";
 import type { RequestHandler } from "./$types";
 
 export const POST: RequestHandler = async (event) => {
+  let phone, status, shippingMethod, paymentMethod, totalAmountStr, notes, orderItemsStr;
+  
   try {
-    const body = await event.request.json();
-    
-    // Create a schema that allows optional userId for public orders
-    const publicOrderSchema = orderSchema.extend({
-      userId: z.number().optional(), // userId will be set internally for public orders
+    // Check content type to determine how to process the request
+    const contentType = event.request.headers.get('content-type');
+    if (contentType && contentType.includes('multipart/form-data')) {
+      // Handle form data (from client-side fetch with FormData) - this is the expected case
+      const formData = await event.request.formData();
+      
+      phone = formData.get('phone') as string;
+      status = formData.get('status') as string;
+      shippingMethod = formData.get('shippingMethod') as string;
+      paymentMethod = formData.get('paymentMethod') as string;
+      totalAmountStr = formData.get('totalAmount') as string;
+      notes = formData.get('notes') as string | null;
+      orderItemsStr = formData.get('orderItems') as string;
+    } else {
+      // Handle JSON data - in case someone calls the endpoint directly with JSON
+      const jsonData = await event.request.json();
+      phone = jsonData.phone;
+      status = jsonData.status;
+      shippingMethod = jsonData.shippingMethod;
+      paymentMethod = jsonData.paymentMethod;
+      totalAmountStr = jsonData.totalAmount;
+      notes = jsonData.notes;
+      orderItemsStr = JSON.stringify(jsonData.orderItems || []);
+    }
+  } catch (parseError) {
+    // Handle parsing errors specifically
+    if (parseError instanceof SyntaxError) {
+      return json({ message: "Format data tidak valid" }, { status: 400 });
+    }
+    // Re-throw if it's a different type of error
+    throw parseError;
+  }
+
+  try {
+    // Parse orderItems which is sent as stringified JSON inside form data
+    let orderItems = [];
+    if (orderItemsStr) {
+      try {
+        orderItems = JSON.parse(orderItemsStr);
+      } catch {
+        return json({ message: "Format order items tidak valid" }, { status: 400 });
+      }
+    }
+
+    // Create a schema for public order creation with phone number
+    const publicOrderByPhoneSchema = orderSchema.extend({
+      phone: z.string().min(10).max(15).regex(/^08\d+$/, "Nomor telepon harus diawali dengan 08 dan hanya berisi angka"),
+      userId: z.number().optional(), // userId will be set internally based on phone number
     });
     
-    const parsed = publicOrderSchema.safeParse({
-      ...body,
-      status: 'pending',
-      shippingMethod: body.shippingMethod || 'pickup',
-      paymentMethod: body.paymentMethod || 'cash',
-      userId: undefined // Ensure userId is undefined so we use the default
+    const parsed = publicOrderByPhoneSchema.safeParse({
+      phone,
+      status: status || 'pending',
+      shippingMethod: shippingMethod || 'pickup',
+      paymentMethod: paymentMethod || 'cash',
+      totalAmount: typeof totalAmountStr === 'string' ? parseInt(totalAmountStr, 10) : (totalAmountStr || 0),
+      notes: notes || undefined,
+      orderItems,
+      userId: undefined // Ensure userId is undefined so we look up by phone
     });
 
     if (!parsed.success) {
@@ -38,27 +86,16 @@ export const POST: RequestHandler = async (event) => {
     }
 
     const data = parsed.data;
-
-    // Create or find a default customer user for public orders
-    // We'll create a guest user if one doesn't exist
-    let customerUser = await prisma.user.findFirst({
+    
+    // Find user by phone number
+    const user = await prisma.user.findUnique({
       where: {
-        username: "public_customer",
-        role: "customer"
+        phone: data.phone
       }
     });
-
-    if (!customerUser) {
-      customerUser = await prisma.user.create({
-        data: {
-          name: "Pelanggan Umum",
-          username: "public_customer",
-          phone: "000000000000",
-          password: "$2a$10$00000000000000000000000000000000000000000000000000000", // Placeholder encrypted password
-          role: "customer",
-          address: "Lokasi tidak diketahui" // Default address for public orders
-        }
-      });
+    
+    if (!user) {
+      return json({ message: "User tidak ditemukan" }, { status: 404 });
     }
 
     // Auto-generate order number for the day
@@ -70,10 +107,10 @@ export const POST: RequestHandler = async (event) => {
       return json({ message: "Order number sudah terdaftar" }, { status: 400 });
     }
 
-    // Create the public order
+    // Create the public order associated with the found user
     const newOrder = await createOrder({
-      userId: customerUser.id, // Use the public customer user
-      createdById: null, // No staff created this order
+      userId: user.id, // Use the user found by phone number
+      createdById: user.id, // For public orders from OrderWizard, set createdById to the same as userId
       orderNumber,
       status: data.status,
       shippingMethod: data.shippingMethod,
@@ -85,7 +122,7 @@ export const POST: RequestHandler = async (event) => {
 
     return json(newOrder);
   } catch (error) {
-    console.error('Error creating public order:', error);
+    console.error('Error creating public order by phone:', error);
     return json({ message: "Gagal membuat order" }, { status: 500 });
   }
 };

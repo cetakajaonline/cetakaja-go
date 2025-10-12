@@ -24,7 +24,7 @@
   let password = '';
   let phone = '';
   let address = '';
-  let role = 'user';
+  let role = 'customer';
 
   // Reset saat modal dibuka
   $: if (show) {
