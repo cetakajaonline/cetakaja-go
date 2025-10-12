@@ -13,8 +13,10 @@ export const GET: RequestHandler = async () => {
       description: settings?.description || null,
       logo: settings?.logo || null,
       bankName: settings?.bankName || null,
+      bankCode: settings?.bankCode || null,
       bankAccountName: settings?.bankAccountName || null,
       bankAccountNumber: settings?.bankAccountNumber || null,
+      qrisImage: settings?.qrisImage || null,
       // Don't include sensitive info like passwords or API keys
     };
     

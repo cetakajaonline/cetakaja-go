@@ -6,7 +6,6 @@
   import { getPublicSettings } from "$lib/services/settingClient";
   import SearchSelect from "$lib/components/ui/SearchSelect.svelte";
   import type { User, Product, ProductVariant, OrderItem } from "$lib/types";
-  import type { ApiResponse } from "$lib/types";
 
   // Define our own public product functions
   async function getAllPublicProducts(): Promise<Product[]> {
@@ -978,6 +977,14 @@
               Kembali
             </button>
             <button
+              class="btn btn-success bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg shadow transition duration-200"
+              onclick={() => {
+                goto("/orders");
+              }}
+            >
+              Cek Pesanan Saya
+            </button>
+            <button
               class="btn btn-primary bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg shadow transition duration-200"
               onclick={async () => {
                 if (customer) {
@@ -1139,7 +1146,7 @@
                   newItem.qty <= 0 ||
                   (productVariants.length > 0 && !newItem.variantId)}
               >
-                Tambah ke Order
+                Tambah ke Pesanan
               </button>
             {/if}
           </div>
@@ -1342,10 +1349,14 @@
                 Bayar langsung ketika barang diambil, gampang banget 😎
               </h2>
               <p class="text-gray-800">
-                Kamu bisa bayar tunai sejumlah {formatCurrency(
-                  getAmountToPay()
-                )} ketika mengambil hasil cetakanmu nanti. Cukup tunjukkan ID Order
-                : {orderDetails?.orderNumber} ke kita biar prosesnya lebih cepat.
+                Kamu bisa bayar tunai sejumlah <span
+                  class="font-bold text-green-600"
+                  >{formatCurrency(getAmountToPay())}</span
+                >
+                ketika mengambil hasil cetakanmu nanti. Cukup tunjukkan
+                <span class="font-bold text-blue-600"
+                  >ID Pesanan : {orderDetails?.orderNumber}</span
+                > ke kita biar prosesnya lebih cepat.
               </p>
             </div>
           {:else if orderData.paymentMethod === "qris"}
@@ -1356,22 +1367,32 @@
               <h2 class="text-lg font-semibold mb-2 text-gray-900">
                 Bayar cepat pakai QRIS 🚀
               </h2>
-              <p class="text-gray-800">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div class="p-3 bg-white rounded-lg border border-gray-300">
+                  <p class="text-sm text-gray-600">ID Pesanan</p>
+                  <p class="font-bold text-lg text-blue-600">
+                    {orderDetails?.orderNumber}
+                  </p>
+                </div>
+                <div class="p-3 bg-white rounded-lg border border-gray-300">
+                  <p class="text-sm text-gray-600">Jumlah Pembayaran</p>
+                  <p class="font-bold text-lg text-green-600">
+                    {formatCurrency(getAmountToPay())}
+                  </p>
+                </div>
+              </div>
+              <p class="text-gray-800 text-center mb-4">
                 Scan kode QR di bawah ini pakai aplikasi bank atau e-wallet
-                kesayanganmu (Gopay, DANA, ShopeePay, OVO, dll). 🔍 Pastikan
-                bayar sejumlah {formatCurrency(getAmountToPay())} !
+                kesayanganmu (Gopay, DANA, ShopeePay, OVO, dll).
               </p>
             </div>
 
             <div class="mb-6 flex flex-col items-center">
-              <h2 class="text-lg font-semibold mb-4 text-gray-900">
-                Scan QRIS
-              </h2>
               {#if settings?.qrisImage}
                 <img
                   src={settings.qrisImage}
                   alt="QRIS Pembayaran"
-                  class="w-64 h-64 object-contain border-4 border-gray-300 rounded-lg"
+                  class="w-128 h-128 object-contain rounded-lg"
                 />
               {:else}
                 <div
@@ -1391,17 +1412,6 @@
 
             <!-- Upload Bukti Pembayaran Section for QRIS -->
             <div class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <h2 class="text-xl font-bold mb-4 text-gray-900">
-                Upload Bukti Pembayaran
-              </h2>
-              <p class="text-gray-800 mb-2">
-                ID Order : {orderDetails?.orderNumber}
-              </p>
-              <p class="text-gray-800 mb-2">
-                Total : {formatCurrency(getAmountToPay())}
-              </p>
-              <p class="text-gray-800 mb-4">Metode Pembayaran : QRIS</p>
-
               <div class="mb-4">
                 <label
                   class="label font-medium py-2 text-gray-700"
@@ -1469,34 +1479,58 @@
             <div
               class="mb-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200"
             >
-              <h2 class="text-lg font-semibold mb-2 text-gray-900">
+              <h2 class="text-lg font-semibold mb-2 text-gray-900 text-center">
                 Transfer dulu, nanti langsung kita proses 💪
               </h2>
-              <p class="text-gray-800">
-                Silakan lakukan transfer sejumlah {formatCurrency(
-                  getAmountToPay()
-                )} ke rekening berikut : Bank : {settings?.bankName ||
-                  "Bank Belum Diatur"} Kode Bank : {settings?.bankCode ||
-                  "Kode Belum Diatur"} Atas Nama : {settings?.bankAccountName ||
-                  "Atas Nama Belum Diatur"}
-              </p>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div class="p-3 bg-white rounded-lg border border-gray-300">
+                  <p class="text-sm text-gray-600">ID Pesanan</p>
+                  <p class="font-bold text-lg text-blue-600">
+                    {orderDetails?.orderNumber}
+                  </p>
+                </div>
+                <div class="p-3 bg-white rounded-lg border border-gray-300">
+                  <p class="text-sm text-gray-600">Jumlah Pembayaran</p>
+                  <p class="font-bold text-lg text-green-600">
+                    {formatCurrency(getAmountToPay())}
+                  </p>
+                </div>
+              </div>
+              <div class="p-4 bg-white rounded-lg border border-gray-300">
+                <h3 class="font-semibold text-gray-700 mb-3 text-center">
+                  Informasi Pembayaran
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
+                  <div>
+                    <p class="text-sm text-gray-600">Bank</p>
+                    <p class="font-bold text-lg text-gray-900">
+                      {settings?.bankName || "Bank Belum Diatur"}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-600">Kode Bank</p>
+                    <p class="font-bold text-lg text-gray-900">
+                      {settings?.bankCode || "Kode Belum Diatur"}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-600">Nomor Rekening</p>
+                    <p class="font-bold text-lg text-gray-900">
+                      {settings?.bankAccountNumber || "Nomor Belum Diatur"}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-600">Atas Nama</p>
+                    <p class="font-bold text-lg text-gray-900">
+                      {settings?.bankAccountName || "Atas Nama Belum Diatur"}
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <!-- Upload Bukti Pembayaran Section for Transfer -->
             <div class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <h2 class="text-xl font-bold mb-4 text-gray-900">
-                Upload Bukti Pembayaran
-              </h2>
-              <p class="text-gray-800 mb-2">
-                ID Order : {orderDetails?.orderNumber}
-              </p>
-              <p class="text-gray-800 mb-2">
-                Total : {formatCurrency(getAmountToPay())}
-              </p>
-              <p class="text-gray-800 mb-4">
-                Metode Pembayaran : Transfer Bank
-              </p>
-
               <div class="mb-4">
                 <label
                   class="label font-medium py-2 text-gray-700"
@@ -1613,8 +1647,11 @@
           <div class="mb-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <p class="text-gray-800 mb-2">
               Kami sedang memverifikasi pembayaranmu. Begitu dikonfirmasi, kamu
-              bisa langsung pantau progres pesanan dengan ID Order : {orderDetails?.orderNumber}
-              di halaman "Lacak Order".
+              bisa langsung pantau progres pesanan dengan <span
+                class="font-bold text-blue-600"
+                >ID Pesanan : {orderDetails?.orderNumber}</span
+              >
+              di halaman "Lacak Pesanan".
             </p>
           </div>
 
@@ -1622,7 +1659,7 @@
             class="btn btn-primary bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-lg shadow transition duration-200 text-lg"
             onclick={() => goto("/orders")}
           >
-            Lacak Order
+            Lacak Pesanan
           </button>
         </div>
       {/if}
