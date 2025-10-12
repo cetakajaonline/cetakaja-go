@@ -27,11 +27,11 @@ async function main() {
       description:
         "Aplikasi Point of Sale untuk Percetakan Dan Digital Printing",
       logo: "/uploads/logo.png",
-      bankName: "Bank Central Asia (BCA)",
-      bankCode: "014",
+      bankName: "Seabank",
+      bankCode: "535",
       bankAccountNumber: "1234567890",
-      bankAccountName: "Nama Pemilik Rekening",
-      qrisImage: "/uploads/qris.png",
+      bankAccountName: "Yuliana",
+      qrisImage: "/uploads/qris/QRIS.jpeg",
     },
   });
 
@@ -43,7 +43,7 @@ async function main() {
   // Create Admin and Staff with addresses
   const admin = await prisma.user.create({
     data: {
-      name: "Admin Cetak Aja Online",
+      name: "Administrator",
       username: "admin",
       phone: `08${Math.floor(100000000 + Math.random() * 900000000)}`, // Generates 08 followed by 9 digits
       password: adminPassword,
@@ -55,7 +55,7 @@ async function main() {
   const staff = await prisma.user.create({
     data: {
       name: "Staff Operasional",
-      username: "staff1",
+      username: "staff",
       phone: `08${Math.floor(100000000 + Math.random() * 900000000)}`, // Generates 08 followed by 9 digits
       password: staffPassword,
       role: "staff",
@@ -131,24 +131,28 @@ async function main() {
       baseCode: "KTN",
       description: "Kartu nama premium dengan berbagai finishing",
       categoryId: createdCategories.find((c) => c.name === "Cetak Offset")!.id,
+      photo: "/uploads/products/logo.png",
     },
     {
       name: "Flyer",
       baseCode: "FLY",
       description: "Flyer promosi dengan berbagai ukuran dan finishing",
       categoryId: createdCategories.find((c) => c.name === "Cetak Offset")!.id,
+      photo: "/uploads/products/logo.png",
     },
     {
       name: "Brosur",
       baseCode: "BRS",
       description: "Brosur dengan berbagai jumlah halaman",
       categoryId: createdCategories.find((c) => c.name === "Cetak Offset")!.id,
+      photo: "/uploads/products/logo.png",
     },
     {
       name: "Katalog Produk",
       baseCode: "KTG",
       description: "Katalog produk dengan kualitas cetak tinggi",
       categoryId: createdCategories.find((c) => c.name === "Cetak Offset")!.id,
+      photo: "/uploads/products/logo.png",
     },
     {
       name: "Spanduk",
@@ -157,6 +161,7 @@ async function main() {
       categoryId: createdCategories.find(
         (c) => c.name === "Cetak Large Format",
       )!.id,
+      photo: "/uploads/products/logo.png",
     },
     {
       name: "Banner",
@@ -165,6 +170,7 @@ async function main() {
       categoryId: createdCategories.find(
         (c) => c.name === "Cetak Large Format",
       )!.id,
+      photo: "/uploads/products/logo.png",
     },
     {
       name: "X-Banner",
@@ -173,18 +179,21 @@ async function main() {
       categoryId: createdCategories.find(
         (c) => c.name === "Cetak Large Format",
       )!.id,
+      photo: "/uploads/products/logo.png",
     },
     {
       name: "Stiker",
       baseCode: "STK",
       description: "Stiker berbagai ukuran dan finishing",
       categoryId: createdCategories.find((c) => c.name === "Cetak Digital")!.id,
+      photo: "/uploads/products/logo.png",
     },
     {
       name: "Kalender",
       baseCode: "KLM",
       description: "Kalender meja dan dinding untuk tahun baru",
       categoryId: createdCategories.find((c) => c.name === "Cetak Offset")!.id,
+      photo: "/uploads/products/logo.png",
     },
     {
       name: "Buku",
@@ -193,6 +202,7 @@ async function main() {
       categoryId: createdCategories.find(
         (c) => c.name === "Binding & Finishing",
       )!.id,
+      photo: "/uploads/products/logo.png",
     },
   ];
 
@@ -319,9 +329,9 @@ async function main() {
         paidAt,
         proofs: {
           create: {
-            fileName: `payment_proof_${orderNumber}.jpg`,
-            filePath: `/uploads/payments/${orderNumber}_proof.jpg`,
-            fileType: "image/jpeg",
+            fileName: "payment_proof.jpg",
+            filePath: "/uploads/payments/logo.png",
+            fileType: "image/png",
           },
         },
       },
@@ -339,7 +349,28 @@ async function main() {
     });
   }
 
+  // Create sample expenses with proof files
+  const expenseCategories: Array<"operasional" | "marketing" | "gaji" | "lainnya"> = [
+    "operasional",
+    "marketing",
+    "gaji",
+    "lainnya"
+  ];
+
+  for (let i = 0; i < 20; i++) {
+    await prisma.expense.create({
+      data: {
+        nominal: faker.number.int({ min: 50000, max: 5000000 }),
+        category: faker.helpers.arrayElement(expenseCategories),
+        date: new Date(faker.date.recent({ days: 60 })),
+        description: faker.lorem.sentence(),
+        proofFile: "/uploads/expenses/logo.png", // Use existing logo.png file in expenses directory
+      },
+    });
+  }
+
   console.log("✅ Created 50 sample orders with all statuses");
+  console.log("✅ Created 20 sample expenses with proof files");
   console.log("✅ Seeding completed successfully!");
 }
 
@@ -349,5 +380,5 @@ main()
     process.exit(1);
   })
   .finally(() => {
-    void prisma.$disconnect().then(() => {});
+    void prisma.$disconnect().then(() => { });
   });
