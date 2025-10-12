@@ -68,7 +68,7 @@
   let paymentProofPreview = $state<string | null>(null);
 
   // Current step in the wizard
-  let currentStep = $state(0); // 0: login, 1: customer details, 2: products, 3: shipping/payment, 4: payment instructions, 5: upload proof, 6: success
+  let currentStep = $state(0); // 0: login, 1: customer details, 2: products, 3: shipping/payment, 4: payment instructions (with upload), 5: success
 
   // Initialize on mount
   onMount(async () => {
@@ -565,7 +565,7 @@
       }
 
       // On success, go to confirmation step
-      currentStep = 6;
+      currentStep = 5;
     } catch (error: any) {
       console.error("Error uploading payment proof:", error);
       errorMessage =
@@ -666,7 +666,7 @@
   }
 
   function nextStep() {
-    if (currentStep < 6) currentStep++;
+    if (currentStep < 5) currentStep++; // Updated max step from 6 to 5
   }
 
   function prevStep() {
@@ -685,7 +685,8 @@
     <!-- Step indicator -->
     <div class="mb-8">
       <div class="flex items-center justify-between relative">
-        {#each [0, 1, 2, 3, 4, 5, 6] as step, i}
+        {#each [0, 1, 2, 3, 4, 5] as step, i}
+          <!-- Removed step 5 -->
           <div class="flex flex-col items-center z-10">
             <div
               class={`w-10 h-10 rounded-full flex items-center justify-center ${
@@ -711,18 +712,16 @@
                       ? "Pengiriman"
                       : step === 4
                         ? "Pembayaran"
-                        : step === 5
-                          ? "Upload"
-                          : "Selesai"}
+                        : "Selesai"}
             </div>
           </div>
-          {#if i < 6}
+          {#if i < 5}
+            <!-- Updated from 6 to 5 -->
             <div
               class={`absolute top-5 left-1/2 w-full h-1 -translate-x-1/2 ${
                 currentStep > step ? "bg-blue-600" : "bg-gray-300"
               }`}
-              style="width: calc(100% / 6); left: calc({(i * 100) /
-                6}% + 8.333%)"
+              style="width: calc(100% / 5); left: calc({(i * 100) / 5}% + 10%)"
             ></div>
           {/if}
         {/each}
@@ -840,7 +839,6 @@
               </div>
             </div>
           {:else}
-            <!-- Phone Number Input for New Customers -->
             <div
               class="bg-white rounded-xl shadow-md p-6 border border-gray-300"
             >
@@ -1141,7 +1139,7 @@
                   newItem.qty <= 0 ||
                   (productVariants.length > 0 && !newItem.variantId)}
               >
-                Tambah ke Pesanan
+                Tambah ke Order
               </button>
             {/if}
           </div>
@@ -1349,9 +1347,10 @@
                 </div>
               {:else}
                 <p class="text-gray-800">
-                  Kamu bisa bayar tunai saat mengambil hasil cetakanmu nanti.
-                  Cukup tunjukkan kode pesanan ke kita biar prosesnya lebih
-                  cepat.
+                  Kamu bisa bayar tunai sejumlah {formatCurrency(
+                    getAmountToPay()
+                  )} ketika mengambil hasil cetakanmu nanti. Cukup tunjukkan ID Order
+                  : {orderDetails?.orderNumber} ke kita biar prosesnya lebih cepat.
                 </p>
               {/if}
             </div>
@@ -1371,14 +1370,14 @@
                 <p class="text-gray-800">
                   Scan kode QR di bawah ini pakai aplikasi bank atau e-wallet
                   kesayanganmu (Gopay, DANA, ShopeePay, OVO, dll). 🔍 Pastikan
-                  nominal sesuai total tagihan sebelum dibayar ya !
+                  bayar sejumlah {formatCurrency(getAmountToPay())} !
                 </p>
               {/if}
             </div>
 
             <div class="mb-6 flex flex-col items-center">
               <h2 class="text-lg font-semibold mb-4 text-gray-900">
-                QRIS Pembayaran
+                Scan QRIS
               </h2>
               {#if settings?.qrisImage}
                 <img
@@ -1400,6 +1399,82 @@
                 Setelah pembayaran berhasil, jangan lupa upload bukti screenshot
                 pembayaran biar langsung kami proses 🙌
               </p>
+            </div>
+
+            <!-- Upload Bukti Pembayaran Section for QRIS -->
+            <div class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <h2 class="text-xl font-bold mb-4 text-gray-900">
+                Upload Bukti Pembayaran
+              </h2>
+              <p class="text-gray-800 mb-2">
+                ID Order : {orderDetails?.orderNumber}
+              </p>
+              <p class="text-gray-800 mb-2">
+                Total : {formatCurrency(getAmountToPay())}
+              </p>
+              <p class="text-gray-800 mb-4">Metode Pembayaran : QRIS</p>
+
+              <div class="mb-4">
+                <label
+                  class="label font-medium py-2 text-gray-700"
+                  for="paymentProofInput">Upload Bukti Pembayaran</label
+                >
+                <input
+                  id="paymentProofInput"
+                  type="file"
+                  accept="image/*,.pdf"
+                  onchange={handlePaymentProofChange}
+                  class="file-input file-input-bordered w-full border-gray-300 focus:border-blue-600 bg-white text-black"
+                />
+
+                {#if paymentProofPreview}
+                  <div class="mt-4">
+                    {#if paymentProofFile?.type.startsWith("image/")}
+                      <img
+                        src={paymentProofPreview}
+                        alt="Preview Bukti Pembayaran"
+                        class="max-w-full h-64 object-contain border rounded border-gray-300"
+                      />
+                    {:else}
+                      <div
+                        class="p-4 bg-gray-100 rounded border border-gray-300"
+                      >
+                        <span class="text-gray-800"
+                          >File : {paymentProofFile?.name}</span
+                        >
+                      </div>
+                    {/if}
+                  </div>
+                {/if}
+              </div>
+
+              {#if errorMessage}
+                <div class="alert alert-error mb-4 rounded-lg">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="stroke-current shrink-0 h-6 w-6 text-red-800"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    ><path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    /></svg
+                  >
+                  <span class="text-red-800">{errorMessage}</span>
+                </div>
+              {/if}
+
+              <div class="flex justify-end">
+                <button
+                  class="btn btn-primary bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg shadow transition duration-200"
+                  onclick={handlePaymentProofUpload}
+                  disabled={loading || !paymentProofFile}
+                >
+                  {loading ? "Mengunggah..." : "Unggah Bukti Pembayaran"}
+                </button>
+              </div>
             </div>
           {:else if orderData.paymentMethod === "transfer"}
             <!-- Bank Transfer Instructions -->
@@ -1423,6 +1498,84 @@
                     "Atas Nama Belum Diatur"}
                 </p>
               {/if}
+            </div>
+
+            <!-- Upload Bukti Pembayaran Section for Transfer -->
+            <div class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <h2 class="text-xl font-bold mb-4 text-gray-900">
+                Upload Bukti Pembayaran
+              </h2>
+              <p class="text-gray-800 mb-2">
+                ID Order : {orderDetails?.orderNumber}
+              </p>
+              <p class="text-gray-800 mb-2">
+                Total : {formatCurrency(getAmountToPay())}
+              </p>
+              <p class="text-gray-800 mb-4">
+                Metode Pembayaran : Transfer Bank
+              </p>
+
+              <div class="mb-4">
+                <label
+                  class="label font-medium py-2 text-gray-700"
+                  for="paymentProofInput">Upload Bukti Pembayaran</label
+                >
+                <input
+                  id="paymentProofInput"
+                  type="file"
+                  accept="image/*,.pdf"
+                  onchange={handlePaymentProofChange}
+                  class="file-input file-input-bordered w-full border-gray-300 focus:border-blue-600 bg-white text-black"
+                />
+
+                {#if paymentProofPreview}
+                  <div class="mt-4">
+                    {#if paymentProofFile?.type.startsWith("image/")}
+                      <img
+                        src={paymentProofPreview}
+                        alt="Preview Bukti Pembayaran"
+                        class="max-w-full h-64 object-contain border rounded border-gray-300"
+                      />
+                    {:else}
+                      <div
+                        class="p-4 bg-gray-100 rounded border border-gray-300"
+                      >
+                        <span class="text-gray-800"
+                          >File : {paymentProofFile?.name}</span
+                        >
+                      </div>
+                    {/if}
+                  </div>
+                {/if}
+              </div>
+
+              {#if errorMessage}
+                <div class="alert alert-error mb-4 rounded-lg">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="stroke-current shrink-0 h-6 w-6 text-red-800"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    ><path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    /></svg
+                  >
+                  <span class="text-red-800">{errorMessage}</span>
+                </div>
+              {/if}
+
+              <div class="flex justify-end">
+                <button
+                  class="btn btn-primary bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg shadow transition duration-200"
+                  onclick={handlePaymentProofUpload}
+                  disabled={loading || !paymentProofFile}
+                >
+                  {loading ? "Mengunggah..." : "Unggah Bukti Pembayaran"}
+                </button>
+              </div>
             </div>
           {/if}
 
@@ -1452,107 +1605,8 @@
         </div>
       {/if}
 
-      <!-- Step 5: Upload payment proof -->
+      <!-- Step 5: Success message -->
       {#if currentStep === 5}
-        <div>
-          <h2 class="text-2xl font-bold mb-6 text-center text-gray-900">
-            Upload Bukti Pembayaran
-          </h2>
-
-          <div class="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <p class="text-gray-800 mb-2">ID Pesanan: {orderDetails?.id}</p>
-            <p class="text-gray-800 mb-2">
-              Total Pembayaran: {formatCurrency(getAmountToPay())}
-            </p>
-            <p class="text-gray-800">
-              Metode Pembayaran: {orderData.paymentMethod === "cash"
-                ? "Tunai"
-                : orderData.paymentMethod === "qris"
-                  ? "QRIS"
-                  : "Transfer Bank"}
-            </p>
-          </div>
-
-          <div class="mb-6">
-            <label
-              class="label font-medium py-2 text-gray-700"
-              for="paymentProofInput">Upload Bukti Pembayaran</label
-            >
-            <input
-              id="paymentProofInput"
-              type="file"
-              accept="image/*,.pdf"
-              onchange={handlePaymentProofChange}
-              class="file-input file-input-bordered w-full border-gray-300 focus:border-blue-600 bg-white text-black"
-            />
-
-            {#if paymentProofPreview}
-              <div class="mt-4">
-                {#if paymentProofFile?.type.startsWith("image/")}
-                  <img
-                    src={paymentProofPreview}
-                    alt="Preview Bukti Pembayaran"
-                    class="max-w-full h-64 object-contain border rounded border-gray-300"
-                  />
-                {:else}
-                  <div class="p-4 bg-gray-100 rounded border border-gray-300">
-                    <span class="text-gray-800"
-                      >File: {paymentProofFile?.name}</span
-                    >
-                  </div>
-                {/if}
-              </div>
-            {/if}
-          </div>
-
-          {#if errorMessage}
-            <div class="alert alert-error mb-4 rounded-lg">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="stroke-current shrink-0 h-6 w-6 text-red-800"
-                fill="none"
-                viewBox="0 0 24 24"
-                ><path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-                /></svg
-              >
-              <span class="text-red-800">{errorMessage}</span>
-            </div>
-          {/if}
-
-          <div class="flex justify-between">
-            <button
-              class="btn btn-secondary bg-gray-600 hover:bg-gray-700 text-white font-medium py-3 px-6 rounded-lg shadow transition duration-200"
-              onclick={() => {
-                prevStep();
-                // Sync editedCustomer with customer data when going back
-                if (customer) {
-                  editedCustomer.name = customer.name || editedCustomer.name;
-                  editedCustomer.phone = customer.phone || editedCustomer.phone;
-                  editedCustomer.address =
-                    customer.address || editedCustomer.address;
-                }
-              }}
-              disabled={loading}
-            >
-              Kembali
-            </button>
-            <button
-              class="btn btn-primary bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg shadow transition duration-200"
-              onclick={handlePaymentProofUpload}
-              disabled={loading || !paymentProofFile}
-            >
-              {loading ? "Mengunggah..." : "Unggah Bukti Pembayaran"}
-            </button>
-          </div>
-        </div>
-      {/if}
-
-      <!-- Step 6: Success message -->
-      {#if currentStep === 6}
         <div class="text-center py-12">
           <div class="mb-8">
             <svg
@@ -1571,14 +1625,14 @@
             </svg>
           </div>
 
-          <h2 class="text-3xl font-bold text-gray-900 mb-4">Terima Kasih!</h2>
-          <p class="text-xl text-gray-700 mb-8">Terima kasih! 🙏</p>
-
+          <h2 class="text-3xl font-bold text-gray-900 mb-4">
+            Terima kasih! 🙏
+          </h2>
           <div class="mb-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <p class="text-gray-800 mb-2">
               Kami sedang memverifikasi pembayaranmu. Begitu dikonfirmasi, kamu
-              bisa langsung pantau progres pesanan dengan ID Pesanan: {orderDetails?.id}
-              di halaman "Lacak Pesanan".
+              bisa langsung pantau progres pesanan dengan ID Order : {orderDetails?.orderNumber}
+              di halaman "Lacak Order".
             </p>
           </div>
 
@@ -1586,7 +1640,7 @@
             class="btn btn-primary bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-8 rounded-lg shadow transition duration-200 text-lg"
             onclick={() => goto("/orders")}
           >
-            Lacak Pesanan
+            Lacak Order
           </button>
         </div>
       {/if}
