@@ -24,9 +24,7 @@
   let bankCode = '';
   let bankAccountNumber = '';
   let bankAccountName = '';
-  let cashPaymentInstruction = '';
-  let qrisPaymentInstruction = '';
-  let bankTransferInstruction = '';
+
   let file: File | null = null;
   let qrisImageFile: File | null = null;
   let logoPreview: string | null = null;
@@ -44,9 +42,6 @@
     bankCode = data.setting.bankCode ?? '';
     bankAccountNumber = data.setting.bankAccountNumber ?? '';
     bankAccountName = data.setting.bankAccountName ?? '';
-    cashPaymentInstruction = data.setting.cashPaymentInstruction ?? '';
-    qrisPaymentInstruction = data.setting.qrisPaymentInstruction ?? '';
-    bankTransferInstruction = data.setting.bankTransferInstruction ?? '';
     logoPreview = data.setting.logo ?? null;
     qrisImagePreview = data.setting.qrisImage ?? null;
   }
@@ -92,10 +87,7 @@
         bankCode,
         bankAccountNumber,
         bankAccountName,
-        qrisImageFile,
-        cashPaymentInstruction,
-        qrisPaymentInstruction,
-        bankTransferInstruction
+        qrisImageFile
       );
 
       if (response.success) {
@@ -106,9 +98,6 @@
         bankCode = response.data?.bankCode || '';
         bankAccountNumber = response.data?.bankAccountNumber || '';
         bankAccountName = response.data?.bankAccountName || '';
-        cashPaymentInstruction = response.data?.cashPaymentInstruction || '';
-        qrisPaymentInstruction = response.data?.qrisPaymentInstruction || '';
-        bankTransferInstruction = response.data?.bankTransferInstruction || '';
         logoPreview = response.data?.logo ?? null;
         qrisImagePreview = response.data?.qrisImage ?? null;
         file = null;
@@ -185,48 +174,7 @@
         <FormInput label="Nomor Rekening" bind:value={bankAccountNumber} readonly={!isAdmin} />
         <FormInput label="Atas Nama Rekening" bind:value={bankAccountName} readonly={!isAdmin} />
 
-        <!-- Payment Instructions -->
-        <div class="form-control w-full">
-          <label for="cashPaymentInstruction" class="label">
-            <span class="label-text">Instruksi Pembayaran Tunai</span>
-          </label>
-          <textarea
-            id="cashPaymentInstruction"
-            class="textarea textarea-bordered w-full"
-            bind:value={cashPaymentInstruction}
-            placeholder="Instruksi pembayaran tunai"
-            disabled={!isAdmin}
-            rows="3"
-          ></textarea>
-        </div>
 
-        <div class="form-control w-full">
-          <label for="qrisPaymentInstruction" class="label">
-            <span class="label-text">Instruksi Pembayaran QRIS</span>
-          </label>
-          <textarea
-            id="qrisPaymentInstruction"
-            class="textarea textarea-bordered w-full"
-            bind:value={qrisPaymentInstruction}
-            placeholder="Instruksi pembayaran QRIS"
-            disabled={!isAdmin}
-            rows="3"
-          ></textarea>
-        </div>
-
-        <div class="form-control w-full">
-          <label for="bankTransferInstruction" class="label">
-            <span class="label-text">Instruksi Pembayaran Transfer Bank</span>
-          </label>
-          <textarea
-            id="bankTransferInstruction"
-            class="textarea textarea-bordered w-full"
-            bind:value={bankTransferInstruction}
-            placeholder="Instruksi pembayaran transfer bank"
-            disabled={!isAdmin}
-            rows="3"
-          ></textarea>
-        </div>
 
         <div class="flex justify-center gap-4 mt-6">
           <Button type="submit" className="btn-primary text-center py-2" disabled={isSubmitting}>

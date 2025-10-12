@@ -1341,18 +1341,12 @@
               <h2 class="text-lg font-semibold mb-2 text-gray-900">
                 Bayar langsung ketika barang diambil, gampang banget 😎
               </h2>
-              {#if settings?.cashPaymentInstruction}
-                <div class="prose text-gray-800">
-                  {@html settings.cashPaymentInstruction}
-                </div>
-              {:else}
-                <p class="text-gray-800">
-                  Kamu bisa bayar tunai sejumlah {formatCurrency(
-                    getAmountToPay()
-                  )} ketika mengambil hasil cetakanmu nanti. Cukup tunjukkan ID Order
-                  : {orderDetails?.orderNumber} ke kita biar prosesnya lebih cepat.
-                </p>
-              {/if}
+              <p class="text-gray-800">
+                Kamu bisa bayar tunai sejumlah {formatCurrency(
+                  getAmountToPay()
+                )} ketika mengambil hasil cetakanmu nanti. Cukup tunjukkan ID Order
+                : {orderDetails?.orderNumber} ke kita biar prosesnya lebih cepat.
+              </p>
             </div>
           {:else if orderData.paymentMethod === "qris"}
             <!-- QRIS Payment Instructions -->
@@ -1362,17 +1356,11 @@
               <h2 class="text-lg font-semibold mb-2 text-gray-900">
                 Bayar cepat pakai QRIS 🚀
               </h2>
-              {#if settings?.qrisPaymentInstruction}
-                <div class="prose text-gray-800">
-                  {@html settings.qrisPaymentInstruction}
-                </div>
-              {:else}
-                <p class="text-gray-800">
-                  Scan kode QR di bawah ini pakai aplikasi bank atau e-wallet
-                  kesayanganmu (Gopay, DANA, ShopeePay, OVO, dll). 🔍 Pastikan
-                  bayar sejumlah {formatCurrency(getAmountToPay())} !
-                </p>
-              {/if}
+              <p class="text-gray-800">
+                Scan kode QR di bawah ini pakai aplikasi bank atau e-wallet
+                kesayanganmu (Gopay, DANA, ShopeePay, OVO, dll). 🔍 Pastikan
+                bayar sejumlah {formatCurrency(getAmountToPay())} !
+              </p>
             </div>
 
             <div class="mb-6 flex flex-col items-center">
@@ -1484,20 +1472,14 @@
               <h2 class="text-lg font-semibold mb-2 text-gray-900">
                 Transfer dulu, nanti langsung kita proses 💪
               </h2>
-              {#if settings?.bankTransferInstruction}
-                <div class="prose text-gray-800">
-                  {@html settings.bankTransferInstruction}
-                </div>
-              {:else}
-                <p class="text-gray-800">
-                  Silakan lakukan transfer sejumlah {formatCurrency(
-                    getAmountToPay()
-                  )} ke rekening berikut : Bank : {settings?.bankName ||
-                    "Bank Belum Diatur"} Kode Bank : {settings?.bankCode ||
-                    "Kode Belum Diatur"} Atas Nama : {settings?.bankAccountName ||
-                    "Atas Nama Belum Diatur"}
-                </p>
-              {/if}
+              <p class="text-gray-800">
+                Silakan lakukan transfer sejumlah {formatCurrency(
+                  getAmountToPay()
+                )} ke rekening berikut : Bank : {settings?.bankName ||
+                  "Bank Belum Diatur"} Kode Bank : {settings?.bankCode ||
+                  "Kode Belum Diatur"} Atas Nama : {settings?.bankAccountName ||
+                  "Atas Nama Belum Diatur"}
+              </p>
             </div>
 
             <!-- Upload Bukti Pembayaran Section for Transfer -->

@@ -2,7 +2,20 @@ import prisma from "$lib/server/prisma";
 import type { Setting } from "@prisma/client";
 
 export async function getSettings(): Promise<Setting | null> {
-  return await prisma.setting.findUnique({ where: { id: 1 } });
+  return await prisma.setting.findUnique({ 
+    where: { id: 1 },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      logo: true,
+      bankName: true,
+      bankCode: true,
+      bankAccountNumber: true,
+      bankAccountName: true,
+      qrisImage: true,
+    }
+  });
 }
 
 // Using a flexible approach to handle both old and new fields
@@ -15,9 +28,6 @@ interface SettingUpdateData {
   bankAccountNumber?: string | null;
   bankAccountName?: string | null;
   qrisImage?: string | null;
-  cashPaymentInstruction?: string | null;
-  qrisPaymentInstruction?: string | null;
-  bankTransferInstruction?: string | null;
   [key: string]: unknown;
 }
 
@@ -68,30 +78,7 @@ export async function updateSetting(data: SettingUpdateData) {
     values.push(data.qrisImage);
     paramIndex++;
   }
-  if (
-    "cashPaymentInstruction" in data &&
-    data.cashPaymentInstruction !== undefined
-  ) {
-    updates.push(`"cashPaymentInstruction" = $${paramIndex}`);
-    values.push(data.cashPaymentInstruction);
-    paramIndex++;
-  }
-  if (
-    "qrisPaymentInstruction" in data &&
-    data.qrisPaymentInstruction !== undefined
-  ) {
-    updates.push(`"qrisPaymentInstruction" = $${paramIndex}`);
-    values.push(data.qrisPaymentInstruction);
-    paramIndex++;
-  }
-  if (
-    "bankTransferInstruction" in data &&
-    data.bankTransferInstruction !== undefined
-  ) {
-    updates.push(`"bankTransferInstruction" = $${paramIndex}`);
-    values.push(data.bankTransferInstruction);
-    paramIndex++;
-  }
+
 
   if (updates.length > 0) {
     const query = `UPDATE "Setting" SET ${updates.join(", ")} WHERE id = $1`;
@@ -99,5 +86,18 @@ export async function updateSetting(data: SettingUpdateData) {
   }
 
   // Fetch and return the updated setting
-  return await prisma.setting.findUnique({ where: { id: 1 } });
+  return await prisma.setting.findUnique({ 
+    where: { id: 1 },
+    select: {
+      id: true,
+      name: true,
+      description: true,
+      logo: true,
+      bankName: true,
+      bankCode: true,
+      bankAccountNumber: true,
+      bankAccountName: true,
+      qrisImage: true,
+    }
+  });
 }

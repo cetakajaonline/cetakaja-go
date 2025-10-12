@@ -26,9 +26,7 @@ export const POST: RequestHandler = async (event) => {
   const bankCode = formData.get("bankCode");
   const bankAccountNumber = formData.get("bankAccountNumber");
   const bankAccountName = formData.get("bankAccountName");
-  const cashPaymentInstruction = formData.get("cashPaymentInstruction");
-  const qrisPaymentInstruction = formData.get("qrisPaymentInstruction");
-  const bankTransferInstruction = formData.get("bankTransferInstruction");
+
   const logoFile = formData.get("logo");
   const qrisImageFile = formData.get("qrisImage");
 
@@ -37,7 +35,14 @@ export const POST: RequestHandler = async (event) => {
   }
 
   // Validasi teks pakai Zod
-  const parsed = settingSchema.safeParse({ name, description });
+  const parsed = settingSchema.safeParse({ 
+    name, 
+    description,
+    bankName: bankName ? String(bankName) : undefined,
+    bankCode: bankCode ? String(bankCode) : undefined,
+    bankAccountNumber: bankAccountNumber ? String(bankAccountNumber) : undefined,
+    bankAccountName: bankAccountName ? String(bankAccountName) : undefined,
+  });
 
   if (!parsed.success) {
     return json(
@@ -90,15 +95,6 @@ export const POST: RequestHandler = async (event) => {
       : {}),
     ...(typeof bankAccountName === "string" && bankAccountName.trim() !== ""
       ? { bankAccountName }
-      : {}),
-    ...(typeof cashPaymentInstruction === "string"
-      ? { cashPaymentInstruction }
-      : {}),
-    ...(typeof qrisPaymentInstruction === "string"
-      ? { qrisPaymentInstruction }
-      : {}),
-    ...(typeof bankTransferInstruction === "string"
-      ? { bankTransferInstruction }
       : {}),
     ...(qrisImageUrl ? { qrisImage: qrisImageUrl } : {}),
   };

@@ -1,38 +1,36 @@
-# BITS Starter Kit - SvelteKit Prisma PostgreSQL JWT Tailwind DaisyUI
+# Cetak Aja Online - Aplikasi Point of Sale untuk Percetakan Dan Digital Printing
 
-![Version](https://img.shields.io/badge/version-1.0.1-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 
-![Prisma](https://img.shields.io/badge/Prisma-6.14.0-2D3748?logo=prisma)
+![Prisma](https://img.shields.io/badge/Prisma-6.17.0-2D3748?logo=prisma)
 
-![SvelteKit](https://img.shields.io/badge/SvelteKit-2.0+-FF3E00?logo=svelte)
+![SvelteKit](https://img.shields.io/badge/SvelteKit-2.36+-FF3E00?logo=svelte)
 
 ![Node.js](https://img.shields.io/badge/Node.js-18+-339933?logo=node.js)
 
-Starter kit lengkap untuk membangun aplikasi web modern dengan SvelteKit dan teknologi terbaru. Dilengkapi dengan authentication system, database management, dan responsive UI components.
+Aplikasi manajemen pesanan dan pembayaran digital printing yang dirancang khusus untuk usaha percetakan. Dilengkapi dengan sistem manajemen pesanan, pembayaran, inventaris, dan laporan keuangan untuk membantu operasional usaha percetakan Anda.
 
 ## ✨ Fitur Utama
 
-- ✅ **SvelteKit 5** dengan TypeScript support
+- ✅ **Manajemen Pesanan** - Buat, lacak, dan kelola pesanan pelanggan secara real-time
 
-- ✅ **TailwindCSS 4** dengan DaisyUI components
+- ✅ **Sistem Pembayaran Digital** - Dukungan pembayaran tunai, transfer bank, dan QRIS
 
-- ✅ **Prisma ORM** dengan support PostgreSQL & SQLite
+- ✅ **Manajemen Produk & Kategori** - Kelola jenis layanan cetak dan kategori produk
 
-- ✅ **JWT Authentication** dengan secure cookie storage
+- ✅ **Manajemen Inventaris** - Pantau stok bahan cetak dan material
 
-- ✅ **Responsive Design** dengan navigation sidebar
+- ✅ **Laporan Keuangan** - Analisis pendapatan dan pengeluaran usaha
 
-- ✅ **Form Validation** menggunakan Zod schema
+- ✅ **Manajemen Karyawan** - Sistem akses berdasarkan peran (admin, staff, customer)
 
-- ✅ **Database Seeding** dengan sample data
+- ✅ **Sistem Notifikasi** - Kirim pemberitahuan status pesanan ke pelanggan
 
-- ✅ **Production Ready** configuration
+- ✅ **Responsive Design** - Berfungsi optimal di desktop dan mobile
 
-- ✅ **API Routes** untuk backend endpoints
-
-- ✅ **Role-based Access** (jika diperlukan)
+- ✅ **Database PostgreSQL** - Dengan Prisma ORM untuk manajemen data
 
 ## 🚀 Quick Start
 
@@ -44,7 +42,7 @@ Pastikan Anda telah menginstall:
 
 - **pnpm** 8.0 atau lebih baru
 
-- **PostgreSQL** atau SQLite database
+- **PostgreSQL** database
 
 ### Installation
 
@@ -52,9 +50,9 @@ Pastikan Anda telah menginstall:
 
 ```bash
 
-git clone https://gitlab.com/bantenitsolutions/sveltekit-prisma-postgres-jwt-tailwind-daisyui.git my-app
+git clone https://github.com/bitscoid/cetakaja-go.git cetakaja-go
 
-cd my-app
+cd cetakaja-go
 
 ```
 
@@ -74,19 +72,13 @@ cp .env.example .env
 
 ```
 
-Edit file `.env` dan sesuaikan dengan konfigurasi Anda:
+Edit file `.env` dan sesuaikan dengan konfigurasi database Anda:
 
 ```env
 
-# Database Configuration (Pilih salah satu)
+# Database Configuration (PostgreSQL)
 
-# PostgreSQL
-
-DATABASE_URL="postgresql://username:password@localhost:5432/mydatabase"
-
-# SQLite (Untuk development)
-
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="postgresql://username:password@localhost:5432/cetakaja_pos"
 
 # JWT Secret Key (Ganti dengan secret yang kuat)
 
@@ -94,7 +86,7 @@ JWT_SECRET="your-super-secret-jwt-key-change-this-in-production"
 
 # Optional: App Configuration
 
-APP_NAME="My SvelteKit App"
+APP_NAME="Cetak Aja Online"
 
 APP_URL="http://localhost:5173"
 
@@ -114,109 +106,85 @@ pnpm dev
 
 ```
 
-Buka [http://localhost:5173](http://localhost:5173) di browser Anda untuk melihat aplikasi.
+Buka [http://localhost:5173](http://localhost:5173) di browser Anda untuk mengakses aplikasi POS cetak.
 
 ## 📁 Project Structure
 
 ```
 
-sveltekit-prisma-postgres-jwt-tailwind-daisyui/
+cetakaja-pos/
 
 ├── src/
 
 │ ├── lib/
 
-│ │ ├── components/ # Reusable Svelte components
+│ │ ├── components/ # Komponen UI untuk manajemen pesanan, pembayaran, dll
 
-│ │ ├── utils/ # Utility functions
+│ │ ├── layouts/ # Layout utama aplikasi
 
-│ │ │ ├── auth.ts # Authentication utilities
+│ │ ├── services/ # Layanan client untuk manajemen data
 
-│ │ │ └── api.ts # API client utilities
+│ │ ├── server/ # Fungsi server untuk manajemen bisnis
 
-│ │ └── types/ # TypeScript type definitions
+│ │ │ ├── productService.ts # Layanan produk cetak
+
+│ │ │ ├── orderService.ts # Layanan manajemen pesanan
+
+│ │ │ ├── paymentService.ts # Layanan pembayaran
+
+│ │ │ ├── settingService.ts # Layanan konfigurasi sistem
+
+│ │ │ └── prisma.ts # Konfigurasi Prisma client
+
+│ │ ├── stores/ # Store Svelte untuk state management
+
+│ │ ├── types/ # Definisi tipe TypeScript
+
+│ │ └── validations/ # Schema validasi Zod
 
 │ ├── routes/
 
+│ │ ├── (app)/ # Halaman utama aplikasi POS
+
+│ │ │ ├── dashboard/ # Dashboard manajemen
+
+│ │ │ ├── orders/ # Manajemen pesanan
+
+│ │ │ ├── products/ # Manajemen produk cetak
+
+│ │ │ ├── users/ # Manajemen pengguna
+
+│ │ │ ├── settings/ # Pengaturan sistem
+
+│ │ │ └── expenses/ # Manajemen pengeluaran
+
 │ │ ├── api/ # API endpoints
 
-│ │ │ ├── auth/ # Authentication endpoints
+│ │ │ ├── orders/ # Endpoint pesanan
 
-│ │ │ └── users/ # User management endpoints
+│ │ │ ├── products/ # Endpoint produk
 
-│ │ ├── login/ # Login page
+│ │ │ ├── payments/ # Endpoint pembayaran
 
-│ │ ├── register/ # Registration page
+│ │ │ └── settings/ # Endpoint konfigurasi
 
-│ │ └── +page.svelte # Main page
+│ │ ├── login/ # Halaman login
 
-│ ├── app.html # HTML template
+│ │ └── register/ # Halaman registrasi
 
-│ └── app.css # Global styles
+│ ├── static/ # File statis (logo, favicon, dll)
+
+│ └── app.html # Template HTML utama
 
 ├── prisma/
 
-│ ├── schema.prisma # Database schema definition
+│ ├── schema.prisma # Skema database percetakan
 
-│ └── seed.ts # Database seed data
+│ └── seed.ts # Data awal sistem
 
-├── static/ # Static assets
-
-├── tests/ # Test files
-
-└── package.json # Dependencies and scripts
+└── package.json # Dependencies dan script
 
 ```
-
-## 🛠️ Available Scripts
-
-### Development Scripts
-
-| Command | Description |
-
-|---------|-------------|
-
-| `pnpm dev` | Menjalankan development server |
-
-| `pnpm build` | Build aplikasi untuk production |
-
-| `pnpm preview` | Preview production build secara lokal |
-
-| `pnpm lint` | Menjalankan ESLint untuk code linting |
-
-| `pnpm format` | Format code dengan Prettier |
-
-| `pnpm check` | Menjalankan type checking |
-
-### Database Scripts
-
-| Command | Description |
-
-|---------|-------------|
-
-| `pnpm bits` | Full setup: install + database migration + seed |
-
-| `pnpm bits:reset` | Reset database + fresh setup |
-
-| `pnpm bits:prod` | Production deployment setup |
-
-| `pnpm db:reset` | Reset database saja |
-
-| `pnpm seed` | Menjalankan seed data |
-
-| `pnpm prisma studio` | Membuka Prisma Studio GUI |
-
-### Migration Scripts
-
-| Command | Description |
-
-|---------|-------------|
-
-| `pnpm migrate:dev` | Membuat migration baru |
-
-| `pnpm migrate:deploy` | Deploy migration ke production |
-
-| `pnpm migrate:status` | Melihat status migration |
 
 ## 🗄️ Database Management
 
@@ -224,7 +192,7 @@ sveltekit-prisma-postgres-jwt-tailwind-daisyui/
 
 ```bash
 
-# Setup awal database (migration + seeding)
+# Setup awal database percetakan (migration + seeding)
 
 pnpm bits
 
@@ -234,7 +202,7 @@ pnpm prisma generate # Generate Prisma client
 
 pnpm prisma migrate dev --name init # Create initial migration
 
-pnpm seed # Run seed data
+pnpm seed # Run seed data dengan contoh produk cetak
 
 ```
 
@@ -248,7 +216,7 @@ pnpm prisma migrate dev --name description_of_changes
 
 # Contoh:
 
-pnpm prisma migrate dev --name add_user_profile
+pnpm prisma migrate dev --name add_printing_product
 
 ```
 
@@ -264,45 +232,36 @@ pnpm prisma studio
 
 pnpm prisma generate
 
-# Reset database (hati-hati, data akan hilang!)
+# Reset database (hati-hati, semua data pesanan akan hilang!)
 
 pnpm db:reset
 
 ```
 
-## 🔐 Authentication System
+## 🔐 Sistem Otentikasi
 
-Starter kit ini sudah termasuk lengkap JWT-based authentication system:
+Aplikasi ini dilengkapi sistem otentikasi berbasis JWT untuk manajemen akses pengguna percetakan:
 
-### Authentication Routes
+### Rute Otentikasi
 
-- `/login` - Halaman login
-
-- `/register` - Halaman registrasi
+- `/login` - Halaman login untuk admin/staff/pelanggan
 
 - `/api/auth/login` - API endpoint untuk login
 
-- `/api/auth/register` - API endpoint untuk registrasi
-
 - `/api/auth/logout` - API endpoint untuk logout
 
-### Protecting Routes
+### Manajemen Akses Berdasarkan Peran
 
-```svelte
+- **Admin** - Akses penuh ke semua fitur sistem
 
-</p><p class="slate-paragraph"> import { redirect } from &#x27;$lib/utils/auth&#x27;;</p><p class="slate-paragraph"> </p><p class="slate-paragraph"> // Redirect jika user tidak authenticated</p><p class="slate-paragraph"> redirect(false);</p><p class="slate-paragraph"> </p><p class="slate-paragraph"> // atau gunakan di load function</p><p class="slate-paragraph"> export const load = async ({ parent }) => {</p><p class="slate-paragraph"> const { user } = await parent();</p><p class="slate-paragraph"> if (!user) {</p><p class="slate-paragraph"> redirect(302, &#x27;/login&#x27;);</p><p class="slate-paragraph"> }</p><p class="slate-paragraph"> </p><p class="slate-paragraph"> return { user };</p><p class="slate-paragraph"> };</p><p class="slate-paragraph">
+- **Staff** - Akses ke manajemen pesanan, produk, dan pelanggan
 
-Protected Content
-=================
+- **Customer** - Akses ke riwayat pesanan dan pembayaran
 
-Welcome, authenticated user!
-
-```
-
-### API Authentication
+### API Otentikasi
 
 ```typescript
-// Contoh protected API endpoint
+// Contoh API endpoint yang dilindungi
 
 export const POST: RequestHandler = async ({ request, cookies }) => {
   const token = cookies.get("token");
@@ -314,192 +273,13 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    // Process request dengan user data
+    // Process request dengan data pengguna
 
     return json({ success: true, data: decoded });
   } catch (error) {
     return json({ error: "Invalid token" }, { status: 401 });
   }
 };
-```
-
-## 🎨 Customization & Styling
-
-### Menambah Components
-
-1. Buat component baru di `src/lib/components/`:
-
-```svelte
-
-</p><p class="slate-paragraph"> export let name: string;</p><p class="slate-paragraph">
-
-Hello, {name}!
---------------
-
-```
-
-2. Gunakan component di pages:
-
-```svelte
-
-</p><p class="slate-paragraph"> import MyComponent from &#x27;$lib/components/MyComponent.svelte&#x27;;</p><p class="slate-paragraph">
-
-This is a custom component
-
-```
-
-### Customizing Styles
-
-- Edit `src/app.css` untuk global styles
-
-- Gunakan Tailwind classes untuk component styling
-
-- Customize DaisyUI theme di `tailwind.config.js`
-
-```javascript
-// tailwind.config.js
-
-import daisyui from "daisyui";
-
-/** @type {import('tailwindcss').Config} */
-
-export default {
-  content: ["./src/**/*.{html,js,svelte,ts}"],
-
-  theme: {
-    extend: {
-      colors: {
-        primary: "#your-custom-color",
-      },
-    },
-  },
-
-  plugins: [daisyui],
-
-  daisyui: {
-    themes: ["light", "dark", "corporate"], // Pilih themes yang diinginkan
-  },
-};
-```
-
-## 📦 Deployment
-
-### Deployment ke Vercel
-
-1. **Push code ke Git repository**
-
-2. **Connect ke Vercel:**
-
-- Login ke [Vercel](https://vercel.com)
-
-- Import project dari Git repository
-
-- Configure environment variables di Vercel dashboard
-
-3. **Environment variables untuk Vercel:**
-
-```env
-
-DATABASE_URL="your-production-database-url"
-
-JWT_SECRET="your-production-jwt-secret"
-
-```
-
-### Self-hosted Deployment dengan Node.js Adapter
-
-1. **Build aplikasi:**
-
-```bash
-
-pnpm build
-
-```
-
-2. **Jalankan production server:**
-
-```bash
-
-pnpm preview
-
-```
-
-3. **Atau deploy dengan PM2:**
-
-```bash
-
-# Install PM2 globally
-
-npm install -g pm2
-
-# Start application dengan PM2
-
-pm2 start build/index.js --name "my-sveltekit-app"
-
-```
-
-### Docker Deployment
-
-```dockerfile
-
-# Dockerfile
-
-FROM node:18-alpine
-
-WORKDIR /app
-
-COPY package.json pnpm-lock.yaml ./
-
-RUN npm install -g pnpm && pnpm install
-
-COPY . .
-
-RUN pnpm build
-
-EXPOSE 3000
-
-CMD ["pnpm", "preview"]
-
-```
-
-## 🧪 Testing
-
-### Menjalankan Tests
-
-```bash
-
-# Menjalankan unit tests
-
-pnpm test
-
-# Menjalankan tests dengan watch mode
-
-pnpm test:watch
-
-# Menjalankan coverage tests
-
-pnpm test:coverage
-
-```
-
-### Menambah Tests
-
-Buat test files di `tests/` directory:
-
-```typescript
-// tests/auth.test.ts
-
-import { describe, it, expect } from "vitest";
-
-import { login } from "../src/lib/utils/auth";
-
-describe("Authentication", () => {
-  it("should validate login credentials", async () => {
-    const result = await login("test@example.com", "password");
-
-    expect(result.success).toBe(true);
-  });
-});
 ```
 
 ## 🤝 Contributing
@@ -554,34 +334,34 @@ Jika Anda mengalami masalah atau memiliki pertanyaan:
 
 - 📖 **Documentation**: Check wiki pages
 
-- 🐛 **Report Bugs**: [Create Issue](https://gitlab.com/bantenitsolutions/sveltekit-prisma-postgres-jwt-tailwind-daisyui/issues)
+- 🐛 **Report Bugs**: [Create Issue](https://github.com/cetakaja/online-printing-pos/issues)
 
-- 💡 **Request Features**: [Feature Requests](https://gitlab.com/bantenitsolutions/sveltekit-prisma-postgres-jwt-tailwind-daisyui/issues)
+- 💡 **Request Features**: [Feature Requests](https://github.com/cetakaja/online-printing-pos/issues)
 
-- 💬 **Discussion**: [Join Discussion](https://gitlab.com/bantenitsolutions/sveltekit-prisma-postgres-jwt-tailwind-daisyui/-/discussions)
+- 💬 **Discussion**: [Join Discussion](https://github.com/cetakaja/online-printing-pos/discussions)
 
 ## 🙏 Acknowledgments
 
-- [SvelteKit](https://kit.svelte.dev/) - The web framework
+- [SvelteKit](https://kit.svelte.dev/) - Framework web modern untuk aplikasi percetakan
 
-- [Prisma](https://www.prisma.io/) - Database ORM
+- [Prisma](https://www.prisma.io/) - ORM database untuk manajemen data percetakan
 
-- [TailwindCSS](https://tailwindcss.com/) - CSS framework
+- [TailwindCSS](https://tailwindcss.com/) - Framework CSS untuk tampilan profesional
 
-- [DaisyUI](https://daisyui.com/) - UI components
+- [DaisyUI](https://daisyui.com/) - Komponen UI yang cantik dan fungsional
 
-- [Lucide Icons](https://lucide.dev/) - Beautiful icons
+- [Lucide Icons](https://lucide.dev/) - Ikon-ikon yang indah dan responsif
 
 ---
 
-**Dikembangkan dengan ❤️ oleh [Banten IT Solutions](https://gitlab.com/bantenitsolutions)**
+**Dikembangkan dengan ❤️ untuk komunitas usaha percetakan di Indonesia**
 
 **Website**: [https://bits.co.id](https://bits.co.id)
 
 **Email**: admin@bits.co.id
 
-**GitLab**: [https://gitlab.com/bantenitsolutions](https://gitlab.com/bantenitsolutions)
+**GitHub**: [https://github.com/bitscoid](https://github.com/bitscoid)
 
 ---
 
-**⭐ Jika project ini membantu Anda, jangan lupa untuk memberikan star di repository!**
+**⭐ Jika aplikasi ini membantu usaha percetakan Anda, jangan lupa memberikan star di repository!**

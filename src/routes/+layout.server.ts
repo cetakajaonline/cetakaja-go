@@ -4,9 +4,14 @@ import type { User } from "$lib/types";
 import prisma from "$lib/server/prisma";
 
 export const load: LayoutServerLoad = async ({ url, locals }) => {
-  const setting = await prisma.setting.findFirst();
-  const appName = setting?.name ?? "Nama Aplikasi";
-  const appDesc = setting?.name ?? "Deskripsi Aplikasi";
+  const setting = await prisma.setting.findFirst({
+    select: {
+      name: true,
+      logo: true,
+    }
+  });
+  const appName = setting?.name ?? "Cetak Aja Online";
+  const appDesc = setting?.description ?? "Aplikasi Point of Sale untuk Percetakan Dan Digital Printing";
   const appLogo = setting?.logo ?? null;
 
   // Mapping pathname ke judul halaman

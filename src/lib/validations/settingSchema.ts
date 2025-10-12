@@ -7,7 +7,4 @@ export const settingSchema = z.object({
   bankCode: z.string().optional(),
   bankAccountNumber: z.string().optional(),
   bankAccountName: z.string().optional(),
-  cashPaymentInstruction: z.string().optional(),
-  qrisPaymentInstruction: z.string().optional(),
-  bankTransferInstruction: z.string().optional(),
 });

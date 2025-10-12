@@ -31,9 +31,6 @@ export interface Setting {
   bankAccountNumber?: string;
   bankAccountName?: string;
   qrisImage?: string;
-  cashPaymentInstruction?: string;
-  qrisPaymentInstruction?: string;
-  bankTransferInstruction?: string;
 }
 
 // ✅ ProductVariant

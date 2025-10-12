@@ -10,9 +10,6 @@ export type Setting = {
   bankAccountNumber?: string | null;
   bankAccountName?: string | null;
   qrisImage?: string | null;
-  cashPaymentInstruction?: string | null;
-  qrisPaymentInstruction?: string | null;
-  bankTransferInstruction?: string | null;
 };
 
 export const setting = writable<Setting | null>(null);

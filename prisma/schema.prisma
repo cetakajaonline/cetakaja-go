@@ -95,9 +95,9 @@ model OrderItem {
   qty       Int
   price     Int
   subtotal  Int
-  notes     String?         @db.VarChar(500)
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
+  notes     String?         @db.VarChar(500)
   order     Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
   product   Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
   variant   ProductVariant? @relation(fields: [variantId], references: [id])
@@ -166,18 +166,15 @@ model Expense {
 }
 
 model Setting {
-  id                      Int     @id @default(1)
-  name                    String  @db.VarChar(100)
-  description             String  @db.VarChar(255)
-  logo                    String? @db.VarChar(255)
-  bankAccountName         String? @db.VarChar(100)
-  bankAccountNumber       String? @db.VarChar(50)
-  bankCode                String? @db.VarChar(10)
-  bankName                String? @db.VarChar(100)
-  bankTransferInstruction String?
-  cashPaymentInstruction  String?
-  qrisImage               String? @db.VarChar(255)
-  qrisPaymentInstruction  String?
+  id                Int     @id @default(1)
+  name              String  @db.VarChar(100)
+  description       String  @db.VarChar(255)
+  logo              String? @db.VarChar(255)
+  bankAccountName   String? @db.VarChar(100)
+  bankAccountNumber String? @db.VarChar(50)
+  bankCode          String? @db.VarChar(10)
+  bankName          String? @db.VarChar(100)
+  qrisImage         String? @db.VarChar(255)
 }
 
 enum Role {

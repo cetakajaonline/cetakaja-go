@@ -41,7 +41,7 @@ export async function getPublicSettings(): Promise<{
   }
 }
 
-// Update setting (with logo and payment instruction support)
+// Update setting (with logo support)
 export async function updateSetting(
   name: string,
   description: string,
@@ -51,9 +51,6 @@ export async function updateSetting(
   bankAccountNumber?: string,
   bankAccountName?: string,
   qrisImageFile?: File | null,
-  cashPaymentInstruction?: string,
-  qrisPaymentInstruction?: string,
-  bankTransferInstruction?: string,
 ): Promise<{ success: boolean; data?: Setting; message?: string }> {
   try {
     const formData = new FormData();
@@ -66,12 +63,6 @@ export async function updateSetting(
       formData.append("bankAccountNumber", bankAccountNumber);
     if (bankAccountName !== undefined)
       formData.append("bankAccountName", bankAccountName);
-    if (cashPaymentInstruction !== undefined)
-      formData.append("cashPaymentInstruction", cashPaymentInstruction);
-    if (qrisPaymentInstruction !== undefined)
-      formData.append("qrisPaymentInstruction", qrisPaymentInstruction);
-    if (bankTransferInstruction !== undefined)
-      formData.append("bankTransferInstruction", bankTransferInstruction);
 
     if (logoFile) {
       formData.append("logo", logoFile);

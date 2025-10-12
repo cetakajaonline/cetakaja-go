@@ -23,21 +23,15 @@ async function main() {
   // Setting
   await prisma.setting.create({
     data: {
-      name: "Sistem Pemesanan Percetakan",
+      name: "Cetak Aja Online",
       description:
-        "Aplikasi manajemen order dan pembayaran untuk usaha percetakan",
+        "Aplikasi Point of Sale untuk Percetakan Dan Digital Printing",
       logo: "/uploads/logo.png",
       bankName: "Bank Central Asia (BCA)",
       bankCode: "014",
       bankAccountNumber: "1234567890",
       bankAccountName: "Nama Pemilik Rekening",
       qrisImage: "/uploads/qris.png",
-      cashPaymentInstruction:
-        '<p>Bayar tunai saat pesanan diterima. Silakan siapkan uang pas sesuai dengan total pesanan.</p><p class="mt-2">Petunjuk tambahan: Hubungi kami jika ada pertanyaan tentang pesanan Anda.</p>',
-      qrisPaymentInstruction:
-        '<ol class="list-decimal list-inside space-y-1"><li>Buka aplikasi pembayaran yang mendukung QRIS (GoPay, OVO, Dana, dll)</li><li>Pilih menu Scan QR atau kode QR</li><li>Scan kode QR yang tersedia</li><li>Periksa rincian pembayaran dan konfirmasi pembayaran</li><li>Simpan bukti pembayaran sebagai referensi</li></ol>',
-      bankTransferInstruction:
-        '<ol class="list-decimal list-inside space-y-1"><li>Login ke aplikasi mobile banking atau internet banking bank Anda</li><li>Pilih menu Transfer ke Rekening Bank Lain</li><li>Masukkan kode bank dan nomor rekening yang tertera</li><li>Masukkan jumlah transfer sesuai tagihan</li><li>Lanjutkan proses transfer sesuai instruksi aplikasi</li><li>Simpan bukti transfer sebagai referensi</li></ol>',
     },
   });
 
@@ -49,7 +43,7 @@ async function main() {
   // Create Admin and Staff with addresses
   const admin = await prisma.user.create({
     data: {
-      name: "Admin Percetakan",
+      name: "Admin Cetak Aja Online",
       username: "admin",
       phone: `08${Math.floor(100000000 + Math.random() * 900000000)}`, // Generates 08 followed by 9 digits
       password: adminPassword,

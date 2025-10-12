@@ -57,7 +57,7 @@
       {#if data?.setting?.logo}
         <img src={data?.setting?.logo} alt="Logo" class="h-6 w-auto" />
       {/if}
-      <span>{data?.setting?.name || "Nama Aplikasi"}</span>
+      <span>{data?.setting?.name || "Cetak Aja Online"}</span>
     </a>
   </div>
 

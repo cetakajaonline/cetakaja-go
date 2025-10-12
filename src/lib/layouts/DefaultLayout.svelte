@@ -2,7 +2,7 @@
   import { page } from '$app/stores';
   export let title: string = 'Dashboard';
 
-  $: appName = $page.data.appName || 'Nama Aplikasi';
+  $: appName = $page.data.appName || 'Cetak Aja Online';
 </script>
 
 <div class="min-h-screen flex flex-col bg-base-100">
