@@ -39,7 +39,9 @@ export async function PUT(event: RequestEvent) {
       const updated = await updateOrder(id, {
         ...data,
         // Only update createdById if provided in the request (for admin use)
-        ...(data.createdById !== undefined && { createdById: data.createdById }),
+        ...(data.createdById !== undefined && {
+          createdById: data.createdById,
+        }),
       });
       return json(updated);
     } else if (user.role === "customer") {
@@ -57,9 +59,7 @@ export async function PUT(event: RequestEvent) {
       }
 
       if (order.userId !== user.id) {
-        throw new Error(
-          "Forbidden: Anda tidak diizinkan mengupdate order ini",
-        );
+        throw new Error("Forbidden: Anda tidak diizinkan mengupdate order ini");
       }
 
       // Allow status update to 'canceled' if current status is 'pending' or 'processing'
@@ -73,9 +73,7 @@ export async function PUT(event: RequestEvent) {
       return json(updated);
     } else {
       // Any other role is forbidden
-      throw new Error(
-        "Forbidden: role tidak diizinkan untuk mengupdate order",
-      );
+      throw new Error("Forbidden: role tidak diizinkan untuk mengupdate order");
     }
   } catch (error) {
     console.error("Error updating order:", error);

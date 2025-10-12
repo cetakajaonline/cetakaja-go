@@ -4,29 +4,35 @@ import { z } from "zod";
 import {
   createOrder,
   getNextOrderNumberForToday,
-  getOrderByOrderNumber
+  getOrderByOrderNumber,
 } from "$lib/server/orderService";
 import { orderSchema } from "$lib/validations/orderSchema";
 import prisma from "$lib/server/prisma";
 import type { RequestHandler } from "./$types";
 
 export const POST: RequestHandler = async (event) => {
-  let phone, status, shippingMethod, paymentMethod, totalAmountStr, notes, orderItemsStr;
-  
+  let phone,
+    status,
+    shippingMethod,
+    paymentMethod,
+    totalAmountStr,
+    notes,
+    orderItemsStr;
+
   try {
     // Check content type to determine how to process the request
-    const contentType = event.request.headers.get('content-type');
-    if (contentType && contentType.includes('multipart/form-data')) {
+    const contentType = event.request.headers.get("content-type");
+    if (contentType && contentType.includes("multipart/form-data")) {
       // Handle form data (from client-side fetch with FormData) - this is the expected case
       const formData = await event.request.formData();
-      
-      phone = formData.get('phone') as string;
-      status = formData.get('status') as string;
-      shippingMethod = formData.get('shippingMethod') as string;
-      paymentMethod = formData.get('paymentMethod') as string;
-      totalAmountStr = formData.get('totalAmount') as string;
-      notes = formData.get('notes') as string | null;
-      orderItemsStr = formData.get('orderItems') as string;
+
+      phone = formData.get("phone") as string;
+      status = formData.get("status") as string;
+      shippingMethod = formData.get("shippingMethod") as string;
+      paymentMethod = formData.get("paymentMethod") as string;
+      totalAmountStr = formData.get("totalAmount") as string;
+      notes = formData.get("notes") as string | null;
+      orderItemsStr = formData.get("orderItems") as string;
     } else {
       // Handle JSON data - in case someone calls the endpoint directly with JSON
       const jsonData = await event.request.json();
@@ -54,25 +60,38 @@ export const POST: RequestHandler = async (event) => {
       try {
         orderItems = JSON.parse(orderItemsStr);
       } catch {
-        return json({ message: "Format order items tidak valid" }, { status: 400 });
+        return json(
+          { message: "Format order items tidak valid" },
+          { status: 400 },
+        );
       }
     }
 
     // Create a schema for public order creation with phone number
     const publicOrderByPhoneSchema = orderSchema.extend({
-      phone: z.string().min(10).max(15).regex(/^08\d+$/, "Nomor telepon harus diawali dengan 08 dan hanya berisi angka"),
+      phone: z
+        .string()
+        .min(10)
+        .max(15)
+        .regex(
+          /^08\d+$/,
+          "Nomor telepon harus diawali dengan 08 dan hanya berisi angka",
+        ),
       userId: z.number().optional(), // userId will be set internally based on phone number
     });
-    
+
     const parsed = publicOrderByPhoneSchema.safeParse({
       phone,
-      status: status || 'pending',
-      shippingMethod: shippingMethod || 'pickup',
-      paymentMethod: paymentMethod || 'cash',
-      totalAmount: typeof totalAmountStr === 'string' ? parseInt(totalAmountStr, 10) : (totalAmountStr || 0),
+      status: status || "pending",
+      shippingMethod: shippingMethod || "pickup",
+      paymentMethod: paymentMethod || "cash",
+      totalAmount:
+        typeof totalAmountStr === "string"
+          ? parseInt(totalAmountStr, 10)
+          : totalAmountStr || 0,
       notes: notes || undefined,
       orderItems,
-      userId: undefined // Ensure userId is undefined so we look up by phone
+      userId: undefined, // Ensure userId is undefined so we look up by phone
     });
 
     if (!parsed.success) {
@@ -86,14 +105,14 @@ export const POST: RequestHandler = async (event) => {
     }
 
     const data = parsed.data;
-    
+
     // Find user by phone number
     const user = await prisma.user.findUnique({
       where: {
-        phone: data.phone
-      }
+        phone: data.phone,
+      },
     });
-    
+
     if (!user) {
       return json({ message: "User tidak ditemukan" }, { status: 404 });
     }
@@ -122,7 +141,7 @@ export const POST: RequestHandler = async (event) => {
 
     return json(newOrder);
   } catch (error) {
-    console.error('Error creating public order by phone:', error);
+    console.error("Error creating public order by phone:", error);
     return json({ message: "Gagal membuat order" }, { status: 500 });
   }
 };

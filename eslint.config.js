@@ -59,7 +59,7 @@ export default [
         parser: tsParser,
         ecmaVersion: "latest",
         sourceType: "module",
-        project: ["./tsconfig.eslint.json"],
+        project: ["./tsconfig.json"], // Use main tsconfig instead of eslint-specific one
         tsconfigRootDir: process.cwd(),
         extraFileExtensions: [".svelte"],
       },

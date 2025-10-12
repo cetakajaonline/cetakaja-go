@@ -28,10 +28,10 @@ export async function POST(event: RequestEvent) {
     // Verify payment exists and belongs to an order
     const payment = await prisma.payment.findUnique({
       where: { id: Number(paymentId) },
-      include: { 
+      include: {
         order: {
-          select: { userId: true }
-        }
+          select: { userId: true },
+        },
       },
     });
 
@@ -42,11 +42,11 @@ export async function POST(event: RequestEvent) {
     // Check if user is authenticated and authorized
     const userId = event.locals.user?.id;
     const userRole = event.locals.user?.role;
-    
+
     // Allow access if user is admin/staff or if it's the user's own order
     if (
-      userRole !== "admin" && 
-      userRole !== "staff" && 
+      userRole !== "admin" &&
+      userRole !== "staff" &&
       userId !== payment.order.userId
     ) {
       return json(

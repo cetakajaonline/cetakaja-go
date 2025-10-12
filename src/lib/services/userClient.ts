@@ -33,14 +33,12 @@ export async function registerUser(
 }
 
 // Public registration function for self-ordering customers
-export async function registerPublicUser(
-  userData: {
-    name: string;
-    username: string;
-    phone: string;
-    password: string;
-  }
-): Promise<ApiResponse<{ user: User }>> {
+export async function registerPublicUser(userData: {
+  name: string;
+  username: string;
+  phone: string;
+  password: string;
+}): Promise<ApiResponse<{ user: User }>> {
   const res = await fetch("/api/auth/register", {
     method: "POST",
     headers: {

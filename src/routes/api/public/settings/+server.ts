@@ -19,10 +19,13 @@ export const GET: RequestHandler = async () => {
       qrisImage: settings?.qrisImage || null,
       // Don't include sensitive info like passwords or API keys
     };
-    
+
     return json(publicSettings);
   } catch (error) {
-    console.error('Error fetching public settings:', error);
-    return json({ message: "Gagal mengambil data pengaturan" }, { status: 500 });
+    console.error("Error fetching public settings:", error);
+    return json(
+      { message: "Gagal mengambil data pengaturan" },
+      { status: 500 },
+    );
   }
 };

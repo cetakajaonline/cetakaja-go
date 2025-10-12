@@ -350,12 +350,9 @@ async function main() {
   }
 
   // Create sample expenses with proof files
-  const expenseCategories: Array<"operasional" | "marketing" | "gaji" | "lainnya"> = [
-    "operasional",
-    "marketing",
-    "gaji",
-    "lainnya"
-  ];
+  const expenseCategories: Array<
+    "operasional" | "marketing" | "gaji" | "lainnya"
+  > = ["operasional", "marketing", "gaji", "lainnya"];
 
   for (let i = 0; i < 20; i++) {
     await prisma.expense.create({
@@ -380,5 +377,5 @@ main()
     process.exit(1);
   })
   .finally(() => {
-    void prisma.$disconnect().then(() => { });
+    void prisma.$disconnect().then(() => {});
   });

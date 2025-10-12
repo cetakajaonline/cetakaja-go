@@ -5,6 +5,7 @@ import {
 } from "$lib/server/notificationService";
 import fs from "fs";
 import path from "path";
+import type { Prisma } from "@prisma/client";
 
 const orderSelect = {
   id: true,
@@ -207,8 +208,6 @@ export async function getOrderWithPayments(id: number) {
     },
   });
 }
-
-import type { Prisma } from "@prisma/client";
 
 // Helper function to handle payment creation/updates consistently
 async function handlePaymentForOrder(

@@ -2,7 +2,7 @@ import prisma from "$lib/server/prisma";
 import type { Setting } from "@prisma/client";
 
 export async function getSettings(): Promise<Setting | null> {
-  return await prisma.setting.findUnique({ 
+  return await prisma.setting.findUnique({
     where: { id: 1 },
     select: {
       id: true,
@@ -14,7 +14,7 @@ export async function getSettings(): Promise<Setting | null> {
       bankAccountNumber: true,
       bankAccountName: true,
       qrisImage: true,
-    }
+    },
   });
 }
 
@@ -79,14 +79,13 @@ export async function updateSetting(data: SettingUpdateData) {
     paramIndex++;
   }
 
-
   if (updates.length > 0) {
     const query = `UPDATE "Setting" SET ${updates.join(", ")} WHERE id = $1`;
     await prisma.$executeRawUnsafe(query, 1, ...values);
   }
 
   // Fetch and return the updated setting
-  return await prisma.setting.findUnique({ 
+  return await prisma.setting.findUnique({
     where: { id: 1 },
     select: {
       id: true,
@@ -98,6 +97,6 @@ export async function updateSetting(data: SettingUpdateData) {
       bankAccountNumber: true,
       bankAccountName: true,
       qrisImage: true,
-    }
+    },
   });
 }

@@ -7,11 +7,14 @@ export const load: LayoutServerLoad = async ({ url, locals }) => {
   const setting = await prisma.setting.findFirst({
     select: {
       name: true,
+      description: true,
       logo: true,
-    }
+    },
   });
   const appName = setting?.name ?? "Cetak Aja Online";
-  const appDesc = setting?.description ?? "Aplikasi Point of Sale untuk Percetakan Dan Digital Printing";
+  const appDesc =
+    setting?.description ??
+    "Aplikasi Point of Sale untuk Percetakan Dan Digital Printing";
   const appLogo = setting?.logo ?? null;
 
   // Mapping pathname ke judul halaman

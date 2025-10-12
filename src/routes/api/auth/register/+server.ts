@@ -28,12 +28,12 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
     const { name, username, phone, password } = parsed.data;
 
     // Check if username or phone already exists
-    const existingUserByUsername = await prisma.user.findUnique({ 
-      where: { username } 
+    const existingUserByUsername = await prisma.user.findUnique({
+      where: { username },
     });
-    
-    const existingUserByPhone = await prisma.user.findUnique({ 
-      where: { phone } 
+
+    const existingUserByPhone = await prisma.user.findUnique({
+      where: { phone },
     });
 
     if (existingUserByUsername) {
@@ -78,13 +78,13 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 
     // Return success response (exclude password from response)
     const { ...userWithoutPassword } = newUser;
-    
-    return json({ 
+
+    return json({
       success: true,
-      data: { user: userWithoutPassword } 
+      data: { user: userWithoutPassword },
     });
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error("Registration error:", error);
     return json(
       { success: false, message: "Terjadi kesalahan saat registrasi" },
       { status: 500 },

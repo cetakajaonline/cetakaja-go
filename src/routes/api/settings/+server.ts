@@ -35,19 +35,33 @@ export const POST: RequestHandler = async (event) => {
   }
 
   // Ensure all bank fields are properly converted to strings if they exist
-  const bankNameStr = bankName instanceof File ? undefined : String(bankName || "");
-  const bankCodeStr = bankCode instanceof File ? undefined : String(bankCode || "");
-  const bankAccountNumberStr = bankAccountNumber instanceof File ? undefined : String(bankAccountNumber || "");
-  const bankAccountNameStr = bankAccountName instanceof File ? undefined : String(bankAccountName || "");
+  const bankNameStr =
+    bankName instanceof File ? undefined : String(bankName || "");
+  const bankCodeStr =
+    bankCode instanceof File ? undefined : String(bankCode || "");
+  const bankAccountNumberStr =
+    bankAccountNumber instanceof File
+      ? undefined
+      : String(bankAccountNumber || "");
+  const bankAccountNameStr =
+    bankAccountName instanceof File ? undefined : String(bankAccountName || "");
 
   // Validasi teks pakai Zod
-  const parsed = settingSchema.safeParse({ 
-    name, 
+  const parsed = settingSchema.safeParse({
+    name,
     description,
-    bankName: bankNameStr && bankNameStr.trim() !== "" ? bankNameStr : undefined,
-    bankCode: bankCodeStr && bankCodeStr.trim() !== "" ? bankCodeStr : undefined,
-    bankAccountNumber: bankAccountNumberStr && bankAccountNumberStr.trim() !== "" ? bankAccountNumberStr : undefined,
-    bankAccountName: bankAccountNameStr && bankAccountNameStr.trim() !== "" ? bankAccountNameStr : undefined,
+    bankName:
+      bankNameStr && bankNameStr.trim() !== "" ? bankNameStr : undefined,
+    bankCode:
+      bankCodeStr && bankCodeStr.trim() !== "" ? bankCodeStr : undefined,
+    bankAccountNumber:
+      bankAccountNumberStr && bankAccountNumberStr.trim() !== ""
+        ? bankAccountNumberStr
+        : undefined,
+    bankAccountName:
+      bankAccountNameStr && bankAccountNameStr.trim() !== ""
+        ? bankAccountNameStr
+        : undefined,
   });
 
   if (!parsed.success) {
