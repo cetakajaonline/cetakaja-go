@@ -21,7 +21,7 @@ export const load: LayoutServerLoad = async ({ locals }) => {
     },
   });
 
-  // Only load data for admin and staff users
+  // Only load extensive data for admin and staff users
   if (locals.user.role === "admin" || locals.user.role === "staff") {
     // Fetch data for all entities
     const [expenses, orders, products] = await Promise.all([
@@ -42,9 +42,65 @@ export const load: LayoutServerLoad = async ({ locals }) => {
       products,
       isAdmin: locals.user.role === "admin",
       isStaff: locals.user.role === "staff",
+      isCustomer: locals.user.role === "customer",
     };
   }
 
+  // For customer users, only load orders related to the customer
+  if (locals.user.role === "customer") {
+    const customerOrders = await prisma.order.findMany({
+      where: { userId: locals.user.id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            phone: true,
+            address: true,
+          },
+        },
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+          },
+        },
+        orderItems: {
+          include: {
+            product: { select: { id: true, name: true } },
+            variant: { select: { id: true, variantName: true } },
+          },
+        },
+        payments: {
+          select: {
+            id: true,
+            method: true,
+            amount: true,
+            status: true,
+            transactionRef: true,
+            paidAt: true,
+          },
+        },
+      },
+    });
+
+    return {
+      user: locals.user,
+      setting: {
+        name: settings?.name ?? "Aplikasi",
+        description: settings?.description ?? "",
+        logo: settings?.logo ?? null,
+      },
+      orders: customerOrders,
+      isAdmin: locals.user.role === "admin",
+      isStaff: locals.user.role === "staff",
+      isCustomer: locals.user.role === "customer",
+    };
+  }
+
+  // For other roles or fallback
   return {
     user: locals.user,
     setting: {
@@ -54,5 +110,6 @@ export const load: LayoutServerLoad = async ({ locals }) => {
     },
     isAdmin: locals.user.role === "admin",
     isStaff: locals.user.role === "staff",
+    isCustomer: locals.user.role === "customer",
   };
 };

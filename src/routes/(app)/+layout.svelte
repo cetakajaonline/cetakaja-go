@@ -10,13 +10,18 @@
     setting.set(data.setting);
   }
 
-  const menuItems = [
+  // Determine menu items based on user role
+  $: menuItems = data.user?.role === 'customer' ? [
     { href: "/dashboard", label: "Dashboard", icon: "🏠" },
-    { href: "/users", label: "Users", icon: "👤" },
+    { href: "/orders", label: "Orders", icon: "📝" },
+  ] : [
+    { href: "/dashboard", label: "Dashboard", icon: "🏠" },
     { href: "/categories", label: "Categories", icon: "🏷️" },
     { href: "/products", label: "Products", icon: "📦" },
     { href: "/orders", label: "Orders", icon: "📝" },
     { href: "/expenses", label: "Expenses", icon: "💰" },
+    { href: "/reports", label: "Reports", icon: "📊" },
+    { href: "/users", label: "Users", icon: "👤" },
     { href: "/settings", label: "Settings", icon: "⚙️" },
   ];
 

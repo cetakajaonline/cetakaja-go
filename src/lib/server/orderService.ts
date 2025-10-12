@@ -28,7 +28,10 @@ const orderSelect = {
       name: true,
       username: true,
       phone: true,
+      role: true,
       address: true,
+      createdAt: true,
+      updatedAt: true,
     },
   },
   createdBy: {
@@ -36,6 +39,8 @@ const orderSelect = {
       id: true,
       name: true,
       username: true,
+      createdAt: true,
+      updatedAt: true,
     },
   },
   orderItems: {
@@ -104,7 +109,10 @@ const orderDetailSelect = {
       name: true,
       username: true,
       phone: true,
+      role: true,
       address: true,
+      createdAt: true,
+      updatedAt: true,
     },
   },
   createdBy: {
@@ -112,6 +120,8 @@ const orderDetailSelect = {
       id: true,
       name: true,
       username: true,
+      createdAt: true,
+      updatedAt: true,
     },
   },
   orderItems: {

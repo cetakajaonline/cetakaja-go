@@ -31,6 +31,7 @@ export const handle: Handle = async ({ event, resolve }) => {
           address: true,
           role: true,
           createdAt: true,
+          updatedAt: true,
         },
       });
 
