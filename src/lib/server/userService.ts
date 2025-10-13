@@ -9,6 +9,7 @@ const userSelect = {
   address: true,
   role: true,
   createdAt: true,
+  updatedAt: true,
 };
 
 export async function getAllUsers() {
@@ -139,6 +140,7 @@ export async function validatePassword(
       address: true,
       role: true,
       createdAt: true,
+      updatedAt: true,
     },
   });
 
@@ -147,11 +149,13 @@ export async function validatePassword(
   const match = await bcrypt.compare(plainPassword, user.password);
   if (!match) return null;
 
-  // Kembalikan objek tanpa password untuk keamanan
+  // For security, only return essential user data after successful validation
   return {
     id: user.id,
     name: user.name,
     username: user.username,
     role: user.role,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
   };
 }

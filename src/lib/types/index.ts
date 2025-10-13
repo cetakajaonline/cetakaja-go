@@ -28,7 +28,7 @@ export interface Order {
   updatedAt: Date;
   userId: number;
   createdById: number | null;
-  
+
   // Relations
   user: {
     id: number;
@@ -56,7 +56,7 @@ export interface OrderItem {
   subtotal: number;
   notes: string | null;
   orderId?: number;
-  
+
   // Relations
   product: {
     id: number;
@@ -80,9 +80,8 @@ export interface Payment {
   transactionRef: string | null;
   paidAt: Date | null;
   createdAt: Date;
-  updatedAt: Date;
-  
-  // Relations  
+
+  // Relations
   proofs: PaymentProof[];
 }
 
@@ -106,7 +105,7 @@ export interface Product {
   photo: string | null;
   createdAt: Date;
   updatedAt: Date;
-  
+
   // Relations
   category: {
     id: number;
@@ -171,7 +170,7 @@ export interface Notification {
   status: "pending" | "sent" | "failed";
   createdAt: Date;
   updatedAt: Date;
-  
+
   // Relations
   user: {
     id: number;
@@ -186,7 +185,11 @@ export interface Notification {
 }
 
 // ✅ Product Sort Key
-export type ProductSortKey = 'name' | 'baseCode' | 'createdAt' | 'category.name';
+export type ProductSortKey =
+  | "name"
+  | "baseCode"
+  | "createdAt"
+  | "category.name";
 
 // ✅ Report Types
 export interface DailyReport {
@@ -298,14 +301,30 @@ export interface AllCustomersReport {
 export interface ReportFilter {
   startDate?: Date | string;
   endDate?: Date | string;
-  reportType: 'daily' | 'weekly' | 'monthly' | 'annual' | 'product' | 'customer' | 'revenue' | 'expense';
+  reportType:
+    | "daily"
+    | "weekly"
+    | "monthly"
+    | "annual"
+    | "product"
+    | "customer"
+    | "revenue"
+    | "expense";
   productId?: number;
   userId?: number;
 }
 
 export interface ReportResponse {
   reportType: string;
-  data: any;
+  data:
+    | DailyReport
+    | WeeklyReport
+    | MonthlyReport
+    | AnnualReport
+    | ProductPerformanceReport[]
+    | CustomerReport[]
+    | RevenueReport[]
+    | ExpenseReport[];
   summary: {
     total: number;
     revenue: number;

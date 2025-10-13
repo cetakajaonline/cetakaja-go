@@ -69,6 +69,9 @@ const orderSelect = {
   payments: {
     select: {
       id: true,
+      orderId: true,
+      userId: true,
+      createdById: true,
       method: true,
       amount: true,
       status: true,
@@ -78,6 +81,7 @@ const orderSelect = {
       proofs: {
         select: {
           id: true,
+          paymentId: true,
           fileName: true,
           filePath: true,
           fileType: true,
@@ -150,6 +154,9 @@ const orderDetailSelect = {
   payments: {
     select: {
       id: true,
+      orderId: true,
+      userId: true,
+      createdById: true,
       method: true,
       amount: true,
       status: true,
@@ -159,6 +166,7 @@ const orderDetailSelect = {
       proofs: {
         select: {
           id: true,
+          paymentId: true,
           fileName: true,
           filePath: true,
           fileType: true,

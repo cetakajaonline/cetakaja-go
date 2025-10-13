@@ -6,6 +6,7 @@ const categorySelect = {
   code: true,
   description: true,
   createdAt: true,
+  updatedAt: true,
 };
 
 export async function getAllCategories() {

@@ -9,6 +9,7 @@ export type User = {
   address: string | null;
   role?: string;
   createdAt: Date | string; // Could be Date or ISO string from SvelteKit
+  updatedAt: Date | string; // Added to match Prisma schema
 };
 
 export const user = writable<User | null>(null);

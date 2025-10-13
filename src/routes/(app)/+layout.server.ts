@@ -109,7 +109,7 @@ export const load: LayoutServerLoad = async ({ locals }) => {
       logo: settings?.logo ?? null,
     },
     isAdmin: locals.user.role === "admin",
-    isStaff: locals.user.role === "staff", 
+    isStaff: locals.user.role === "staff",
     isCustomer: locals.user.role === "customer",
   };
 };

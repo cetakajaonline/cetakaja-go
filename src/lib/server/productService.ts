@@ -7,9 +7,18 @@ const productInclude = {
     select: {
       id: true,
       name: true,
+      code: true,
     },
   },
   variants: {
+    select: {
+      id: true,
+      variantName: true,
+      price: true,
+      createdAt: true,
+      updatedAt: true,
+      productId: true,
+    },
     orderBy: { createdAt: "asc" as const },
   },
 };

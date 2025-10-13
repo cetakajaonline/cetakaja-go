@@ -1,7 +1,22 @@
 import type { Product } from "$lib/types";
 
+// Input type for product creation/update that excludes relations
+interface ProductInput {
+  name: string;
+  description?: string;
+  baseCode: string;
+  photo?: string;
+  categoryId: number;
+  variants?: {
+    id?: number;
+    variantName: string;
+    price: number;
+    delete?: boolean;
+  }[];
+}
+
 export async function createProduct(
-  productData: Omit<Product, "id" | "createdAt">,
+  productData: ProductInput,
 ): Promise<Product> {
   const res = await fetch("/api/products", {
     method: "POST",
@@ -19,7 +34,7 @@ export async function createProduct(
 
 export async function updateProduct(
   id: number,
-  productData: Partial<Product>,
+  productData: Partial<ProductInput>,
 ): Promise<Product> {
   const res = await fetch(`/api/products/${id}`, {
     method: "PUT",

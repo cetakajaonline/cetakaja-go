@@ -52,7 +52,7 @@ export async function registerPublicUser(userData: {
 }
 
 export async function createUser(
-  userData: Omit<User, "id" | "createdAt"> & { password: string },
+  userData: Omit<User, "id" | "createdAt" | "updatedAt"> & { password: string },
 ): Promise<User> {
   const res = await fetch("/api/users", {
     method: "POST",

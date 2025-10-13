@@ -121,25 +121,24 @@
 
       let result: Product;
       if (isEditMode && selectedProduct) {
-        const validatedWithCreatedAt = {
+        // When updating, just pass the validated data without manually creating variant objects with missing fields
+        const validatedForUpdate = {
           ...validated,
-          variants: validated.variants?.map(v => {
-            // For update, if id exists, use it; if creating new, id will be 0 (handled by Prisma)
-            // Adding createdAt with a default value to match ProductVariant interface
-            return {
-              id: v.id || 0,
-              variantName: v.variantName,
-              price: v.price,
-              createdAt: new Date() // Provide a default value for createdAt
-            };
-          })
+          variants: validated.variants?.map(v => ({
+            id: v.id || 0,
+            variantName: v.variantName,
+            price: v.price,
+            // Don't include createdAt or updatedAt here as they should be managed by the server
+          }))
         };
-        result = await updateProduct(selectedProduct.id, validatedWithCreatedAt);
+        result = await updateProduct(selectedProduct.id, validatedForUpdate);
         products.update(items => items.map((p) =>
           p.id === selectedProduct!.id ? { ...p, ...result } : p
         ));
       } else {
         // Ensure required fields are present and not undefined
+        // Don't include variant objects with createdAt/updatedAt in the create payload
+        // The API backend will handle creating the proper variant objects
         const createPayload = {
           name: validated.name ?? "",
           description: validated.description ?? "",
@@ -147,11 +146,10 @@
           photo: validated.photo ?? "",
           categoryId: validated.categoryId ?? 0,
           variants: (validated.variants ?? []).map(v => ({
-            id: 0, // Placeholder ID untuk variant baru
+            // Only include the fields that are actually needed for creating variants
             variantName: v.variantName,
-            price: v.price,
-            createdAt: new Date(), // Tambahkan createdAt untuk variant baru
-            updatedAt: new Date()
+            price: v.price
+            // Don't include id (will be assigned by DB), createdAt, or updatedAt
           }))
         };
         result = await createProduct(createPayload);

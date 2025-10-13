@@ -44,33 +44,53 @@ export const load: PageServerLoad = async ({ locals }) => {
       getAllProducts(),
       getAllExpenses(),
     ]);
-    
+
     // Count only customers for total user count
-    const customerUsers = users.filter(user => user.role === 'customer');
+    const customerUsers = users.filter((user) => user.role === "customer");
 
     // Calculate statistics
-    const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
-    const pendingOrders = orders.filter(order => order.status === 'pending').length;
-    const processingOrders = orders.filter(order => order.status === 'processing').length;
-    const finishedOrders = orders.filter(order => order.status === 'finished').length;
-    const canceledOrders = orders.filter(order => order.status === 'canceled').length;
-    const totalExpenses = expenses.reduce((sum, expense) => sum + expense.nominal, 0);
+    const totalRevenue = orders.reduce(
+      (sum, order) => sum + order.totalAmount,
+      0,
+    );
+    const pendingOrders = orders.filter(
+      (order) => order.status === "pending",
+    ).length;
+    const processingOrders = orders.filter(
+      (order) => order.status === "processing",
+    ).length;
+    const finishedOrders = orders.filter(
+      (order) => order.status === "finished",
+    ).length;
+    const canceledOrders = orders.filter(
+      (order) => order.status === "canceled",
+    ).length;
+    const totalExpenses = expenses.reduce(
+      (sum, expense) => sum + expense.nominal,
+      0,
+    );
     const netRevenue = totalRevenue - totalExpenses;
 
     // Get recent orders (last 5)
     const recentOrders = orders
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      )
       .slice(0, 5);
 
     // Get top selling products
-    const productSales = new Map<number, { name: string; totalSold: number; totalRevenue: number }>();
-    
+    const productSales = new Map<
+      number,
+      { name: string; totalSold: number; totalRevenue: number }
+    >();
+
     // Initialize with all products
     for (const product of products) {
       productSales.set(product.id, {
         name: product.name,
         totalSold: 0,
-        totalRevenue: 0
+        totalRevenue: 0,
       });
     }
 
@@ -93,25 +113,25 @@ export const load: PageServerLoad = async ({ locals }) => {
       totalRevenue: number;
     }> = Array.from(productSales.entries())
       .map(([id, data]) => ({ id, ...data }))
-      .filter(product => product.totalSold > 0) // Only show products that have sales
+      .filter((product) => product.totalSold > 0) // Only show products that have sales
       .sort((a, b) => b.totalSold - a.totalSold)
       .slice(0, 5); // Top 5
 
     // Get monthly revenue for last 6 months
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-    
+
     const monthlyRevenue = await prisma.order.groupBy({
-      by: ['createdAt'],
+      by: ["createdAt"],
       where: {
         createdAt: {
-          gte: sixMonthsAgo
+          gte: sixMonthsAgo,
         },
-        status: { not: 'canceled' }
+        status: { not: "canceled" },
       },
       _sum: {
-        totalAmount: true
-      }
+        totalAmount: true,
+      },
     });
 
     // Group by month
@@ -119,7 +139,10 @@ export const load: PageServerLoad = async ({ locals }) => {
     for (const item of monthlyRevenue) {
       const monthYear = new Date(item.createdAt).toISOString().slice(0, 7); // YYYY-MM
       if (monthlyRevenueGrouped.has(monthYear)) {
-        monthlyRevenueGrouped.set(monthYear, monthlyRevenueGrouped.get(monthYear)! + (item._sum.totalAmount || 0));
+        monthlyRevenueGrouped.set(
+          monthYear,
+          monthlyRevenueGrouped.get(monthYear)! + (item._sum.totalAmount || 0),
+        );
       } else {
         monthlyRevenueGrouped.set(monthYear, item._sum.totalAmount || 0);
       }
@@ -156,6 +179,9 @@ export const load: PageServerLoad = async ({ locals }) => {
             username: true,
             phone: true,
             address: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true,
           },
         },
         createdBy: {
@@ -163,6 +189,8 @@ export const load: PageServerLoad = async ({ locals }) => {
             id: true,
             name: true,
             username: true,
+            createdAt: true,
+            updatedAt: true,
           },
         },
         orderItems: {
@@ -174,26 +202,54 @@ export const load: PageServerLoad = async ({ locals }) => {
         payments: {
           select: {
             id: true,
+            orderId: true,
+            userId: true,
+            createdById: true,
             method: true,
             amount: true,
             status: true,
             transactionRef: true,
             paidAt: true,
+            createdAt: true,
+            proofs: {
+              select: {
+                id: true,
+                paymentId: true,
+                fileName: true,
+                filePath: true,
+                fileType: true,
+                uploadedAt: true,
+              },
+            },
           },
         },
       },
     });
 
     // Calculate customer-specific stats
-    const totalRevenue = customerOrders.reduce((sum, order) => sum + order.totalAmount, 0);
-    const pendingOrders = customerOrders.filter(order => order.status === 'pending').length;
-    const processingOrders = customerOrders.filter(order => order.status === 'processing').length;
-    const finishedOrders = customerOrders.filter(order => order.status === 'finished').length;
-    const canceledOrders = customerOrders.filter(order => order.status === 'canceled').length;
+    const totalRevenue = customerOrders.reduce(
+      (sum, order) => sum + order.totalAmount,
+      0,
+    );
+    const pendingOrders = customerOrders.filter(
+      (order) => order.status === "pending",
+    ).length;
+    const processingOrders = customerOrders.filter(
+      (order) => order.status === "processing",
+    ).length;
+    const finishedOrders = customerOrders.filter(
+      (order) => order.status === "finished",
+    ).length;
+    const canceledOrders = customerOrders.filter(
+      (order) => order.status === "canceled",
+    ).length;
 
     // Get customer's recent orders (last 5)
     const recentOrders = customerOrders
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      )
       .slice(0, 5);
 
     stats = {

@@ -54,15 +54,16 @@
           <tr>
             {#each columns as col}
               <td>{row[col]}</td>
-          {/each}
-          {#if actions}
-            <td class="text-right">
-              <div class="join">
-                <button class="btn btn-xs btn-outline btn-info join-item" on:click={() => dispatch('edit', row)}>Edit</button>
-                <button class="btn btn-xs btn-outline btn-error join-item" on:click={() => dispatch('delete', row)}>Hapus</button>
-              </div>
-            </td>
-          {/if}
+            {/each}
+            {#if actions}
+              <td class="text-right">
+                <div class="join">
+                  <button class="btn btn-xs btn-outline btn-info join-item" on:click={() => dispatch('edit', row)}>Edit</button>
+                  <button class="btn btn-xs btn-outline btn-error join-item" on:click={() => dispatch('delete', row)}>Hapus</button>
+                </div>
+              </td>
+            {/if}
+          </tr>
         {/each}
       </tbody>
     </table>
