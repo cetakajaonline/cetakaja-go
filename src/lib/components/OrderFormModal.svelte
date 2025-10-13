@@ -471,7 +471,65 @@
       
       <!-- Existing Items -->
       {#if orderItems.length > 0}
-      <div class="overflow-x-auto">
+      <!-- Mobile Card Layout -->
+      <div class="block sm:hidden">
+        {#each orderItems as item, index}
+          <div class="border-b border-gray-200 p-4 mb-4 rounded-lg bg-base-100">
+            <div class="flex justify-between items-start mb-2">
+              <div class="font-bold">{products.find(p => p.id === item.productId)?.name}</div>
+              <button
+                onclick={() => removeOrderItem(index)}
+                class="btn btn-error btn-xs"
+              >
+                Hapus
+              </button>
+            </div>
+            
+            <div class="space-y-2">
+              <div class="flex">
+                <div class="w-2/5 font-semibold">Varian:</div>
+                <div class="w-3/5 text-right">{item.variant?.variantName || '-'}</div>
+              </div>
+              
+              <div class="flex">
+                <div class="w-2/5 font-semibold">Jumlah:</div>
+                <div class="w-3/5 text-right">{item.qty}</div>
+              </div>
+              
+              <div class="flex">
+                <div class="w-2/5 font-semibold">Harga:</div>
+                <div class="w-3/5 text-right">{formatCurrency(item.price)}</div>
+              </div>
+              
+              <div class="flex">
+                <div class="w-2/5 font-semibold">Subtotal:</div>
+                <div class="w-3/5 text-right font-bold">{formatCurrency(item.subtotal)}</div>
+              </div>
+              
+              <div class="flex">
+                <div class="w-2/5 font-semibold">Link Desain:</div>
+                <div class="w-3/5 text-right">
+                  {#if item.notes}
+                    <a href="{item.notes}" target="_blank" class="text-blue-600 hover:underline break-all">
+                      Lihat Desain
+                    </a>
+                  {:else}
+                    <span>-</span>
+                  {/if}
+                </div>
+              </div>
+            </div>
+          </div>
+        {/each}
+        
+        <div class="flex justify-between p-4 rounded-lg bg-base-100 font-bold">
+          <div class="text-right">Total:</div>
+          <div>{formatCurrency(calculateTotal())}</div>
+        </div>
+      </div>
+      
+      <!-- Desktop Table Layout -->
+      <div class="hidden sm:block overflow-x-auto">
         <table class="table table-sm">
           <thead>
             <tr>
@@ -545,7 +603,7 @@
                   <img 
                     src={paymentProofPreview} 
                     alt="Preview Bukti Pembayaran" 
-                    class="max-w-xs max-h-48 rounded border"
+                    class="w-full max-w-full h-auto max-h-64 object-contain rounded-lg"
                   />
                 {:else}
                   <div class="p-4 bg-gray-100 rounded border flex items-center">

@@ -21,8 +21,8 @@
   let isAdmin = $derived(user?.role === "admin");
   let isStaff = $derived(user?.role === "staff");
   let isCustomer = $derived(user?.role === "customer");
-  let canCancel = $derived(isCustomer && user.id === order?.userId && (order?.status === "pending" || order?.status === "processing"));
-  let canUploadProof = $derived(isCustomer && user.id === order?.userId && 
+  let canCancel = $derived((isCustomer && user.id === order?.userId) || (isAdmin || isStaff) && (order?.status === "pending" || order?.status === "processing"));
+  let canUploadProof = $derived((isCustomer && user.id === order?.userId) || (isAdmin || isStaff) && 
                      (order?.paymentMethod === 'transfer' || order?.paymentMethod === 'qris') &&
                      (order?.status === 'pending' || order?.status === 'processing') && 
                      order?.paymentStatus !== 'confirmed');
@@ -127,34 +127,48 @@
           <div class="bg-base-200 p-4 rounded-lg">
             <h4 class="font-semibold mb-2">Informasi Order</h4>
             <div class="space-y-1 text-sm">
-              <div><span class="font-medium">Status:</span> 
-                <span class={`ml-2 badge ${order.status === 'pending' ? 'badge-warning' : order.status === 'processing' ? 'badge-info' : order.status === 'finished' ? 'badge-success' : 'badge-error'}`}>
-                  {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-                </span>
+              <div class="flex">
+                <div class="w-2/5 font-medium">Status :</div>
+                <div class="w-3/5 text-right">
+                  <span class={`badge ${order.status === 'pending' ? 'badge-warning' : order.status === 'processing' ? 'badge-info' : order.status === 'finished' ? 'badge-success' : 'badge-error'}`}>
+                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                  </span>
+                </div>
               </div>
-              <div><span class="font-medium">Tanggal:</span> {formatDate(order.createdAt)}</div>
-              <div><span class="font-medium">Diperbarui:</span> {formatDate(order.updatedAt)}</div>
+              <div class="flex">
+                <div class="w-2/5 font-medium">Tanggal :</div>
+                <div class="w-3/5 text-right">{formatDate(order.createdAt)}</div>
+              </div>
+              <div class="flex">
+                <div class="w-2/5 font-medium">Diperbarui :</div>
+                <div class="w-3/5 text-right">{formatDate(order.updatedAt)}</div>
+              </div>
             </div>
           </div>
 
           <div class="bg-base-200 p-4 rounded-lg">
             <h4 class="font-semibold mb-2">Pembayaran</h4>
             <div class="space-y-1 text-sm">
-              <div><span class="font-medium">Metode:</span> 
-                <span class={`badge ${
-                  order.paymentMethod === 'transfer' ? 'badge-primary' :
-                  order.paymentMethod === 'qris' ? 'badge-info' :
-                  'badge-warning'
-                }`}>
-                  {order.paymentMethod === 'transfer' ? 'Transfer' : order.paymentMethod === 'qris' ? 'Qris' : 'Tunai'}
-                </span>
+              <div class="flex">
+                <div class="w-2/5 font-medium">Metode :</div>
+                <div class="w-3/5 text-right">
+                  <span class={`badge ${order.paymentMethod === 'transfer' ? 'badge-primary' : order.paymentMethod === 'qris' ? 'badge-info' : 'badge-warning'}`}>
+                    {order.paymentMethod === 'transfer' ? 'Transfer' : order.paymentMethod === 'qris' ? 'Qris' : 'Tunai'}
+                  </span>
+                </div>
               </div>
-              <div><span class="font-medium">Status:</span> 
-                <span class={`ml-2 badge ${order.paymentStatus === 'confirmed' ? 'badge-success' : order.paymentStatus === 'failed' ? 'badge-error' : order.paymentStatus === 'refunded' ? 'badge-neutral' : 'badge-warning'}`}>
-                  {order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)}
-                </span>
+              <div class="flex">
+                <div class="w-2/5 font-medium">Status :</div>
+                <div class="w-3/5 text-right">
+                  <span class={`badge ${order.paymentStatus === 'confirmed' ? 'badge-success' : order.paymentStatus === 'failed' ? 'badge-error' : order.paymentStatus === 'refunded' ? 'badge-neutral' : 'badge-warning'}`}>
+                    {order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)}
+                  </span>
+                </div>
               </div>
-              <div><span class="font-medium">Total:</span> {formatCurrency(order.totalAmount)}</div>
+              <div class="flex">
+                <div class="w-2/5 font-medium">Total :</div>
+                <div class="w-3/5 text-right">{formatCurrency(order.totalAmount)}</div>
+              </div>
             </div>
           </div>
         </div>
@@ -164,22 +178,32 @@
           <div class="bg-base-200 p-4 rounded-lg">
             <h4 class="font-semibold mb-2">Pelanggan</h4>
             <div class="space-y-1 text-sm">
-              <div><span class="font-medium">Nama:</span> {order.user.name}</div>
-              <div><span class="font-medium">No Telp:</span> {order.user.phone}</div>
+              <div class="flex">
+                <div class="w-2/5 font-medium">Nama :</div>
+                <div class="w-3/5 text-right">{order.user.name}</div>
+              </div>
+              <div class="flex">
+                <div class="w-2/5 font-medium">No Telp :</div>
+                <div class="w-3/5 text-right">{order.user.phone}</div>
+              </div>
             </div>
           </div>
 
           <div class="bg-base-200 p-4 rounded-lg">
             <h4 class="font-semibold mb-2">Pengiriman</h4>
             <div class="space-y-1 text-sm">
-              <div><span class="font-medium">Metode:</span> 
-                <span class={`badge ${
-                  order.shippingMethod === 'pickup' ? 'badge-neutral' : 'badge-info'
-                }`}>
-                  {order.shippingMethod === 'pickup' ? 'Pickup' : 'Delivery'}
-                </span>
+              <div class="flex">
+                <div class="w-2/5 font-medium">Metode :</div>
+                <div class="w-3/5 text-right">
+                  <span class={`badge ${order.shippingMethod === 'pickup' ? 'badge-neutral' : 'badge-info'}`}>
+                    {order.shippingMethod === 'pickup' ? 'Pickup' : 'Delivery'}
+                  </span>
+                </div>
               </div>
-              <div><span class="font-medium">Alamat:</span> {order.user.address || 'Tidak ada alamat'}</div>
+              <div class="flex">
+                <div class="w-2/5 font-medium">Alamat :</div>
+                <div class="w-3/5 text-right">{order.user.address || 'Tidak ada alamat'}</div>
+              </div>
             </div>
           </div>
         </div>
@@ -187,16 +211,63 @@
         <!-- Order Items -->
         <div class="bg-base-200 p-4 rounded-lg">
           <h4 class="font-semibold mb-2">Item Pesanan</h4>
-          <div class="overflow-x-auto">
-            <table class="table table-compact">
+          <!-- Mobile Card Layout -->
+          <div class="block sm:hidden">
+            {#each order.orderItems as item}
+              <div class="border-b border-gray-200 pb-3 mb-3 last:border-0 last:pb-0 last:mb-0">
+                <div class="space-y-1 text-sm">
+                  <div class="flex">
+                    <div class="w-2/5 font-medium">Produk:</div>
+                    <div class="w-3/5 text-right">{item.product.name}</div>
+                  </div>
+                  <div class="flex">
+                    <div class="w-2/5 font-medium">Varian:</div>
+                    <div class="w-3/5 text-right">{item.variant?.variantName || '-'}</div>
+                  </div>
+                  <div class="flex">
+                    <div class="w-2/5 font-medium">Link Desain:</div>
+                    <div class="w-3/5 text-right">
+                      {#if item.notes}
+                        <a href="{item.notes}" target="_blank" class="text-blue-600 hover:underline break-all">
+                          Lihat Desain
+                        </a>
+                      {:else}
+                        -
+                      {/if}
+                    </div>
+                  </div>
+                  <div class="flex">
+                    <div class="w-2/5 font-medium">Qty:</div>
+                    <div class="w-3/5 text-right">{item.qty}</div>
+                  </div>
+                  <div class="flex">
+                    <div class="w-2/5 font-medium">Harga:</div>
+                    <div class="w-3/5 text-right">{formatCurrency(item.price)}</div>
+                  </div>
+                  <div class="flex">
+                    <div class="w-2/5 font-medium">Subtotal:</div>
+                    <div class="w-3/5 text-right">{formatCurrency(item.subtotal)}</div>
+                  </div>
+                </div>
+              </div>
+            {/each}
+            <div class="flex border-t border-gray-200 pt-2 mt-2">
+              <div class="w-2/5 font-bold">Total:</div>
+              <div class="w-3/5 text-right font-bold">{formatCurrency(order.totalAmount)}</div>
+            </div>
+          </div>
+          
+          <!-- Desktop Table Layout -->
+          <div class="hidden sm:block overflow-x-auto">
+            <table class="table table-compact w-full">
               <thead>
                 <tr>
                   <th>Produk</th>
                   <th>Varian</th>
+                  <th>Link Desain</th>
                   <th class="text-right">Qty</th>
                   <th class="text-right">Harga</th>
                   <th class="text-right">Subtotal</th>
-                  <th>Link Desain</th>
                 </tr>
               </thead>
               <tbody>
@@ -204,9 +275,6 @@
                   <tr>
                     <td>{item.product.name}</td>
                     <td>{item.variant?.variantName || '-'}</td>
-                    <td class="text-right">{item.qty}</td>
-                    <td class="text-right">{formatCurrency(item.price)}</td>
-                    <td class="text-right">{formatCurrency(item.subtotal)}</td>
                     <td>
                       {#if item.notes}
                         <a href="{item.notes}" target="_blank" class="text-blue-600 hover:underline break-all">
@@ -216,6 +284,9 @@
                         -
                       {/if}
                     </td>
+                    <td class="text-right">{item.qty}</td>
+                    <td class="text-right">{formatCurrency(item.price)}</td>
+                    <td class="text-right">{formatCurrency(item.subtotal)}</td>
                   </tr>
                 {/each}
               </tbody>
@@ -239,7 +310,7 @@
                   <h4 class="font-semibold mb-2">Bukti Pembayaran</h4>
                   <div class="space-y-2">
                     {#each payment.proofs as proof}
-                      <div class="border rounded p-2">
+                      <div class="rounded p-2">
                         <div class="flex items-center justify-between">
                           <div class="flex items-center">
                             {#if proof.fileType.startsWith('image/')}
@@ -269,7 +340,7 @@
                               <img 
                                 src="{proof.filePath}" 
                                 alt="Preview Bukti Pembayaran" 
-                                class="max-w-xs max-h-64 border rounded cursor-pointer hover:opacity-90"
+                                class="w-full max-h-64 object-contain rounded cursor-pointer hover:opacity-90"
                               />
                             </a>
                           {:else}
@@ -309,31 +380,32 @@
       </div>
 
       <div class="modal-action flex justify-end space-x-2">
+        <!-- Upload Payment Proof Button for Customer -->
+        {#if canUploadProof}
+          <button
+            onclick={openUploadProofModal}
+            class="btn btn-primary btn-outline"
+          >
+            Upload Bukti
+          </button>
+        {/if}
+
         <!-- Cancel Button for Customer -->
         {#if canCancel}
           <button
             onclick={() => showCancelConfirm = true}
-            class="btn btn-error"
+            class="btn btn-warning btn-outline"
           >
             Batalkan
           </button>
         {/if}
 
-        <!-- Upload Payment Proof Button for Customer -->
-        {#if canUploadProof}
-          <button
-            onclick={openUploadProofModal}
-            class="btn btn-primary"
-          >
-            Upload Bukti Pembayaran
-          </button>
-        {/if}
-
         <button 
-          class="btn btn-outline" 
+          class="btn btn-circle btn-error btn-outline" 
           onclick={closeModal}
+          aria-label="Close"
         >
-          Tutup
+          ✕
         </button>
       </div>
     </div>

@@ -28,346 +28,416 @@
   function getProgressPercentage(value: number, total: number): number {
     return total > 0 ? Math.min(100, Math.round((value / total) * 100)) : 0;
   }
+
+  // Type guard to help TypeScript understand the role
+  function isCustomer(role: "admin" | "staff" | "customer"): role is "customer" {
+    return role === "customer";
+  }
+
+  function isAdminOrStaff(role: "admin" | "staff" | "customer"): role is "admin" | "staff" {
+    return role === "admin" || role === "staff";
+  }
 </script>
 
 <DefaultLayout title="Dashboard">
   <PageHeader title="Dashboard" icon="📊" />
 
   <div class="mx-auto space-y-6">
+    <!-- Welcome Message for Customers -->
+    {#if isCustomer(user.role)}
+      <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-2xl p-6 shadow-lg">
+        <div class="flex flex-col md:flex-row justify-between items-center">
+          <div>
+            <h2 class="text-2xl font-bold mb-2">Selamat Datang, {user.name}!</h2>
+            <p class="mb-4 opacity-90">Kelola pesanan Anda dengan mudah dan pantau statusnya secara real-time.</p>
+          </div>
+          <div class="text-4xl">👋</div>
+        </div>
+      </div>
+    {/if}
     <!-- Main Statistics Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      <!-- Total Orders -->
-      <div class="bg-base-300 shadow-md rounded-2xl p-5 border border-base-200">
-        <div class="flex items-center justify-between">
-          <div>
-            <div class="text-2xl font-bold text-primary">
-              {stats.totalOrders}
+    {#if isCustomer(user.role)}
+      <!-- Customer Statistics -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Total Orders -->
+        <div class="bg-base-300 shadow-md rounded-2xl p-5 border border-base-200">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-2xl font-bold text-primary">
+                {orders.length}
+              </div>
+              <div class="text-sm text-gray-500">Total Pesanan Anda</div>
             </div>
-            <div class="text-sm text-gray-500">Total Pesanan</div>
+            <div class="text-3xl">📦</div>
           </div>
-          <div class="text-3xl">📦</div>
         </div>
-        <div class="mt-3">
-          <div class="flex justify-between text-xs text-gray-500 mb-1">
-            <span>Selesai</span>
-            <span>{stats.finishedOrders}</span>
+
+        <!-- Pending Orders -->
+        <div class="bg-base-300 shadow-md rounded-2xl p-5 border border-base-200">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-2xl font-bold text-warning">
+                {orders.filter(o => o.status === "pending").length}
+              </div>
+              <div class="text-sm text-gray-500">Pesanan Diproses</div>
+            </div>
+            <div class="text-3xl">⏳</div>
           </div>
-          <div class="w-full bg-gray-200 rounded-full h-2">
-            <div
-              class="bg-success h-2 rounded-full"
-              style="width: {getProgressPercentage(
-                stats.finishedOrders,
-                stats.totalOrders
-              )}%"
-            ></div>
+        </div>
+
+        <!-- Completed Orders -->
+        <div class="bg-base-300 shadow-md rounded-2xl p-5 border border-base-200">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-2xl font-bold text-success">
+                {orders.filter(o => o.status === "finished").length}
+              </div>
+              <div class="text-sm text-gray-500">Pesanan Selesai</div>
+            </div>
+            <div class="text-3xl">✅</div>
+          </div>
+        </div>
+      </div>
+    {:else}
+      <!-- Admin/Staff Statistics -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Total Orders -->
+        <div class="bg-base-300 shadow-md rounded-2xl p-5 border border-base-200">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-2xl font-bold text-primary">
+                {stats.totalOrders}
+              </div>
+              <div class="text-sm text-gray-500">Total Pesanan</div>
+            </div>
+            <div class="text-3xl">📦</div>
+          </div>
+          <div class="mt-3">
+            <div class="flex justify-between text-xs text-gray-500 mb-1">
+              <span>Selesai</span>
+              <span>{stats.finishedOrders}</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+              <div
+                class="bg-success h-2 rounded-full"
+                style="width: {getProgressPercentage(
+                  stats.finishedOrders,
+                  stats.totalOrders
+                )}%"
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Total Revenue -->
+        <div class="bg-base-300 shadow-md rounded-2xl p-5 border border-base-200">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-2xl font-bold text-success">
+                {formatCurrency(stats.totalRevenue)}
+              </div>
+              <div class="text-sm text-gray-500">Total Pendapatan</div>
+            </div>
+            <div class="text-3xl">💰</div>
+          </div>
+          <div class="mt-3">
+            <div class="flex justify-between text-xs text-gray-500 mb-1">
+              <span>Bersih</span>
+              <span>{formatCurrency(stats.netRevenue)}</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+              <div class="bg-success h-2 rounded-full" style="width: 100%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pending Orders -->
+        <div class="bg-base-300 shadow-md rounded-2xl p-5 border border-base-200">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-2xl font-bold text-warning">
+                {stats.pendingOrders}
+              </div>
+              <div class="text-sm text-gray-500">Pesanan Menunggu</div>
+            </div>
+            <div class="text-3xl">⏳</div>
+          </div>
+          <div class="mt-3">
+            <div class="flex justify-between text-xs text-gray-500 mb-1">
+              <span>Proses</span>
+              <span>{stats.processingOrders}</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+              <div
+                class="bg-warning h-2 rounded-full"
+                style="width: {getProgressPercentage(
+                  stats.processingOrders,
+                  stats.totalOrders
+                )}%"
+              ></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Total Users -->
+        <div class="bg-base-300 shadow-md rounded-2xl p-5 border border-base-200">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-2xl font-bold text-info">{stats.totalUsers}</div>
+              <div class="text-sm text-gray-500">Total Pengguna</div>
+            </div>
+            <div class="text-3xl">👥</div>
+          </div>
+          <div class="mt-3">
+            <div class="flex justify-between text-xs text-gray-500 mb-1">
+              <span>Klien Aktif</span>
+              <span>{stats.totalOrders > 0 ? stats.totalUsers : 0}</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+              <div class="bg-info h-2 rounded-full" style="width: 100%"></div>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Total Revenue -->
-      <div class="bg-base-300 shadow-md rounded-2xl p-5 border border-base-200">
-        <div class="flex items-center justify-between">
-          <div>
-            <div class="text-2xl font-bold text-success">
-              {formatCurrency(stats.totalRevenue)}
+      <!-- Charts and Graphs -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Orders by Status -->
+        {#if isAdminOrStaff(user.role)}
+          <div
+            class="bg-base-300 shadow-md rounded-2xl p-5 border border-base-200"
+          >
+            <h3 class="font-semibold mb-4">Status Pesanan</h3>
+            <div class="space-y-3">
+              <div>
+                <div class="flex justify-between text-sm mb-1">
+                  <span class="flex items-center"
+                    ><span class="w-3 h-3 bg-success rounded-full mr-2"></span> Selesai</span
+                  >
+                  <span
+                    >{stats.finishedOrders} ({getProgressPercentage(
+                      stats.finishedOrders,
+                      stats.totalOrders
+                    )}%)</span
+                  >
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                  <div
+                    class="bg-success h-2.5 rounded-full"
+                    style="width: {getProgressPercentage(
+                      stats.finishedOrders,
+                      stats.totalOrders
+                    )}%"
+                  ></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-1">
+                  <span class="flex items-center"
+                    ><span class="w-3 h-3 bg-warning rounded-full mr-2"></span> Proses</span
+                  >
+                  <span
+                    >{stats.processingOrders} ({getProgressPercentage(
+                      stats.processingOrders,
+                      stats.totalOrders
+                    )}%)</span
+                  >
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                  <div
+                    class="bg-warning h-2.5 rounded-full"
+                    style="width: {getProgressPercentage(
+                      stats.processingOrders,
+                      stats.totalOrders
+                    )}%"
+                  ></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-1">
+                  <span class="flex items-center"
+                    ><span class="w-3 h-3 bg-info rounded-full mr-2"></span> Menunggu</span
+                  >
+                  <span
+                    >{stats.pendingOrders} ({getProgressPercentage(
+                      stats.pendingOrders,
+                      stats.totalOrders
+                    )}%)</span
+                  >
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                  <div
+                    class="bg-info h-2.5 rounded-full"
+                    style="width: {getProgressPercentage(
+                      stats.pendingOrders,
+                      stats.totalOrders
+                    )}%"
+                  ></div>
+                </div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm mb-1">
+                  <span class="flex items-center"
+                    ><span class="w-3 h-3 bg-error rounded-full mr-2"></span> Dibatalkan</span
+                  >
+                  <span
+                    >{stats.canceledOrders} ({getProgressPercentage(
+                      stats.canceledOrders,
+                      stats.totalOrders
+                    )}%)</span
+                  >
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                  <div
+                    class="bg-error h-2.5 rounded-full"
+                    style="width: {getProgressPercentage(
+                      stats.canceledOrders,
+                      stats.totalOrders
+                    )}%"
+                  ></div>
+                </div>
+              </div>
             </div>
-            <div class="text-sm text-gray-500">Total Pendapatan</div>
           </div>
-          <div class="text-3xl">💰</div>
-        </div>
-        <div class="mt-3">
-          <div class="flex justify-between text-xs text-gray-500 mb-1">
-            <span>Bersih</span>
-            <span>{formatCurrency(stats.netRevenue)}</span>
+        {/if}
+
+        <!-- Monthly Revenue (for admin/staff only) -->
+        {#if isAdminOrStaff(user.role)}
+          <div
+            class="bg-base-300 shadow-md rounded-2xl p-5 border border-base-200"
+          >
+            <h3 class="font-semibold mb-4">
+              Pendapatan Bulanan (6 Bulan Terakhir)
+            </h3>
+            <div class="space-y-2 max-h-48 overflow-y-auto">
+              {#if stats.monthlyRevenue.length > 0}
+                {#each stats.monthlyRevenue as revenue, i}
+                  <div class="flex items-center">
+                    <div class="w-24 text-sm">{revenue.month}</div>
+                    <div class="flex-1 ml-2">
+                      <div class="w-full bg-gray-200 rounded-full h-4">
+                        <div
+                          class="bg-gradient-to-r from-primary to-secondary h-4 rounded-full flex items-center justify-end pr-2 text-white text-xs"
+                          style="width: {Math.min(
+                            100,
+                            Math.max(
+                              5,
+                              (revenue.total /
+                                Math.max(
+                                  ...stats.monthlyRevenue.map((r) => r.total)
+                                )) *
+                                100
+                            )
+                          )}%"
+                        >
+                          {formatCurrency(revenue.total)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                {/each}
+              {:else}
+                <div class="text-center py-4 text-gray-500">Tidak ada data</div>
+              {/if}
+            </div>
           </div>
-          <div class="w-full bg-gray-200 rounded-full h-2">
-            <div class="bg-success h-2 rounded-full" style="width: 100%"></div>
-          </div>
-        </div>
+        {/if}
       </div>
 
-      <!-- Pending Orders -->
-      <div class="bg-base-300 shadow-md rounded-2xl p-5 border border-base-200">
-        <div class="flex items-center justify-between">
-          <div>
-            <div class="text-2xl font-bold text-warning">
-              {stats.pendingOrders}
+      <!-- Top Selling Products and Recent Orders -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Top Selling Products (for admin/staff only) -->
+        {#if isAdminOrStaff(user.role)}
+          <div
+            class="bg-base-300 shadow-md rounded-2xl p-5 border border-base-200"
+          >
+            <h3 class="font-semibold mb-4">Produk Terlaris</h3>
+            <div class="space-y-3">
+              {#if stats.topSellingProducts.length > 0}
+                {#each stats.topSellingProducts as product, i}
+                  <div
+                    class="flex justify-between items-center pb-2 border-b border-base-200"
+                  >
+                    <div>
+                      <div class="font-medium">{product.name}</div>
+                      <div class="text-sm text-gray-500">
+                        Terjual: {product.totalSold} | Pendapatan: {formatCurrency(
+                          product.totalRevenue
+                        )}
+                      </div>
+                    </div>
+                    <div class="text-lg">#{i + 1}</div>
+                  </div>
+                {/each}
+              {:else}
+                <div class="text-center py-4 text-gray-500">
+                  Tidak ada data produk terlaris
+                </div>
+              {/if}
             </div>
-            <div class="text-sm text-gray-500">Pesanan Menunggu</div>
           </div>
-          <div class="text-3xl">⏳</div>
-        </div>
-        <div class="mt-3">
-          <div class="flex justify-between text-xs text-gray-500 mb-1">
-            <span>Proses</span>
-            <span>{stats.processingOrders}</span>
-          </div>
-          <div class="w-full bg-gray-200 rounded-full h-2">
-            <div
-              class="bg-warning h-2 rounded-full"
-              style="width: {getProgressPercentage(
-                stats.processingOrders,
-                stats.totalOrders
-              )}%"
-            ></div>
-          </div>
-        </div>
-      </div>
+        {/if}
 
-      <!-- Total Users -->
-      <div class="bg-base-300 shadow-md rounded-2xl p-5 border border-base-200">
-        <div class="flex items-center justify-between">
-          <div>
-            <div class="text-2xl font-bold text-info">{stats.totalUsers}</div>
-            <div class="text-sm text-gray-500">Total Pengguna</div>
-          </div>
-          <div class="text-3xl">👥</div>
-        </div>
-        <div class="mt-3">
-          <div class="flex justify-between text-xs text-gray-500 mb-1">
-            <span>Klien Aktif</span>
-            <span>{stats.totalOrders > 0 ? stats.totalUsers : 0}</span>
-          </div>
-          <div class="w-full bg-gray-200 rounded-full h-2">
-            <div class="bg-info h-2 rounded-full" style="width: 100%"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Charts and Graphs -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- Orders by Status -->
-      {#if user.role === "admin" || user.role === "staff"}
-        <div
-          class="bg-base-300 shadow-md rounded-2xl p-5 border border-base-200"
-        >
-          <h3 class="font-semibold mb-4">Status Pesanan</h3>
-          <div class="space-y-3">
-            <div>
-              <div class="flex justify-between text-sm mb-1">
-                <span class="flex items-center"
-                  ><span class="w-3 h-3 bg-success rounded-full mr-2"></span> Selesai</span
-                >
-                <span
-                  >{stats.finishedOrders} ({getProgressPercentage(
-                    stats.finishedOrders,
-                    stats.totalOrders
-                  )}%)</span
-                >
-              </div>
-              <div class="w-full bg-gray-200 rounded-full h-2.5">
-                <div
-                  class="bg-success h-2.5 rounded-full"
-                  style="width: {getProgressPercentage(
-                    stats.finishedOrders,
-                    stats.totalOrders
-                  )}%"
-                ></div>
-              </div>
-            </div>
-            <div>
-              <div class="flex justify-between text-sm mb-1">
-                <span class="flex items-center"
-                  ><span class="w-3 h-3 bg-warning rounded-full mr-2"></span> Proses</span
-                >
-                <span
-                  >{stats.processingOrders} ({getProgressPercentage(
-                    stats.processingOrders,
-                    stats.totalOrders
-                  )}%)</span
-                >
-              </div>
-              <div class="w-full bg-gray-200 rounded-full h-2.5">
-                <div
-                  class="bg-warning h-2.5 rounded-full"
-                  style="width: {getProgressPercentage(
-                    stats.processingOrders,
-                    stats.totalOrders
-                  )}%"
-                ></div>
-              </div>
-            </div>
-            <div>
-              <div class="flex justify-between text-sm mb-1">
-                <span class="flex items-center"
-                  ><span class="w-3 h-3 bg-info rounded-full mr-2"></span> Menunggu</span
-                >
-                <span
-                  >{stats.pendingOrders} ({getProgressPercentage(
-                    stats.pendingOrders,
-                    stats.totalOrders
-                  )}%)</span
-                >
-              </div>
-              <div class="w-full bg-gray-200 rounded-full h-2.5">
-                <div
-                  class="bg-info h-2.5 rounded-full"
-                  style="width: {getProgressPercentage(
-                    stats.pendingOrders,
-                    stats.totalOrders
-                  )}%"
-                ></div>
-              </div>
-            </div>
-            <div>
-              <div class="flex justify-between text-sm mb-1">
-                <span class="flex items-center"
-                  ><span class="w-3 h-3 bg-error rounded-full mr-2"></span> Dibatalkan</span
-                >
-                <span
-                  >{stats.canceledOrders} ({getProgressPercentage(
-                    stats.canceledOrders,
-                    stats.totalOrders
-                  )}%)</span
-                >
-              </div>
-              <div class="w-full bg-gray-200 rounded-full h-2.5">
-                <div
-                  class="bg-error h-2.5 rounded-full"
-                  style="width: {getProgressPercentage(
-                    stats.canceledOrders,
-                    stats.totalOrders
-                  )}%"
-                ></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      {/if}
-
-      <!-- Monthly Revenue (for admin/staff only) -->
-      {#if user.role === "admin" || user.role === "staff"}
-        <div
-          class="bg-base-300 shadow-md rounded-2xl p-5 border border-base-200"
-        >
+        <!-- Recent Orders -->
+        <div class="bg-base-300 shadow-md rounded-2xl p-5 border border-base-200">
           <h3 class="font-semibold mb-4">
-            Pendapatan Bulanan (6 Bulan Terakhir)
+            {isCustomer(user.role) ? "Pesanan Anda" : "Pesanan Terbaru"}
           </h3>
-          <div class="space-y-2 max-h-48 overflow-y-auto">
-            {#if stats.monthlyRevenue.length > 0}
-              {#each stats.monthlyRevenue as revenue, i}
-                <div class="flex items-center">
-                  <div class="w-24 text-sm">{revenue.month}</div>
-                  <div class="flex-1 ml-2">
-                    <div class="w-full bg-gray-200 rounded-full h-4">
+          <div class="space-y-3 max-h-80 overflow-y-auto">
+            {#if (isCustomer(user.role) ? orders : stats.recentOrders).length > 0}
+              {#each (isCustomer(user.role) ? orders : stats.recentOrders) as order, i}
+                <div class="pb-3 border-b border-base-200 last:border-0">
+                  <div class="flex justify-between items-start">
+                    <div>
+                      <div class="font-medium">#{order.orderNumber}</div>
+                      {#if isAdminOrStaff(user.role)}
+                        <div class="text-sm text-gray-500">
+                          Klien: {order.user?.name || "N/A"}
+                        </div>
+                      {/if}
+                      <div class="text-sm text-gray-500">
+                        {formatDate(order.createdAt)}
+                      </div>
+                    </div>
+                    <div class="text-right">
+                      <div class="font-semibold text-success">
+                        {formatCurrency(order.totalAmount)}
+                      </div>
                       <div
-                        class="bg-gradient-to-r from-primary to-secondary h-4 rounded-full flex items-center justify-end pr-2 text-white text-xs"
-                        style="width: {Math.min(
-                          100,
-                          Math.max(
-                            5,
-                            (revenue.total /
-                              Math.max(
-                                ...stats.monthlyRevenue.map((r) => r.total)
-                              )) *
-                              100
-                          )
-                        )}%"
+                        class={`text-xs px-2 py-1 rounded-full inline-block min-w-[60px] text-center ${
+                          order.status === "pending"
+                            ? "bg-warning text-warning-content"
+                            : order.status === "processing"
+                              ? "bg-info text-info-content"
+                              : order.status === "finished"
+                                ? "bg-success text-success-content"
+                                : "bg-error text-error-content"
+                        }`}
                       >
-                        {formatCurrency(revenue.total)}
+                        {order.status === "pending"
+                          ? "Menunggu"
+                          : order.status === "processing"
+                            ? "Proses"
+                            : order.status === "finished"
+                              ? "Selesai"
+                              : "Dibatalkan"}
                       </div>
                     </div>
                   </div>
                 </div>
               {/each}
             {:else}
-              <div class="text-center py-4 text-gray-500">Tidak ada data</div>
-            {/if}
-          </div>
-        </div>
-      {/if}
-    </div>
-
-    <!-- Top Selling Products and Recent Orders -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- Top Selling Products (for admin/staff only) -->
-      {#if user.role === "admin" || user.role === "staff"}
-        <div
-          class="bg-base-300 shadow-md rounded-2xl p-5 border border-base-200"
-        >
-          <h3 class="font-semibold mb-4">Produk Terlaris</h3>
-          <div class="space-y-3">
-            {#if stats.topSellingProducts.length > 0}
-              {#each stats.topSellingProducts as product, i}
-                <div
-                  class="flex justify-between items-center pb-2 border-b border-base-200"
-                >
-                  <div>
-                    <div class="font-medium">{product.name}</div>
-                    <div class="text-sm text-gray-500">
-                      Terjual: {product.totalSold} | Pendapatan: {formatCurrency(
-                        product.totalRevenue
-                      )}
-                    </div>
-                  </div>
-                  <div class="text-lg">#{i + 1}</div>
-                </div>
-              {/each}
-            {:else}
               <div class="text-center py-4 text-gray-500">
-                Tidak ada data produk terlaris
+                {isCustomer(user.role) ? "Anda belum memiliki pesanan" : "Tidak ada pesanan terbaru"}
               </div>
             {/if}
           </div>
-        </div>
-      {/if}
-
-      <!-- Recent Orders -->
-      <div class="bg-base-300 shadow-md rounded-2xl p-5 border border-base-200">
-        <h3 class="font-semibold mb-4">Pesanan Terbaru</h3>
-        <div class="space-y-3 max-h-80 overflow-y-auto">
-          {#if stats.recentOrders.length > 0}
-            {#each stats.recentOrders as order, i}
-              <div class="pb-3 border-b border-base-200 last:border-0">
-                <div class="flex justify-between items-start">
-                  <div>
-                    <div class="font-medium">#{order.orderNumber}</div>
-                    <div class="text-sm text-gray-500">
-                      Klien: {order.user?.name || "N/A"}
-                    </div>
-                    <div class="text-sm text-gray-500">
-                      {formatDate(order.createdAt)}
-                    </div>
-                  </div>
-                  <div class="text-right">
-                    <div class="font-semibold text-success">
-                      {formatCurrency(order.totalAmount)}
-                    </div>
-                    <div
-                      class={`text-xs px-2 py-1 rounded-full inline-block min-w-[60px] text-center ${
-                        order.status === "pending"
-                          ? "bg-warning text-warning-content"
-                          : order.status === "processing"
-                            ? "bg-info text-info-content"
-                            : order.status === "finished"
-                              ? "bg-success text-success-content"
-                              : "bg-error text-error-content"
-                      }`}
-                    >
-                      {order.status === "pending"
-                        ? "Menunggu"
-                        : order.status === "processing"
-                          ? "Proses"
-                          : order.status === "finished"
-                            ? "Selesai"
-                            : "Dibatalkan"}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            {/each}
-          {:else}
-            <div class="text-center py-4 text-gray-500">
-              Tidak ada pesanan terbaru
-            </div>
-          {/if}
         </div>
       </div>
-    </div>
-
+    {/if}
+    
     <!-- Additional Stats for Admin/Staff -->
-    {#if user.role === "admin" || user.role === "staff"}
+    {#if isAdminOrStaff(user.role)}
       <div class="bg-base-300 shadow-md rounded-2xl p-5 border border-base-200">
         <h3 class="font-semibold mb-4">Statistik Tambahan</h3>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -682,7 +682,7 @@
 <div class="min-h-screen bg-white">
   <div class="container mx-auto px-4 py-8">
     <!-- Step indicator -->
-    <div class="mb-8">
+    <div class="mb-8 step-indicator-top">
       <div class="flex items-center justify-between relative">
         {#each [0, 1, 2, 3, 4, 5] as step, i}
           <!-- Removed step 5 -->
@@ -808,8 +808,8 @@
                   bind:value={customerPassword}
                   disabled={loading}
                 />
-                <label for="password-input" class="label">
-                  <span class="label-text-alt text-gray-500 italic"
+                <label for="password-input" class="label text-wrap">
+                  <span class="label-text-alt text-gray-500 italic text-xs sm:text-sm"
                     ><span class="text-red-600"> *</span> Password default adalah
                     nomor whatsapp Anda</span
                   >
@@ -841,9 +841,8 @@
             <div
               class="bg-white rounded-xl shadow-md p-6 border border-gray-300"
             >
-              <p class="text-gray-600 mb-4">
-                Masukkan nomor WhatsApp kamu biar kita bisa kirim update pesanan
-                nanti.<br /> Tenang, nggak bakal dispam kok 😉
+              <p class="text-gray-600 text-sm sm:text-base mb-4">
+                Masukkan No WhatsApp kamu biar kita bisa kirim notifikasi terkait status pembayaran dan pesananmu.
               </p>
 
               <div class="form-control w-full">
@@ -855,8 +854,8 @@
                   bind:value={phone}
                   disabled={loading}
                 />
-                <label for="phone-input" class="label">
-                  <span class="label-text-alt text-gray-500 italic"
+                <label for="phone-input" class="label text-wrap">
+                  <span class="label-text-alt text-gray-500 italic text-xs sm:text-sm"
                     ><span class="text-red-600"> *</span> Nomor harus diawali dengan
                     08 dan hanya angka tanpa spasi</span
                   >
@@ -910,6 +909,13 @@
           {/if}
         </div>
       {/if}
+      
+      <!-- Simple bottom step indicator -->
+      <div class="fixed bottom-4 left-0 right-0 flex justify-center">
+        <div class="bg-white border border-gray-300 rounded-full px-4 py-2 shadow-lg">
+          <span class="text-gray-700 font-medium text-sm">Langkah {currentStep + 1} dari 6</span>
+        </div>
+      </div>
 
       <!-- Step 1: Customer details -->
       {#if currentStep === 1}
@@ -960,9 +966,9 @@
             </div>
           </div>
 
-          <div class="flex justify-between">
+          <div class="flex flex-col sm:flex-row gap-3 justify-between">
             <button
-              class="btn btn-secondary bg-gray-600 hover:bg-gray-700 text-white font-medium py-3 px-6 rounded-lg shadow transition duration-200"
+              class="btn btn-secondary bg-gray-600 hover:bg-gray-700 text-white font-medium py-3 px-6 rounded-lg shadow transition duration-200 flex-1"
               onclick={() => {
                 prevStep();
                 // Sync editedCustomer with customer data when going back
@@ -977,7 +983,7 @@
               Kembali
             </button>
             <button
-              class="btn btn-success bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg shadow transition duration-200"
+              class="btn btn-success bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg shadow transition duration-200 flex-1"
               onclick={() => {
                 goto("/orders");
               }}
@@ -985,7 +991,7 @@
               Cek Pesanan Saya
             </button>
             <button
-              class="btn btn-primary bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg shadow transition duration-200"
+              class="btn btn-primary bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg shadow transition duration-200 flex-1"
               onclick={async () => {
                 if (customer) {
                   // Update customer details on the server
@@ -1032,6 +1038,13 @@
           </div>
         </div>
       {/if}
+      
+      <!-- Simple bottom step indicator -->
+      <div class="fixed bottom-4 left-0 right-0 flex justify-center">
+        <div class="bg-white border border-gray-300 rounded-full px-4 py-2 shadow-lg">
+          <span class="text-gray-700 font-medium text-sm">Langkah {currentStep + 1} dari 6</span>
+        </div>
+      </div>
 
       <!-- Step 2: Product selection -->
       {#if currentStep === 2}
@@ -1086,9 +1099,9 @@
               </div>
 
               <div class="form-control w-full mb-4">
-                <label for="newItemNotes" class="label">
+                <label for="newItemNotes" class="label text-wrap">
                   <span
-                    class="label-text text-gray-700 italic text-md px-1 py-1"
+                    class="label-text text-gray-700 italic text-xs sm:text-sm px-1 py-1"
                     >Kirim link file desain kamu (Google Drive, Canva, dll).<br
                     />Kalau belum ada, tulis aja "minta bantu desain" nanti kita
                     chat kamu dulu.</span
@@ -1104,9 +1117,9 @@
               </div>
 
               {#if newItem.productId && ((productVariants.length > 0 && newItem.variantId) || productVariants.length === 0)}
-                <div class="overflow-x-auto mb-4">
-                  <table class="table table-zebra">
-                    <thead>
+                <div class="overflow-x-auto mb-4 block sm:table sm:overflow-x-visible">
+                  <table class="table table-zebra w-full">
+                    <thead class="hidden sm:table-header-group">
                       <tr class="bg-gray-100">
                         <th class="text-gray-900 font-semibold">Produk</th>
                         <th class="text-gray-900 font-semibold">Varian</th>
@@ -1115,23 +1128,27 @@
                         <th class="text-gray-900 font-semibold">Harga</th>
                       </tr>
                     </thead>
-                    <tbody>
-                      <tr class="hover:bg-gray-50">
-                        <td class="text-gray-800"
-                          >{products.find((p) => p.id === newItem.productId)
+                    <tbody class="block sm:table-row-group">
+                      <tr class="block sm:table-row hover:bg-gray-50 border-b sm:border-b-0">
+                        <td class="block sm:table-cell text-gray-800 sm:w-1/5"
+                          ><span class="font-semibold sm:hidden">Produk:</span> {products.find((p) => p.id === newItem.productId)
                             ?.name}</td
                         >
-                        <td class="text-gray-800"
-                          >{newItem.variantId
+                        <td class="block sm:table-cell text-gray-800 sm:w-1/5"
+                          ><span class="font-semibold sm:hidden">Varian:</span> {newItem.variantId
                             ? productVariants.find(
                                 (v) => v.id === newItem.variantId
                               )?.variantName || "-"
                             : "-"}</td
                         >
-                        <td class="text-gray-800">{newItem.notes || "-"}</td>
-                        <td class="text-gray-800">{newItem.qty}</td>
-                        <td class="text-gray-800"
-                          >{formatCurrency(newItem.price)}</td
+                        <td class="block sm:table-cell text-gray-800 sm:w-1/5"
+                          ><span class="font-semibold sm:hidden">Link Desain:</span> {newItem.notes || "-"}</td
+                        >
+                        <td class="block sm:table-cell text-gray-800 sm:w-1/5"
+                          ><span class="font-semibold sm:hidden">Jumlah:</span> {newItem.qty}</td
+                        >
+                        <td class="block sm:table-cell text-gray-800 sm:w-1/5"
+                          ><span class="font-semibold sm:hidden">Harga:</span> {formatCurrency(newItem.price)}</td
                         >
                       </tr>
                     </tbody>
@@ -1163,9 +1180,9 @@
                 mau diubah atau mau tambah pesanan, tinggal tambahkan lagi
                 pesanan diatas.
               </p>
-              <div class="overflow-x-auto">
-                <table class="table table-bordered">
-                  <thead>
+              <div class="overflow-x-auto block sm:table sm:overflow-x-visible">
+                <table class="table table-bordered w-full">
+                  <thead class="hidden sm:table-header-group">
                     <tr class="bg-gray-100">
                       <th class="text-gray-900 font-semibold">Produk</th>
                       <th class="text-gray-900 font-semibold">Varian</th>
@@ -1176,19 +1193,22 @@
                       <th class="text-gray-900 font-semibold">Aksi</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody class="block sm:table-row-group">
                     {#each orderData.orderItems as item, index}
-                      <tr class="hover:bg-gray-50">
-                        <td class="text-gray-800">{item.product.name}</td>
-                        <td class="text-gray-800"
-                          >{item.variant?.variantName || "-"}</td
+                      <tr class="block sm:table-row hover:bg-gray-50 border-b sm:border-b-0">
+                        <td class="block sm:table-cell text-gray-800 sm:w-1/7"
+                          ><span class="font-semibold sm:hidden">Produk:</span> {item.product.name}</td
                         >
-                        <td class="text-gray-800">
+                        <td class="block sm:table-cell text-gray-800 sm:w-1/7"
+                          ><span class="font-semibold sm:hidden">Varian:</span> {item.variant?.variantName || "-"}</td
+                        >
+                        <td class="block sm:table-cell text-gray-800 sm:w-1/7"
+                          ><span class="font-semibold sm:hidden">Link Desain:</span> 
                           {#if item.notes}
                             <a
                               href={item.notes}
                               target="_blank"
-                              class="text-blue-600 hover:underline break-all"
+                              class="text-blue-600 hover:underline break-all block sm:inline"
                             >
                               Lihat Desain
                             </a>
@@ -1196,16 +1216,18 @@
                             -
                           {/if}
                         </td>
-                        <td class="text-gray-800">{item.qty}</td>
-                        <td class="text-gray-800"
-                          >{formatCurrency(item.price)}</td
+                        <td class="block sm:table-cell text-gray-800 sm:w-1/7"
+                          ><span class="font-semibold sm:hidden">Jumlah:</span> {item.qty}</td
                         >
-                        <td class="text-gray-800"
-                          >{formatCurrency(item.subtotal)}</td
+                        <td class="block sm:table-cell text-gray-800 sm:w-1/7"
+                          ><span class="font-semibold sm:hidden">Harga:</span> {formatCurrency(item.price)}</td
                         >
-                        <td>
+                        <td class="block sm:table-cell text-gray-800 sm:w-1/7"
+                          ><span class="font-semibold sm:hidden">Subtotal:</span> {formatCurrency(item.subtotal)}</td
+                        >
+                        <td class="block sm:table-cell sm:w-1/7">
                           <button
-                            class="btn btn-error btn-sm bg-red-600 hover:bg-red-700 text-white"
+                            class="btn btn-error btn-sm bg-red-600 hover:bg-red-700 text-white mt-2 sm:mt-0"
                             onclick={() => removeItem(index)}
                           >
                             Hapus
@@ -1213,14 +1235,15 @@
                         </td>
                       </tr>
                     {/each}
-                    <tr class="font-bold bg-gray-100">
-                      <td colspan="5" class="text-right text-gray-900"
-                        >Total:</td
+                    <tr class="block sm:table-row font-bold bg-gray-100">
+                      <td class="block sm:table-cell text-right text-gray-900 sm:text-right sm:w-6/7"
+                        ><span class="font-semibold sm:hidden block">Total:</span>
+                        <span class="hidden sm:block">Total:</span></td
                       >
-                      <td class="text-gray-900"
+                      <td class="block sm:table-cell text-gray-900 text-right sm:text-right sm:w-1/7"
                         >{formatCurrency(calculateTotal())}</td
                       >
-                      <td></td>
+                      <td class="block sm:table-cell"></td>
                     </tr>
                   </tbody>
                 </table>
@@ -1228,9 +1251,9 @@
             </div>
           {/if}
 
-          <div class="flex justify-between">
+          <div class="flex flex-col sm:flex-row gap-3 justify-between">
             <button
-              class="btn btn-secondary bg-gray-600 hover:bg-gray-700 text-white font-medium py-3 px-6 rounded-lg shadow transition duration-200"
+              class="btn btn-secondary bg-gray-600 hover:bg-gray-700 text-white font-medium py-3 px-6 rounded-lg shadow transition duration-200 flex-1"
               onclick={() => {
                 prevStep();
                 // Sync editedCustomer with customer data when going back
@@ -1245,7 +1268,7 @@
               Kembali
             </button>
             <button
-              class="btn btn-primary bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg shadow transition duration-200"
+              class="btn btn-primary bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg shadow transition duration-200 flex-1"
               onclick={() => (currentStep = 3)}
               disabled={orderData.orderItems.length === 0}
             >
@@ -1254,6 +1277,13 @@
           </div>
         </div>
       {/if}
+      
+      <!-- Simple bottom step indicator -->
+      <div class="fixed bottom-4 left-0 right-0 flex justify-center">
+        <div class="bg-white border border-gray-300 rounded-full px-4 py-2 shadow-lg">
+          <span class="text-gray-700 font-medium text-sm">Langkah {currentStep + 1} dari 6</span>
+        </div>
+      </div>
 
       <!-- Step 3: Shipping and payment -->
       {#if currentStep === 3}
@@ -1306,9 +1336,9 @@
             </div>
           </div>
 
-          <div class="flex justify-between">
+          <div class="flex flex-col sm:flex-row gap-3 justify-between">
             <button
-              class="btn btn-secondary bg-gray-600 hover:bg-gray-700 text-white font-medium py-3 px-6 rounded-lg shadow transition duration-200"
+              class="btn btn-secondary bg-gray-600 hover:bg-gray-700 text-white font-medium py-3 px-6 rounded-lg shadow transition duration-200 flex-1"
               onclick={() => {
                 prevStep();
                 // Sync editedCustomer with customer data when going back
@@ -1323,7 +1353,7 @@
               Kembali
             </button>
             <button
-              class="btn btn-primary bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg shadow transition duration-200"
+              class="btn btn-primary bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg shadow transition duration-200 flex-1"
               onclick={handleSubmitOrder}
               disabled={loading || orderData.orderItems.length === 0}
             >
@@ -1332,6 +1362,13 @@
           </div>
         </div>
       {/if}
+      
+      <!-- Simple bottom step indicator -->
+      <div class="fixed bottom-4 left-0 right-0 flex justify-center">
+        <div class="bg-white border border-gray-300 rounded-full px-4 py-2 shadow-lg">
+          <span class="text-gray-700 font-medium text-sm">Langkah {currentStep + 1} dari 6</span>
+        </div>
+      </div>
 
       <!-- Step 4: Payment instructions -->
       {#if currentStep === 4}
@@ -1595,9 +1632,9 @@
             </div>
           {/if}
 
-          <div class="flex justify-between">
+          <div class="flex flex-col sm:flex-row gap-3 justify-between">
             <button
-              class="btn btn-secondary bg-gray-600 hover:bg-gray-700 text-white font-medium py-3 px-6 rounded-lg shadow transition duration-200"
+              class="btn btn-secondary bg-gray-600 hover:bg-gray-700 text-white font-medium py-3 px-6 rounded-lg shadow transition duration-200 flex-1"
               onclick={() => {
                 prevStep();
                 // Sync editedCustomer with customer data when going back
@@ -1612,7 +1649,7 @@
               Kembali
             </button>
             <button
-              class="btn btn-primary bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg shadow transition duration-200"
+              class="btn btn-primary bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg shadow transition duration-200 flex-1"
               onclick={() => (currentStep = 5)}
             >
               Lanjutkan
@@ -1620,6 +1657,13 @@
           </div>
         </div>
       {/if}
+      
+      <!-- Simple bottom step indicator -->
+      <div class="fixed bottom-4 left-0 right-0 flex justify-center">
+        <div class="bg-white border border-gray-300 rounded-full px-4 py-2 shadow-lg">
+          <span class="text-gray-700 font-medium text-sm">Langkah {currentStep + 1} dari 6</span>
+        </div>
+      </div>
 
       <!-- Step 5: Success message -->
       {#if currentStep === 5}
@@ -1691,6 +1735,11 @@
     /* Style focused option */
     .homepage-search-select .bg-base-300 {
       background-color: #e5e7eb !important; /* gray-200 equivalent */
+    }
+    
+    /* Hide the original step indicator at the top */
+    .step-indicator-top {
+      display: none;
     }
   </style>
 </div>

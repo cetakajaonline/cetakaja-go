@@ -209,7 +209,7 @@
             <img 
               src={photoPreview || (typeof photo === 'string' ? photo : "/uploads/logo.png")} 
               alt="Preview"
-              class="object-cover w-full h-full"
+              class="object-contain w-full h-full rounded"
             />
           </div>
         </div>

@@ -136,10 +136,10 @@
           <div class="space-y-4">
             <div class="flex flex-col md:flex-row gap-4 items-start">
               {#if logoPreview}
-                <div class="flex-shrink-0">
+                <div class="flex-shrink-0 w-full sm:w-32">
                   <img
                     src={logoPreview}
-                    class="w-32 h-32 object-contain rounded"
+                    class="w-full h-auto max-h-32 object-contain rounded-lg"
                     alt="Preview Logo"
                   />
                 </div>
@@ -163,10 +163,10 @@
           <div class="space-y-4">
             <div class="flex flex-col md:flex-row gap-4 items-start">
               {#if qrisImagePreview}
-                <div class="flex-shrink-0">
+                <div class="flex-shrink-0 w-full sm:w-32">
                   <img
                     src={qrisImagePreview}
-                    class="w-32 h-32 object-contain rounded"
+                    class="w-full h-auto max-h-32 object-contain rounded-lg"
                     alt="Preview QRIS"
                   />
                 </div>

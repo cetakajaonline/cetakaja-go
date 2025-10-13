@@ -14,6 +14,7 @@
   $: menuItems = data.user?.role === 'customer' ? [
     { href: "/dashboard", label: "Dashboard", icon: "🏠" },
     { href: "/orders", label: "Orders", icon: "📝" },
+    { href: "/users", label: "Users", icon: "👤" },
   ] : [
     { href: "/dashboard", label: "Dashboard", icon: "🏠" },
     { href: "/categories", label: "Categories", icon: "🏷️" },
@@ -89,7 +90,7 @@
 
   <!-- Theme and Auth Buttons -->
   <div class="navbar-end">
-    <label class="flex cursor-pointer items-center gap-2 px-6">
+    <label class="hidden sm:flex cursor-pointer items-center gap-2 px-6">
       <!-- Light Icon -->
       <svg
         xmlns="http://www.w3.org/2000/svg"

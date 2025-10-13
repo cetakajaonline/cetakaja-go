@@ -171,7 +171,7 @@
                 <img 
                   src={proofFilePreview} 
                   alt="Preview" 
-                  class="max-h-32 max-w-xs object-contain border rounded"
+                  class="w-full max-w-full h-auto max-h-48 object-contain rounded-lg"
                 />
               </div>
               <button 

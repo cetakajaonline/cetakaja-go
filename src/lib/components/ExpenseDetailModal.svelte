@@ -24,27 +24,27 @@
       <div class="space-y-4">
         <div class="flex justify-between items-center">
           <span class="text-gray-500">Nominal:</span>
-          <span class="font-bold text-lg">{formatCurrency(expense.nominal)}</span>
+          <span class="font-bold text-lg text-right">{formatCurrency(expense.nominal)}</span>
         </div>
 
         <div class="flex justify-between items-center">
           <span class="text-gray-500">Kategori:</span>
-          <span>{formatCategory(expense.category)}</span>
+          <span class="text-right">{formatCategory(expense.category)}</span>
         </div>
 
         <div class="flex justify-between items-center">
           <span class="text-gray-500">Tanggal:</span>
-          <span>{formatDate(expense.date)}</span>
+          <span class="text-right">{formatDate(expense.date)}</span>
         </div>
 
         <div class="flex justify-between items-center">
           <span class="text-gray-500">Deskripsi:</span>
-          <span>{expense.description || '-'}</span>
+          <span class="text-right">{expense.description || '-'}</span>
         </div>
 
         <div class="flex justify-between items-center">
           <span class="text-gray-500">Bukti:</span>
-          <span>
+          <span class="text-right">
             {#if expense.proofFile}
               <a href="{expense.proofFile}" target="_blank" class="text-blue-500 hover:underline">Lihat File</a>
             {:else}
@@ -55,12 +55,12 @@
 
         <div class="flex justify-between items-center">
           <span class="text-gray-500">Tanggal Dibuat:</span>
-          <span>{formatDate(expense.createdAt)}</span>
+          <span class="text-right">{formatDate(expense.createdAt)}</span>
         </div>
 
         <div class="flex justify-between items-center">
           <span class="text-gray-500">Tanggal Diupdate:</span>
-          <span>{formatDate(expense.updatedAt)}</span>
+          <span class="text-right">{formatDate(expense.updatedAt)}</span>
         </div>
       </div>
     {/if}
