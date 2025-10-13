@@ -88,7 +88,7 @@
   </div>
   
   <!-- Desktop Table Layout -->
-  <div class="hidden sm:block overflow-x-auto">
+  <div class="hidden sm:block overflow-x-auto max-w-full">
     <table class="table w-full text-sm">
       <thead class="bg-base-100 text-base-content">
         <tr>

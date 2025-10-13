@@ -131,7 +131,7 @@
   </div>
   
   <!-- Desktop Table Layout -->
-  <div class="hidden sm:block overflow-x-auto">
+  <div class="hidden sm:block overflow-x-auto max-w-full">
     <table class="table table-zebra">
       <thead>
         <tr>
