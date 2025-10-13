@@ -42,7 +42,7 @@ export const load: LayoutServerLoad = async ({ locals }) => {
       products,
       isAdmin: locals.user.role === "admin",
       isStaff: locals.user.role === "staff",
-      isCustomer: locals.user.role === "customer",
+      isCustomer: false, // Not a customer since it's admin/staff
     };
   }
 
@@ -94,9 +94,9 @@ export const load: LayoutServerLoad = async ({ locals }) => {
         logo: settings?.logo ?? null,
       },
       orders: customerOrders,
-      isAdmin: locals.user.role === "admin",
-      isStaff: locals.user.role === "staff",
-      isCustomer: locals.user.role === "customer",
+      isAdmin: false, // Not an admin since it's a customer
+      isStaff: false, // Not a staff since it's a customer
+      isCustomer: true,
     };
   }
 
@@ -109,7 +109,7 @@ export const load: LayoutServerLoad = async ({ locals }) => {
       logo: settings?.logo ?? null,
     },
     isAdmin: locals.user.role === "admin",
-    isStaff: locals.user.role === "staff",
+    isStaff: locals.user.role === "staff", 
     isCustomer: locals.user.role === "customer",
   };
 };

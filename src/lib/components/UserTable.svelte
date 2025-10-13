@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { User } from "$lib/types";
   import IconButton from "$lib/components/ui/IconButton.svelte";
-  import { ChevronUp, ChevronDown, Pencil, Trash2 } from "lucide-svelte";
 
   export let users: User[] = [];
   // export let onRowClick: (user: User) => void; Pakai Buat Detail
@@ -96,11 +95,7 @@
             <div class="flex items-center gap-1">
               Nama
               {#if sortKey === "name"}
-                {#if sortDirection === "asc"}
-                  <ChevronUp class="w-4 h-4 text-base-content/70" />
-                {:else}
-                  <ChevronDown class="w-4 h-4 text-base-content/70" />
-                {/if}
+                {#if sortDirection === "asc"} ↑ {:else} ↓ {/if}
               {/if}
             </div>
           </th>
@@ -109,11 +104,7 @@
             <div class="flex items-center gap-1">
               Username
               {#if sortKey === "username"}
-                {#if sortDirection === "asc"}
-                  <ChevronUp class="w-4 h-4 text-base-content/70" />
-                {:else}
-                  <ChevronDown class="w-4 h-4 text-base-content/70" />
-                {/if}
+                {#if sortDirection === "asc"} ↑ {:else} ↓ {/if}
               {/if}
             </div>
           </th>
@@ -122,11 +113,7 @@
             <div class="flex items-center gap-1">
               No. HP
               {#if sortKey === "phone"}
-                {#if sortDirection === "asc"}
-                  <ChevronUp class="w-4 h-4 text-base-content/70" />
-                {:else}
-                  <ChevronDown class="w-4 h-4 text-base-content/70" />
-                {/if}
+                {#if sortDirection === "asc"} ↑ {:else} ↓ {/if}
               {/if}
             </div>
           </th>
@@ -135,11 +122,7 @@
             <div class="flex items-center gap-1">
               Alamat
               {#if sortKey === "address"}
-                {#if sortDirection === "asc"}
-                  <ChevronUp class="w-4 h-4 text-base-content/70" />
-                {:else}
-                  <ChevronDown class="w-4 h-4 text-base-content/70" />
-                {/if}
+                {#if sortDirection === "asc"} ↑ {:else} ↓ {/if}
               {/if}
             </div>
           </th>
@@ -148,11 +131,7 @@
             <div class="flex items-center gap-1">
               Role
               {#if sortKey === "role"}
-                {#if sortDirection === "asc"}
-                  <ChevronUp class="w-4 h-4 text-base-content/70" />
-                {:else}
-                  <ChevronDown class="w-4 h-4 text-base-content/70" />
-                {/if}
+                {#if sortDirection === "asc"} ↑ {:else} ↓ {/if}
               {/if}
             </div>
           </th>

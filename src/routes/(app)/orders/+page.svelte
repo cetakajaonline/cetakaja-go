@@ -313,7 +313,7 @@
 <DefaultLayout title="Orders">
   <PageHeader
     title="Orders"
-    icon="📦"
+    icon="📝"
     showAddButton={isAdmin || isStaff}
     addLabel="Tambah"
     onAdd={openAddModal}

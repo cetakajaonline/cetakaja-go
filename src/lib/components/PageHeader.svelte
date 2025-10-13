@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { Plus } from 'lucide-svelte';
-
   export let title: string;
   export let icon: string = '';
   export let showAddButton: boolean = false;
@@ -18,7 +16,6 @@
 
   {#if showAddButton}
     <button on:click={onAdd} class="btn btn-primary gap-2">
-      <Plus class="w-4 h-4 mr-2" />
       {addLabel}
     </button>
   {/if}
