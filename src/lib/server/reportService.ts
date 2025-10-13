@@ -997,7 +997,7 @@ export async function getExpenseReport(
 export async function generateReport(
   filter: ReportFilter,
 ): Promise<ReportResponse> {
-  const { startDate, endDate, reportType } = filter;
+  const { startDate, endDate, reportType, productId, userId } = filter;
 
   if (!startDate || !endDate) {
     throw new Error("Start date and end date are required");
@@ -1008,23 +1008,30 @@ export async function generateReport(
     typeof startDate === "string" ? new Date(startDate) : startDate;
   const endDateObj = typeof endDate === "string" ? new Date(endDate) : endDate;
 
-  // Remove the userId and productId filters to ensure all reports show all data
-  // regardless of whether specific filters were passed
-  let reportData:
-    | DailyReport
-    | WeeklyReport
-    | MonthlyReport
-    | AnnualReport
-    | ProductPerformanceReport[]
-    | CustomerReport[]
-    | RevenueReport[]
-    | ExpenseReport[];
+  let reportData: any;
   let summary = { total: 0, revenue: 0, expenses: 0, net: 0 };
 
   switch (reportType) {
     case "daily": {
       const dailyReport = await getDailyReport(startDateObj);
-      reportData = dailyReport;
+      reportData = {
+        orders: dailyReport.orders.map(order => ({
+          id: order.id,
+          orderNumber: order.orderNumber,
+          status: order.status,
+          paymentStatus: order.paymentStatus,
+          totalAmount: order.totalAmount,
+          createdAt: order.createdAt,
+          user: {
+            name: order.user.name,
+            phone: order.user.phone,
+          }
+        })),
+        totalOrders: dailyReport.totalOrders,
+        totalRevenue: dailyReport.totalRevenue,
+        totalExpenses: dailyReport.totalExpenses,
+        netRevenue: dailyReport.netRevenue
+      };
       summary = {
         total: dailyReport.totalOrders,
         revenue: dailyReport.totalRevenue,
@@ -1036,7 +1043,29 @@ export async function generateReport(
 
     case "weekly": {
       const weeklyReport = await getWeeklyReport(startDateObj);
-      reportData = weeklyReport;
+      // Get daily breakdown for the week
+      const dailyBreakdown = [];
+      const currentDate = new Date(weeklyReport.startDate);
+      while (currentDate <= weeklyReport.endDate) {
+        const dailyData = await getDailyReport(currentDate);
+        dailyBreakdown.push({
+          date: currentDate,
+          totalOrders: dailyData.totalOrders,
+          totalRevenue: dailyData.totalRevenue
+        });
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+      
+      reportData = {
+        weeklyStats: {
+          weekLabel: weeklyReport.weekLabel,
+          totalOrders: weeklyReport.totalOrders,
+          totalRevenue: weeklyReport.totalRevenue,
+          totalExpenses: weeklyReport.totalExpenses,
+          netRevenue: weeklyReport.netRevenue
+        },
+        dailyBreakdown
+      };
       summary = {
         total: weeklyReport.totalOrders,
         revenue: weeklyReport.totalRevenue,
@@ -1050,7 +1079,57 @@ export async function generateReport(
       const year = startDateObj.getFullYear();
       const month = startDateObj.getMonth();
       const monthlyReport = await getMonthlyReport(year, month);
-      reportData = monthlyReport;
+      // Get weekly breakdown for the month
+      const weeklyBreakdown = [];
+      const startDateForMonth = new Date(year, month, 1);
+      let currentDate = new Date(startDateForMonth);
+      
+      // Calculate weekly breakdown by going through each week in the month
+      while (currentDate <= monthlyReport.endDate) {
+        const weekStart = new Date(currentDate);
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekStart.getDate() + 6);
+        if (weekEnd > monthlyReport.endDate) {
+          weekEnd.setTime(monthlyReport.endDate.getTime());
+        }
+        
+        // Get orders for this week
+        const ordersInWeek = await prisma.order.findMany({
+          where: {
+            createdAt: {
+              gte: weekStart,
+              lte: weekEnd,
+            },
+            status: { not: "canceled" },
+          },
+          select: {
+            totalAmount: true,
+            createdAt: true,
+          }
+        });
+        
+        const totalRevenue = ordersInWeek.reduce((sum, order) => sum + order.totalAmount, 0);
+        const totalOrders = ordersInWeek.length;
+        
+        weeklyBreakdown.push({
+          weekLabel: `Week of ${weekStart.toISOString().split('T')[0]}`,
+          totalOrders,
+          totalRevenue
+        });
+        
+        currentDate.setDate(currentDate.getDate() + 7);
+      }
+      
+      reportData = {
+        monthlyStats: {
+          monthLabel: monthlyReport.monthLabel,
+          totalOrders: monthlyReport.totalOrders,
+          totalRevenue: monthlyReport.totalRevenue,
+          totalExpenses: monthlyReport.totalExpenses,
+          netRevenue: monthlyReport.netRevenue
+        },
+        weeklyBreakdown
+      };
       summary = {
         total: monthlyReport.totalOrders,
         revenue: monthlyReport.totalRevenue,
@@ -1063,7 +1142,27 @@ export async function generateReport(
     case "annual": {
       const yearValue = startDateObj.getFullYear();
       const annualReport = await getAnnualReport(yearValue);
-      reportData = annualReport;
+      // Get monthly breakdown for the year
+      const monthlyBreakdown = [];
+      for (let month = 0; month < 12; month++) {
+        const monthlyReport = await getMonthlyReport(yearValue, month);
+        monthlyBreakdown.push({
+          monthLabel: `${monthlyReport.monthLabel}`,
+          totalOrders: monthlyReport.totalOrders,
+          totalRevenue: monthlyReport.totalRevenue
+        });
+      }
+      
+      reportData = {
+        annualStats: {
+          year: annualReport.year,
+          totalOrders: annualReport.totalOrders,
+          totalRevenue: annualReport.totalRevenue,
+          totalExpenses: annualReport.totalExpenses,
+          netRevenue: annualReport.netRevenue
+        },
+        monthlyBreakdown
+      };
       summary = {
         total: annualReport.totalOrders,
         revenue: annualReport.totalRevenue,
@@ -1074,102 +1173,151 @@ export async function generateReport(
     }
 
     case "product": {
-      // Remove filters based on productId - return all products report regardless of input productId
-      const productReport = await getAllProductsPerformanceReport(
-        startDateObj,
-        endDateObj,
-      );
-      reportData = productReport;
-      // reportData is an array of ProductPerformanceReport
-      const totalProductSold = productReport.reduce(
-        (sum, item) => sum + item.totalSold,
-        0,
-      );
-      const totalProductRevenue = productReport.reduce(
-        (sum, item) => sum + item.totalRevenue,
-        0,
-      );
-      summary = {
-        total: totalProductSold,
-        revenue: totalProductRevenue,
-        expenses: 0,
-        net: totalProductRevenue,
-      };
+      if (productId) {
+        // Individual product report
+        const productReport = await getProductPerformanceReport(
+          productId,
+          startDateObj,
+          endDateObj
+        );
+        reportData = {
+          products: [{
+            id: productReport.productId,
+            name: productReport.productName,
+            totalSold: productReport.totalSold,
+            totalRevenue: productReport.totalRevenue
+          }],
+          totalProducts: 1,
+          totalSold: productReport.totalSold,
+          totalRevenue: productReport.totalRevenue
+        };
+        summary = {
+          total: productReport.totalSold,
+          revenue: productReport.totalRevenue,
+          expenses: 0,
+          net: productReport.totalRevenue,
+        };
+      } else {
+        // All products report
+        const productReport = await getAllProductsPerformanceReport(
+          startDateObj,
+          endDateObj
+        );
+        reportData = {
+          products: productReport.map(p => ({
+            id: p.productId,
+            name: p.productName,
+            totalSold: p.totalSold,
+            totalRevenue: p.totalRevenue
+          })),
+          totalProducts: productReport.length,
+          totalSold: productReport.reduce((sum, p) => sum + p.totalSold, 0),
+          totalRevenue: productReport.reduce((sum, p) => sum + p.totalRevenue, 0)
+        };
+        const totalSold = reportData.totalSold;
+        const totalRevenue = reportData.totalRevenue;
+        summary = {
+          total: totalSold,
+          revenue: totalRevenue,
+          expenses: 0,
+          net: totalRevenue,
+        };
+      }
       break;
     }
 
     case "customer": {
-      // Remove filters based on userId - return all customers report regardless of input userId
-      const customerReport = await getAllCustomersReport(
-        startDateObj,
-        endDateObj,
-      );
-      reportData = customerReport;
-      // reportData is an array of CustomerReport
-      const totalCustomersCount = customerReport.length;
-      const totalCustomerRevenue = customerReport.reduce(
-        (sum, item) => sum + item.totalSpent,
-        0,
-      );
-      summary = {
-        total: totalCustomersCount,
-        revenue: totalCustomerRevenue,
-        expenses: 0,
-        net: totalCustomerRevenue,
-      };
+      if (userId) {
+        // Individual customer report
+        const customerReport = await getCustomerReport(
+          userId,
+          startDateObj,
+          endDateObj
+        );
+        reportData = {
+          customers: [{
+            id: customerReport.userId,
+            name: customerReport.customerName,
+            totalOrders: customerReport.totalOrders,
+            totalSpent: customerReport.totalSpent
+          }],
+          totalCustomers: 1,
+          totalOrders: customerReport.totalOrders,
+          totalRevenue: customerReport.totalSpent
+        };
+        summary = {
+          total: customerReport.totalOrders,
+          revenue: customerReport.totalSpent,
+          expenses: 0,
+          net: customerReport.totalSpent,
+        };
+      } else {
+        // All customers report
+        const customerReport = await getAllCustomersReport(
+          startDateObj,
+          endDateObj
+        );
+        reportData = {
+          customers: customerReport.map(c => ({
+            id: c.userId,
+            name: c.customerName,
+            totalOrders: c.totalOrders,
+            totalSpent: c.totalSpent
+          })),
+          totalCustomers: customerReport.length,
+          totalOrders: customerReport.reduce((sum, c) => sum + c.totalOrders, 0),
+          totalRevenue: customerReport.reduce((sum, c) => sum + c.totalSpent, 0)
+        };
+        const totalOrders = reportData.totalOrders;
+        const totalRevenue = reportData.totalRevenue;
+        summary = {
+          total: totalOrders,
+          revenue: totalRevenue,
+          expenses: 0,
+          net: totalRevenue,
+        };
+      }
       break;
     }
 
     case "revenue": {
-      const revenueReportResult = await getRevenueReport(
-        startDateObj,
-        endDateObj,
-      );
-      // getRevenueReport now returns RevenueReport[] based on reportClient.ts fixes
-      const revenueReport: RevenueReport[] = Array.isArray(revenueReportResult)
-        ? revenueReportResult
-        : [revenueReportResult];
-      reportData = revenueReport;
-      const totalRevenue = revenueReport.reduce(
-        (sum, item) => sum + item.totalRevenue,
-        0,
-      );
-      const totalOrders = revenueReport.reduce(
-        (sum, item) => sum + item.orders.length,
-        0,
-      );
+      const revenueReport = await getRevenueReport(startDateObj, endDateObj);
+      reportData = {
+        totalRevenue: revenueReport.totalRevenue,
+        orders: revenueReport.orders.map(order => ({
+          id: order.id,
+          orderNumber: order.orderNumber,
+          totalAmount: order.totalAmount,
+          createdAt: order.createdAt,
+          paymentStatus: order.paymentStatus
+        }))
+      };
       summary = {
-        total: totalOrders,
-        revenue: totalRevenue,
+        total: revenueReport.orders.length,
+        revenue: revenueReport.totalRevenue,
         expenses: 0,
-        net: totalRevenue,
+        net: revenueReport.totalRevenue,
       };
       break;
     }
 
     case "expense": {
-      const expenseReportResult = await getExpenseReport(
-        startDateObj,
-        endDateObj,
-      );
-      // getExpenseReport now returns ExpenseReport[] based on reportClient.ts fixes
-      const expenseReport: ExpenseReport[] = Array.isArray(expenseReportResult)
-        ? expenseReportResult
-        : [expenseReportResult];
-      reportData = expenseReport;
-      const totalExpenses = expenseReport.reduce(
-        (sum, item) => sum + item.totalExpenses,
-        0,
-      );
-      const totalExpenseItems = expenseReport.reduce(
-        (sum, item) => sum + item.expenses.length,
-        0,
-      );
+      const expenseReport = await getExpenseReport(startDateObj, endDateObj);
+      reportData = {
+        totalExpenses: expenseReport.totalExpenses,
+        expenses: expenseReport.expenses.map(expense => ({
+          id: expense.id,
+          nominal: expense.nominal,
+          category: expense.category,
+          description: expense.description,
+          date: expense.date
+        }))
+      };
       summary = {
-        total: totalExpenseItems,
+        total: expenseReport.expenses.length,
         revenue: 0,
-        expenses: totalExpenses,
-        net: -totalExpenses,
+        expenses: expenseReport.totalExpenses,
+        net: -expenseReport.totalExpenses,
       };
       break;
     }

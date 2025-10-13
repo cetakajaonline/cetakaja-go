@@ -36,36 +36,32 @@
            typeof data.netRevenue !== 'undefined';
   }
 
-  function isProductReportIndividual(data: any): data is { productId?: number; productName?: string; totalSold?: number; totalRevenue?: number } {
-    return data && typeof data.productId !== 'undefined'; // Check for individual product report
+  function isProductReport(data: any): data is { totalProducts: number; totalSold: number; totalRevenue: number; products: any[] } {
+    return data && 
+           typeof data.totalProducts !== 'undefined' && 
+           typeof data.totalSold !== 'undefined' && 
+           typeof data.totalRevenue !== 'undefined' && 
+           Array.isArray(data.products);
   }
 
-  function isProductReportAll(data: any): data is { totalProducts?: number; totalSold?: number; totalRevenue?: number; products?: any[] } {
-    return Array.isArray(data); // Check if it's an array of products
+  function isCustomerReport(data: any): data is { totalCustomers: number; totalOrders: number; totalRevenue: number; customers: any[] } {
+    return data && 
+           typeof data.totalCustomers !== 'undefined' && 
+           typeof data.totalOrders !== 'undefined' && 
+           typeof data.totalRevenue !== 'undefined' && 
+           Array.isArray(data.customers);
   }
 
-  function isCustomerReportIndividual(data: any): data is { userId?: number; customerName?: string; totalOrders?: number; totalSpent?: number } {
-    return data && typeof data.userId !== 'undefined'; // Check for individual customer report
+  function isRevenueReport(data: any): data is { totalRevenue: number; orders: any[] } {
+    return data && 
+           typeof data.totalRevenue !== 'undefined' && 
+           Array.isArray(data.orders);
   }
 
-  function isCustomerReportAll(data: any): data is { totalCustomers?: number; totalOrders?: number; totalRevenue?: number; customers?: any[] } {
-    return Array.isArray(data); // Check if it's an array of customers
-  }
-
-  function isRevenueReportIndividual(data: any): data is { totalRevenue?: number; orders?: any[] } {
-    return data && typeof data.totalRevenue !== 'undefined' && !Array.isArray(data);
-  }
-
-  function isRevenueReportAll(data: any): data is { totalRevenue?: number; orders?: any[] }[] {
-    return Array.isArray(data); // Check if it's an array of revenue reports
-  }
-
-  function isExpenseReportIndividual(data: any): data is { totalExpenses?: number; expenses?: any[] } {
-    return data && typeof data.totalExpenses !== 'undefined' && !Array.isArray(data);
-  }
-
-  function isExpenseReportAll(data: any): data is { totalExpenses?: number; expenses?: any[] }[] {
-    return Array.isArray(data); // Check if it's an array of expense reports
+  function isExpenseReport(data: any): data is { totalExpenses: number; expenses: any[] } {
+    return data && 
+           typeof data.totalExpenses !== 'undefined' && 
+           Array.isArray(data.expenses);
   }
 </script>
 
@@ -95,24 +91,24 @@
           </div>
           <div class="flex justify-between">
             <span>Periode:</span>
-            <span class="font-medium">{formatDate(report.dateRange.start)} - {formatDate(report.dateRange.end)}</span>
+            <span class="font-medium">{report.dateRange ? formatDate(report.dateRange.start) + ' - ' + formatDate(report.dateRange.end) : 'N/A'}</span>
           </div>
           <div class="flex justify-between">
             <span>Total:</span>
-            <span class="font-medium">{report.summary.total}</span>
+            <span class="font-medium">{report.summary ? report.summary.total : 'N/A'}</span>
           </div>
           <div class="flex justify-between">
             <span>Pendapatan:</span>
-            <span class="font-medium text-success">{formatCurrency(report.summary.revenue)}</span>
+            <span class="font-medium text-success">{report.summary ? formatCurrency(report.summary.revenue) : formatCurrency(0)}</span>
           </div>
           <div class="flex justify-between">
             <span>Pengeluaran:</span>
-            <span class="font-medium text-error">{formatCurrency(report.summary.expenses)}</span>
+            <span class="font-medium text-error">{report.summary ? formatCurrency(report.summary.expenses) : formatCurrency(0)}</span>
           </div>
           <div class="flex justify-between">
             <span>Laba Bersih:</span>
-            <span class="font-medium {report.summary.net >= 0 ? 'text-success' : 'text-error'}">
-              {formatCurrency(report.summary.net)}
+            <span class="font-medium {report.summary && report.summary.net >= 0 ? 'text-success' : 'text-error'}">
+              {report.summary ? formatCurrency(report.summary.net) : formatCurrency(0)}
             </span>
           </div>
         </div>
@@ -134,92 +130,82 @@
             {/if}
           {:else if report.reportType === 'product'}
             <!-- Product Performance -->
-            {#if report.data && isProductReportAll(report.data)}
+            {#if report.data && isProductReport(report.data)}
               <!-- All products report -->
               <div class="text-sm max-h-64 overflow-y-auto">
-                {#if (report.data as any[])[0]?.totalProducts !== undefined}
-                  <p>Total Produk: {(report.data as any[])[0].totalProducts || 0}</p>
-                  <p>Total Terjual: {(report.data as any[])[0].totalSold || 0}</p>
-                  <p>Total Pendapatan: {formatCurrency((report.data as any[])[0].totalRevenue || 0)}</p>
-                {/if}
-                {#if (report.data as any[])[0] && (report.data as any[])[0].products && (report.data as any[])[0].products.length > 0}
+                <p>Total Produk: {report.data.totalProducts || 0}</p>
+                <p>Total Terjual: {report.data.totalSold || 0}</p>
+                <p>Total Pendapatan: {formatCurrency(report.data.totalRevenue || 0)}</p>
+                {#if report.data.products && report.data.products.length > 0}
                   <div class="mt-2">
                     <h5 class="font-medium mb-1">Daftar Produk:</h5>
-                    {#each (report.data as any[])[0].products as product, i}
-                      <div class="border-b pb-1 {i < (report.data as any[])[0].products.length - 1 ? 'mb-2' : ''}">
-                        <p>Produk: {product.productName}</p>
+                    {#each report.data.products as product, i}
+                      <div class="border-b pb-1 {i < report.data.products.length - 1 ? 'mb-2' : ''}">
+                        <p>Produk: {product.name}</p>
                         <p>Terjual: {product.totalSold} | Pendapatan: {formatCurrency(product.totalRevenue)}</p>
                       </div>
                     {/each}
                   </div>
                 {/if}
               </div>
-            {:else if report.data && isProductReportIndividual(report.data)}
-              <!-- Individual product report -->
-              <div class="text-sm">
-                <p>Produk: {report.data.productName}</p>
-                <p>Total Terjual: {report.data.totalSold || 0}</p>
-                <p>Total Pendapatan: {formatCurrency(report.data.totalRevenue || 0)}</p>
-              </div>
             {/if}
           {:else if report.reportType === 'customer'}
             <!-- Customer Report -->
-            {#if report.data && isCustomerReportAll(report.data)}
+            {#if report.data && isCustomerReport(report.data)}
               <!-- All customers report -->
               <div class="text-sm max-h-64 overflow-y-auto">
-                {#if (report.data as any[])[0]?.totalCustomers !== undefined}
-                  <p>Total Pelanggan: {(report.data as any[])[0].totalCustomers || 0}</p>
-                  <p>Total Pesanan: {(report.data as any[])[0].totalOrders || 0}</p>
-                  <p>Total Pendapatan: {formatCurrency((report.data as any[])[0].totalRevenue || 0)}</p>
-                {/if}
-                {#if (report.data as any[])[0] && (report.data as any[])[0].customers && (report.data as any[])[0].customers.length > 0}
+                <p>Total Pelanggan: {report.data.totalCustomers || 0}</p>
+                <p>Total Pesanan: {report.data.totalOrders || 0}</p>
+                <p>Total Pendapatan: {formatCurrency(report.data.totalRevenue || 0)}</p>
+                {#if report.data.customers && report.data.customers.length > 0}
                   <div class="mt-2">
                     <h5 class="font-medium mb-1">Daftar Pelanggan:</h5>
-                    {#each (report.data as any[])[0].customers as customer, i}
-                      <div class="border-b pb-1 {i < (report.data as any[])[0].customers.length - 1 ? 'mb-2' : ''}">
-                        <p>Pelanggan: {customer.customerName}</p>
+                    {#each report.data.customers as customer, i}
+                      <div class="border-b pb-1 {i < report.data.customers.length - 1 ? 'mb-2' : ''}">
+                        <p>Pelanggan: {customer.name}</p>
                         <p>Pesanan: {customer.totalOrders} | Dibelanjakan: {formatCurrency(customer.totalSpent)}</p>
                       </div>
                     {/each}
                   </div>
                 {/if}
               </div>
-            {:else if report.data && isCustomerReportIndividual(report.data)}
-              <!-- Individual customer report -->
-              <div class="text-sm">
-                <p>Pelanggan: {report.data.customerName}</p>
-                <p>Total Pesanan: {report.data.totalOrders || 0}</p>
-                <p>Total Dibelanjakan: {formatCurrency(report.data.totalSpent || 0)}</p>
-              </div>
             {/if}
           {:else if report.reportType === 'revenue'}
             <!-- Revenue Report -->
-            {#if report.data && isRevenueReportAll(report.data)}
-              {#if (report.data as any[])[0]?.totalRevenue !== undefined}
-                <div class="text-sm">
-                  <p>Total Pendapatan: {formatCurrency((report.data as any[])[0].totalRevenue || 0)}</p>
-                  <p>Jumlah Transaksi: {(report.data as any[])[0].orders?.length || 0}</p>
-                </div>
-              {/if}
-            {:else if report.data && isRevenueReportIndividual(report.data)}
+            {#if report.data && isRevenueReport(report.data)}
               <div class="text-sm">
                 <p>Total Pendapatan: {formatCurrency(report.data.totalRevenue || 0)}</p>
                 <p>Jumlah Transaksi: {report.data.orders?.length || 0}</p>
+                {#if report.data.orders && report.data.orders.length > 0}
+                  <div class="mt-2">
+                    <h5 class="font-medium mb-1">Daftar Transaksi:</h5>
+                    {#each report.data.orders as order, i}
+                      <div class="border-b pb-1 {i < report.data.orders.length - 1 ? 'mb-2' : ''}">
+                        <p>No. Transaksi: {order.orderNumber}</p>
+                        <p>Tanggal: {formatDate(order.createdAt)} | Jumlah: {formatCurrency(order.totalAmount)}</p>
+                      </div>
+                    {/each}
+                  </div>
+                {/if}
               </div>
             {/if}
           {:else if report.reportType === 'expense'}
             <!-- Expense Report -->
-            {#if report.data && isExpenseReportAll(report.data)}
-              {#if (report.data as any[])[0]?.totalExpenses !== undefined}
-                <div class="text-sm">
-                  <p>Total Pengeluaran: {formatCurrency((report.data as any[])[0].totalExpenses || 0)}</p>
-                  <p>Jumlah Transaksi: {(report.data as any[])[0].expenses?.length || 0}</p>
-                </div>
-              {/if}
-            {:else if report.data && isExpenseReportIndividual(report.data)}
+            {#if report.data && isExpenseReport(report.data)}
               <div class="text-sm">
                 <p>Total Pengeluaran: {formatCurrency(report.data.totalExpenses || 0)}</p>
                 <p>Jumlah Transaksi: {report.data.expenses?.length || 0}</p>
+                {#if report.data.expenses && report.data.expenses.length > 0}
+                  <div class="mt-2">
+                    <h5 class="font-medium mb-1">Daftar Pengeluaran:</h5>
+                    {#each report.data.expenses as expense, i}
+                      <div class="border-b pb-1 {i < report.data.expenses.length - 1 ? 'mb-2' : ''}">
+                        <p>Kategori: {expense.category}</p>
+                        <p>Tanggal: {formatDate(expense.date)} | Jumlah: {formatCurrency(expense.nominal)}</p>
+                      </div>
+                    {/each}
+                  </div>
+                {/if}
               </div>
             {/if}
           {:else}

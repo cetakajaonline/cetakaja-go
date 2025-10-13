@@ -314,17 +314,128 @@ export interface ReportFilter {
   userId?: number;
 }
 
+// UI-focused report data structures for efficient rendering
+export interface DailyReportUI {
+  orders: {
+    id: number;
+    orderNumber: string;
+    status: string;
+    paymentStatus: string;
+    totalAmount: number;
+    createdAt: Date;
+    user: {
+      name: string;
+      phone: string;
+    };
+  }[];
+  totalOrders: number;
+  totalRevenue: number;
+  totalExpenses: number;
+  netRevenue: number;
+}
+
+export interface WeeklyReportUI {
+  weeklyStats: {
+    weekLabel: string;
+    totalOrders: number;
+    totalRevenue: number;
+    totalExpenses: number;
+    netRevenue: number;
+  };
+  dailyBreakdown: {
+    date: Date;
+    totalOrders: number;
+    totalRevenue: number;
+  }[];
+}
+
+export interface MonthlyReportUI {
+  monthlyStats: {
+    monthLabel: string;
+    totalOrders: number;
+    totalRevenue: number;
+    totalExpenses: number;
+    netRevenue: number;
+  };
+  weeklyBreakdown: {
+    weekLabel: string;
+    totalOrders: number;
+    totalRevenue: number;
+  }[];
+}
+
+export interface AnnualReportUI {
+  annualStats: {
+    year: number;
+    totalOrders: number;
+    totalRevenue: number;
+    totalExpenses: number;
+    netRevenue: number;
+  };
+  monthlyBreakdown: {
+    monthLabel: string;
+    totalOrders: number;
+    totalRevenue: number;
+  }[];
+}
+
+export interface ProductReportUI {
+  products: {
+    id: number;
+    name: string;
+    totalSold: number;
+    totalRevenue: number;
+  }[];
+  totalProducts: number;
+  totalSold: number;
+  totalRevenue: number;
+}
+
+export interface CustomerReportUI {
+  customers: {
+    id: number;
+    name: string;
+    totalOrders: number;
+    totalSpent: number;
+  }[];
+  totalCustomers: number;
+  totalOrders: number;
+  totalRevenue: number;
+}
+
+export interface RevenueReportUI {
+  totalRevenue: number;
+  orders: {
+    id: number;
+    orderNumber: string;
+    totalAmount: number;
+    createdAt: Date;
+    paymentStatus: string;
+  }[];
+}
+
+export interface ExpenseReportUI {
+  totalExpenses: number;
+  expenses: {
+    id: number;
+    nominal: number;
+    category: string;
+    description: string | null;
+    date: Date;
+  }[];
+}
+
 export interface ReportResponse {
   reportType: string;
-  data:
-    | DailyReport
-    | WeeklyReport
-    | MonthlyReport
-    | AnnualReport
-    | ProductPerformanceReport[]
-    | CustomerReport[]
-    | RevenueReport[]
-    | ExpenseReport[];
+  data: 
+    | DailyReportUI
+    | WeeklyReportUI
+    | MonthlyReportUI
+    | AnnualReportUI
+    | ProductReportUI
+    | CustomerReportUI
+    | RevenueReportUI
+    | ExpenseReportUI;
   summary: {
     total: number;
     revenue: number;

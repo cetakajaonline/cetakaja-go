@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import type { ReportResponse } from '$lib/types';
+  import type { ReportResponse, DailyReportUI, WeeklyReportUI, MonthlyReportUI, AnnualReportUI, ProductReportUI, CustomerReportUI, RevenueReportUI, ExpenseReportUI } from '$lib/types';
   import {
     Chart,
     BarController,
@@ -23,19 +23,45 @@
   let chartData: { labels: string[]; values: number[] } = $state({ labels: [], values: [] });
   let maxValue: number = $state(0);
 
+  // Use a variable that's not reactive for tracking last processed report
+  let lastProcessedReportSignature: string | null = null;
+  
   $effect(() => {
-    if (report) {
-      processReportData();
-    }
-    // Destroy and recreate chart when report changes
-    if (chart) {
-      chart.destroy();
-      chart = null;
-    }
-    if (report && !loading) {
-      initChart();
+    // Create a signature to identify this specific report
+    const currentSignature = report ? `${report.reportType}_${report.dateRange?.start?.toString()}_${report.dateRange?.end?.toString()}` : null;
+    
+    // Only process if this is a different report
+    if (currentSignature !== lastProcessedReportSignature) {
+      lastProcessedReportSignature = currentSignature;
+      
+      if (report && !loading) {
+        processReportData();
+        
+        // Update chart only if it already exists, otherwise create it
+        if (chart) {
+          updateChart();
+        } else {
+          initChart();
+        }
+      } else if (!report && chart) {
+        // Destroy chart when report is null
+        chart.destroy();
+        chart = null;
+      }
     }
   });
+
+  function updateChart() {
+    if (!chart || !chartData.labels.length) return;
+    
+    // Update chart data with cloned arrays to avoid Svelte 5 reactivity conflicts
+    chart.data.labels = [...chartData.labels];
+    chart.data.datasets[0].data = [...chartData.values];
+    if (chart.options.plugins?.title) {
+      (chart.options.plugins.title as { text: string }).text = getChartTitle();
+    }
+    chart.update();
+  }
 
   function processReportData() {
     if (!report || !report.data) return;
@@ -43,84 +69,96 @@
     // Initialize empty chart data
     chartData = { labels: [], values: [] };
     
-    // Extract chart data based on report type
+    // Extract chart data based on report type using new UI-focused data structures
     switch (report.reportType) {
       case 'daily':
-      case 'weekly':
-      case 'monthly':
-      case 'annual':
-        // For date-based reports, we might want to show day/month breakdown
-        // For simplicity, we'll just show summary values
+        const dailyData = report.data as DailyReportUI;
         chartData = {
           labels: ['Total Orders', 'Revenue', 'Expenses', 'Net'],
           values: [
-            report.summary.total || 0,
-            report.summary.revenue || 0,
-            report.summary.expenses || 0,
-            report.summary.net || 0
+            dailyData.totalOrders || 0,
+            dailyData.totalRevenue || 0,
+            dailyData.totalExpenses || 0,
+            dailyData.netRevenue || 0
+          ]
+        };
+        break;
+      case 'weekly':
+        const weeklyData = report.data as WeeklyReportUI;
+        chartData = {
+          labels: ['Total Orders', 'Revenue', 'Expenses', 'Net'],
+          values: [
+            weeklyData.weeklyStats?.totalOrders || 0,
+            weeklyData.weeklyStats?.totalRevenue || 0,
+            weeklyData.weeklyStats?.totalExpenses || 0,
+            weeklyData.weeklyStats?.netRevenue || 0
+          ]
+        };
+        break;
+      case 'monthly':
+        const monthlyData = report.data as MonthlyReportUI;
+        chartData = {
+          labels: ['Total Orders', 'Revenue', 'Expenses', 'Net'],
+          values: [
+            monthlyData.monthlyStats?.totalOrders || 0,
+            monthlyData.monthlyStats?.totalRevenue || 0,
+            monthlyData.monthlyStats?.totalExpenses || 0,
+            monthlyData.monthlyStats?.netRevenue || 0
+          ]
+        };
+        break;
+      case 'annual':
+        const annualData = report.data as AnnualReportUI;
+        chartData = {
+          labels: ['Total Orders', 'Revenue', 'Expenses', 'Net'],
+          values: [
+            annualData.annualStats?.totalOrders || 0,
+            annualData.annualStats?.totalRevenue || 0,
+            annualData.annualStats?.totalExpenses || 0,
+            annualData.annualStats?.netRevenue || 0
           ]
         };
         break;
       case 'product':
-        // Product performance report - check if it's individual or all products
-        // Type guard to check if it's an individual product report (has productId)
-        if (report.data && typeof report.data === 'object' && 'productId' in report.data) {
-          // Individual product report
-          chartData = {
-            labels: ['Items Sold', 'Revenue'],
-            values: [report.summary.total || 0, report.summary.revenue || 0]
-          };
-        } else if (report.data && Array.isArray(report.data) && report.data[0] && 'totalProducts' in report.data[0]) {
-          // All products report - use total products, total sold, total revenue
-          chartData = {
-            labels: ['Total Products', 'Total Sold', 'Total Revenue'],
-            values: [
-              (report.data as any[])[0].totalProducts || 0,
-              (report.data as any[])[0].totalSold || 0,
-              (report.data as any[])[0].totalRevenue || 0
-            ]
-          };
-        }
+        const productData = report.data as ProductReportUI;
+        chartData = {
+          labels: ['Total Products', 'Total Sold', 'Total Revenue'],
+          values: [
+            productData.totalProducts || 0,
+            productData.totalSold || 0,
+            productData.totalRevenue || 0
+          ]
+        };
         break;
       case 'customer':
-        // Customer report - check if it's individual or all customers
-        // Type guard to check if it's an individual customer report (has userId)
-        if (report.data && typeof report.data === 'object' && 'userId' in report.data) {
-          // Individual customer report
-          chartData = {
-            labels: ['Orders Count', 'Total Spent'],
-            values: [report.summary.total || 0, report.summary.revenue || 0]
-          };
-        } else if (report.data && Array.isArray(report.data) && report.data[0] && 'totalCustomers' in report.data[0]) {
-          // All customers report - use total customers, total orders, total revenue
-          chartData = {
-            labels: ['Total Customers', 'Total Orders', 'Total Revenue'],
-            values: [
-              (report.data as any[])[0].totalCustomers || 0,
-              (report.data as any[])[0].totalOrders || 0,
-              (report.data as any[])[0].totalRevenue || 0
-            ]
-          };
-        }
+        const customerData = report.data as CustomerReportUI;
+        chartData = {
+          labels: ['Total Customers', 'Total Orders', 'Total Revenue'],
+          values: [
+            customerData.totalCustomers || 0,
+            customerData.totalOrders || 0,
+            customerData.totalRevenue || 0
+          ]
+        };
         break;
       case 'revenue':
-        // Revenue report
+        const revenueData = report.data as RevenueReportUI;
         chartData = {
           labels: ['Revenue'],
-          values: [report.summary.revenue || 0]
+          values: [revenueData.totalRevenue || 0]
         };
         break;
       case 'expense':
-        // Expense report
+        const expenseData = report.data as ExpenseReportUI;
         chartData = {
           labels: ['Expenses'],
-          values: [report.summary.expenses || 0]
+          values: [expenseData.totalExpenses || 0]
         };
         break;
       default:
         chartData = {
           labels: ['Data'],
-          values: [report.summary.total || 0]
+          values: [report.summary?.total || 0]
         };
     }
 
@@ -131,19 +169,23 @@
   function initChart() {
     if (!chartContainer || !report) return;
 
-    // Clear previous chart if exists
+    // Update existing chart if available, otherwise create new one
     if (chart) {
-      chart.destroy();
-    }
-
-    // Create new chart
-    chart = new Chart(chartContainer, {
-      type: 'bar',
-      data: {
-        labels: chartData.labels,
+      // Update the existing chart data
+      chart.data.labels = [...chartData.labels];
+      chart.data.datasets[0].data = [...chartData.values];
+      if (chart.options.plugins && chart.options.plugins.title) {
+        chart.options.plugins.title.text = getChartTitle();
+      }
+      chart.update();
+    } else {
+      // Create new chart
+      // Create a separate copy of chart data for Chart.js to avoid Svelte 5 $state conflicts
+      const chartJSData = {
+        labels: [...chartData.labels],
         datasets: [{
           label: 'Report Data',
-          data: chartData.values,
+          data: [...chartData.values],
           backgroundColor: [
             'rgba(54, 162, 235, 0.6)',
             'rgba(255, 99, 132, 0.6)',
@@ -158,26 +200,31 @@
           ],
           borderWidth: 1
         }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: false
+      };
+
+      chart = new Chart(chartContainer, {
+        type: 'bar',
+        data: chartJSData,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            },
+            title: {
+              display: true,
+              text: getChartTitle()
+            }
           },
-          title: {
-            display: true,
-            text: getChartTitle()
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true
+          scales: {
+            y: {
+              beginAtZero: true
+            }
           }
         }
-      }
-    });
+      });
+    }
   }
 
   function getChartTitle(): string {
