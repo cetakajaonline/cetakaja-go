@@ -94,6 +94,7 @@
       "@prisma/client",
       "@prisma/engines",
       "@tailwindcss/oxide",
+      "core-js",
       "esbuild",
       "prisma",
       "sharp",
@@ -109,7 +110,10 @@
     "cookie": "^1.0.2",
     "daisyui": "^5.2.3",
     "jsonwebtoken": "^9.0.2",
+    "jspdf": "^3.0.3",
+    "jspdf-autotable": "^5.0.2",
     "tailwindcss": "^4.1.14",
+    "xlsx": "^0.18.5",
     "zod": "^4.1.12"
   }
 }
