@@ -1208,22 +1208,22 @@
                             <a
                               href={item.notes}
                               target="_blank"
-                              class="text-blue-600 hover:underline break-all block sm:inline"
+                              class="text-blue-600 hover:underline break-all sm:inline"
                             >
-                              Lihat Desain
+                              Link
                             </a>
                           {:else}
                             -
                           {/if}
                         </td>
                         <td class="block sm:table-cell text-gray-800 sm:w-1/7"
-                          ><span class="font-semibold sm:hidden">Jumlah:</span> {item.qty}</td
+                          ><span class="font-semibold sm:hidden">Jumlah :</span> {item.qty}</td
                         >
                         <td class="block sm:table-cell text-gray-800 sm:w-1/7"
-                          ><span class="font-semibold sm:hidden">Harga:</span> {formatCurrency(item.price)}</td
+                          ><span class="font-semibold sm:hidden">Harga :</span> {formatCurrency(item.price)}</td
                         >
                         <td class="block sm:table-cell text-gray-800 sm:w-1/7"
-                          ><span class="font-semibold sm:hidden">Subtotal:</span> {formatCurrency(item.subtotal)}</td
+                          ><span class="font-semibold sm:hidden">Subtotal :</span> {formatCurrency(item.subtotal)}</td
                         >
                         <td class="block sm:table-cell sm:w-1/7">
                           <button
@@ -1236,14 +1236,13 @@
                       </tr>
                     {/each}
                     <tr class="block sm:table-row font-bold bg-gray-100">
-                      <td class="block sm:table-cell text-right text-gray-900 sm:text-right sm:w-6/7"
-                        ><span class="font-semibold sm:hidden block">Total:</span>
-                        <span class="hidden sm:block">Total:</span></td
+                      <td colspan="5" class="block sm:table-cell text-gray-900 px-4 py-3"
+                        ><span class="font-semibold sm:hidden block text-center">Total :</span>
+                        <span class="hidden sm:block">Total : </span></td
                       >
-                      <td class="block sm:table-cell text-gray-900 text-right sm:text-right sm:w-1/7"
+                      <td class="block sm:table-cell text-gray-900 px-4 py-3"
                         >{formatCurrency(calculateTotal())}</td
                       >
-                      <td class="block sm:table-cell"></td>
                     </tr>
                   </tbody>
                 </table>
@@ -1539,19 +1538,19 @@
                 </h3>
                 <div class="grid grid-cols-2 gap-4">
                   <div>
-                    <p class="text-sm text-gray-600">Bank</p>
-                    <p class="font-bold text-lg text-gray-900">
-                      {settings?.bankName || "Bank Belum Diatur"}
-                    </p>
-                  </div>
-                  <div>
                     <p class="text-sm text-gray-600">Kode Bank</p>
                     <p class="font-bold text-lg text-gray-900">
                       {settings?.bankCode || "Kode Belum Diatur"}
                     </p>
                   </div>
                   <div>
-                    <p class="text-sm text-gray-600">Nomor Rekening</p>
+                    <p class="text-sm text-gray-600">Nama Bank</p>
+                    <p class="font-bold text-lg text-gray-900">
+                      {settings?.bankName || "Bank Belum Diatur"}
+                    </p>
+                  </div>
+                  <div>
+                    <p class="text-sm text-gray-600">No Rekening</p>
                     <p class="font-bold text-lg text-gray-900">
                       {settings?.bankAccountNumber || "Nomor Belum Diatur"}
                     </p>
