@@ -109,7 +109,7 @@
         </div>
         <div>
           <h3 class="font-semibold text-lg">Laporan Pendapatan</h3>
-          <p class="text-gray-600 text-sm mt-1">Sedang dalam perbaikan...</p>
+          <p class="text-gray-600 text-sm mt-1">Laporan pendapatan harian</p>
         </div>
       </div>
     </a>
@@ -124,7 +124,7 @@
         </div>
         <div>
           <h3 class="font-semibold text-lg">Laporan Pengeluaran</h3>
-          <p class="text-gray-600 text-sm mt-1">Sedang dalam perbaikan...</p>
+          <p class="text-gray-600 text-sm mt-1">Laporan pengeluaran harian</p>
         </div>
       </div>
     </a>
@@ -139,7 +139,7 @@
         </div>
         <div>
           <h3 class="font-semibold text-lg">Laporan Margin</h3>
-          <p class="text-gray-600 text-sm mt-1">Sedang dalam perbaikan...</p>
+          <p class="text-gray-600 text-sm mt-1">Laporan margin keuntungan</p>
         </div>
       </div>
     </a>

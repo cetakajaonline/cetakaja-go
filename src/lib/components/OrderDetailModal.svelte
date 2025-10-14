@@ -3,7 +3,7 @@
   import type { Order, User } from "$lib/types";
   import { updateOrder, uploadPaymentProof, getOrder } from "$lib/services/orderClient";
   import { formatCurrency, capitalizeFirstLetter, getStatusClass } from "$lib/utils/formatters";
-  import { formatDateTime } from "$lib/utils/date";
+  import { formatDateTime, formatDate } from "$lib/utils/date";
 
   let { 
     show = false, 

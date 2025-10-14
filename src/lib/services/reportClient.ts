@@ -1,4 +1,4 @@
-// Client functions for daily, weekly, monthly, annual, customer, and product report APIs
+// Client functions for daily, weekly, monthly, annual, customer, product, revenue, expense, and margin report APIs
 import type {
   DailyReportData,
   WeeklyReportData,
@@ -6,6 +6,9 @@ import type {
   AnnualReportData,
   CustomerReportData,
   ProductReportData,
+  RevenueReportData,
+  ExpenseReportData,
+  MarginReportData,
 } from "$lib/types";
 
 /**
@@ -183,4 +186,61 @@ export async function getTodaysReport(): Promise<DailyReportData> {
 export async function getReportForDate(date: Date): Promise<DailyReportData> {
   const dateString = date.toISOString().split("T")[0];
   return getDailyReport(dateString);
+}
+
+/**
+ * Fetches revenue report data for a specific date
+ * @param date The date to fetch report for (format: YYYY-MM-DD)
+ * @returns Promise resolving to revenue report data
+ */
+export async function getRevenueReport(date?: string): Promise<RevenueReportData> {
+  const url = date ? `/api/reports/revenue?date=${date}` : "/api/reports/revenue";
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to fetch revenue report");
+  }
+
+  const result = await response.json();
+  return result.data as RevenueReportData;
+}
+
+/**
+ * Fetches expense report data for a specific date
+ * @param date The date to fetch report for (format: YYYY-MM-DD)
+ * @returns Promise resolving to expense report data
+ */
+export async function getExpenseReport(date?: string): Promise<ExpenseReportData> {
+  const url = date ? `/api/reports/expense?date=${date}` : "/api/reports/expense";
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to fetch expense report");
+  }
+
+  const result = await response.json();
+  return result.data as ExpenseReportData;
+}
+
+/**
+ * Fetches margin report data for a specific date
+ * @param date The date to fetch report for (format: YYYY-MM-DD)
+ * @returns Promise resolving to margin report data
+ */
+export async function getMarginReport(date?: string): Promise<MarginReportData> {
+  const url = date ? `/api/reports/margin?date=${date}` : "/api/reports/margin";
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to fetch margin report");
+  }
+
+  const result = await response.json();
+  return result.data as MarginReportData;
 }

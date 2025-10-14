@@ -673,162 +673,6 @@ export async function exportAnnualReportToExcel(
 }
 
 /**
- * Exports annual report data to Excel format
- * @param reportData The annual report data to export
- * @param year The year of the report
- */
-export async function exportAnnualReportToExcel(
-  reportData: AnnualReportData,
-  year: number,
-): Promise<void> {
-  // Dynamically import xlsx (SheetJS) to avoid SSR issues
-  const XLSX = await import("xlsx");
-
-  // Create a new workbook
-  const wb = XLSX.utils.book_new();
-
-  // 1. Summary Sheet
-  const summaryHeaders: (string | number)[] = [
-    "Laporan Tahunan",
-    `Tahun ${reportData.year}`,
-  ];
-
-  const emptyRow: (string | number)[] = [""];
-
-  const summaryRows: (string | number)[][] = [
-    ["Total Orders", reportData.totalOrders],
-    ["Total Pendapatan", formatCurrency(reportData.totalRevenue)],
-    ["Total Pengeluaran", formatCurrency(reportData.totalExpenses)],
-    ["Keuntungan", formatCurrency(reportData.totalProfit)],
-    emptyRow,
-    ["Ringkasan Status Order Tahunan", ""],
-    ["Pending", reportData.ordersByStatus.pending],
-    ["Processing", reportData.ordersByStatus.processing],
-    ["Selesai", reportData.ordersByStatus.finished],
-    ["Dibatalkan", reportData.ordersByStatus.canceled],
-  ];
-
-  const summaryData: (string | number)[][] = [
-    summaryHeaders,
-    emptyRow,
-    ...summaryRows,
-  ];
-
-  const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
-  XLSX.utils.book_append_sheet(wb, summaryWs, "Ringkasan Tahunan");
-
-  // 2. Top Selling Products Sheet
-  if (reportData.topSellingProducts.length > 0) {
-    const topProductsHeaders: (string | number)[] = [
-      "Nama Produk",
-      "Jumlah Terjual",
-      "Total Pendapatan",
-    ];
-
-    // Helper function to ensure type safety
-    const createTopProductRow = (
-      product: (typeof reportData.topSellingProducts)[number],
-    ): (string | number)[] => {
-      const nameStr: string = product.name;
-      const totalSoldNum: number = product.totalSold;
-      const totalRevenueNum: number = product.totalRevenue;
-
-      return [nameStr, totalSoldNum, totalRevenueNum];
-    };
-
-    const topProductsRows: (string | number)[][] =
-      reportData.topSellingProducts.map(createTopProductRow);
-    const topProductsData: (string | number)[][] = [
-      topProductsHeaders,
-      ...topProductsRows,
-    ];
-
-    const topProductsWs = XLSX.utils.aoa_to_sheet(topProductsData);
-    XLSX.utils.book_append_sheet(
-      wb,
-      topProductsWs,
-      "Produk Terlaris Tahun Ini",
-    );
-  }
-
-  // 3. Orders Sheet
-  if (reportData.orders.length > 0) {
-    const ordersHeaders: (string | number)[] = [
-      "Waktu",
-      "No. Order",
-      "Pelanggan",
-      "Status",
-      "Total",
-    ];
-
-    // Helper function to ensure type safety
-    const createOrderRow = (
-      order: (typeof reportData.orders)[number],
-    ): (string | number)[] => {
-      const dateStr: string = new Date(order.createdAt).toLocaleDateString(
-        "id-ID",
-      );
-      const orderNumberStr: string = order.orderNumber;
-      const userNameStr: string = order.user.name;
-      const statusStr: string = order.status;
-      const totalAmountNum: number = order.totalAmount;
-
-      return [dateStr, orderNumberStr, userNameStr, statusStr, totalAmountNum];
-    };
-
-    const ordersRows: (string | number)[][] =
-      reportData.orders.map(createOrderRow);
-    const ordersData: (string | number)[][] = [ordersHeaders, ...ordersRows];
-
-    const ordersWs = XLSX.utils.aoa_to_sheet(ordersData);
-    XLSX.utils.book_append_sheet(wb, ordersWs, "Rincian Pendapatan Tahun Ini");
-  }
-
-  // 4. Expenses Sheet
-  if (reportData.expenses.length > 0) {
-    const expensesHeaders: (string | number)[] = [
-      "Waktu",
-      "Kategori",
-      "Deskripsi",
-      "Nominal",
-    ];
-
-    // Helper function to ensure type safety
-    const createExpenseRow = (
-      expense: (typeof reportData.expenses)[number],
-    ): (string | number)[] => {
-      const dateStr: string = new Date(expense.date).toLocaleDateString(
-        "id-ID",
-      );
-      const categoryStr: string =
-        capitalizeFirstLetter(expense.category);
-      const descriptionStr: string = expense.description || "-";
-      const nominalNum: number = expense.nominal;
-
-      return [dateStr, categoryStr, descriptionStr, nominalNum];
-    };
-
-    const expensesRows: (string | number)[][] =
-      reportData.expenses.map(createExpenseRow);
-    const expensesData: (string | number)[][] = [
-      expensesHeaders,
-      ...expensesRows,
-    ];
-
-    const expensesWs = XLSX.utils.aoa_to_sheet(expensesData);
-    XLSX.utils.book_append_sheet(
-      wb,
-      expensesWs,
-      "Rincian Pengeluaran Tahun Ini",
-    );
-  }
-
-  // Save the workbook
-  const fileName = `laporan-tahunan-${year}.xlsx`;
-  XLSX.writeFile(wb, fileName);
-}
-
-/**
  * Exports customer report data to Excel format
  * @param reportData The customer report data to export
  * @param startDate The start date of the report
@@ -861,6 +705,14 @@ export async function exportCustomerReportToExcel(
 
   const emptyRow: (string | number)[] = [""];
 
+  // Count orders by status from customerOrders
+  const ordersByStatus = {
+    pending: reportData.customerOrders.filter(order => order.status === 'pending').length,
+    processing: reportData.customerOrders.filter(order => order.status === 'processing').length,
+    finished: reportData.customerOrders.filter(order => order.status === 'finished').length,
+    canceled: reportData.customerOrders.filter(order => order.status === 'canceled').length,
+  };
+
   const summaryRows: (string | number)[][] = [
     ["Total Pelanggan", reportData.totalCustomers],
     ["Total Orders", reportData.totalOrders],
@@ -868,10 +720,10 @@ export async function exportCustomerReportToExcel(
     ["Rata-rata Nilai Pesanan", formatCurrency(reportData.averageOrderValue)],
     emptyRow,
     ["Ringkasan Status Order", ""],
-    ["Pending", reportData.ordersByStatus.pending],
-    ["Processing", reportData.ordersByStatus.processing],
-    ["Selesai", reportData.ordersByStatus.finished],
-    ["Dibatalkan", reportData.ordersByStatus.canceled],
+    ["Pending", ordersByStatus.pending],
+    ["Processing", ordersByStatus.processing],
+    ["Selesai", ordersByStatus.finished],
+    ["Dibatalkan", ordersByStatus.canceled],
   ];
 
   const summaryData: (string | number)[][] = [

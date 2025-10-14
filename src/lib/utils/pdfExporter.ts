@@ -1022,9 +1022,9 @@ export async function exportMonthlyReportToPDF(
       let ordersStartY = 150; // Default position if no previous elements
       if (reportData.topSellingProducts.length > 0) {
         // Position after top products table
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-assertion
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if ((doc as any).lastAutoTable) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-assertion
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           ordersStartY = (doc as any).lastAutoTable.finalY + 15; // Space below previous table
         }
       } else {
@@ -1091,16 +1091,16 @@ export async function exportMonthlyReportToPDF(
       let expensesStartY = 150; // Default position if no previous elements
       if (reportData.orders.length > 0) {
         // Position after orders table
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-assertion
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if ((doc as any).lastAutoTable) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-assertion
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           expensesStartY = (doc as any).lastAutoTable.finalY + 15; // Space below previous table
         }
       } else if (reportData.topSellingProducts.length > 0) {
         // Position after top products table if no orders
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-assertion
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if ((doc as any).lastAutoTable) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-assertion
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           expensesStartY = (doc as any).lastAutoTable.finalY + 15; // Space below previous table
         }
       } else {
@@ -1627,26 +1627,34 @@ export async function exportCustomerReportToPDF(
     doc.setFont("helvetica", "normal");
     doc.setTextColor(0, 0, 0); // Reset text color
 
+    // Calculate order status counts from customerOrders array
+    const ordersByStatus = {
+      pending: reportData.customerOrders.filter(order => order.status === 'pending').length,
+      processing: reportData.customerOrders.filter(order => order.status === 'processing').length,
+      finished: reportData.customerOrders.filter(order => order.status === 'finished').length,
+      canceled: reportData.customerOrders.filter(order => order.status === 'canceled').length,
+    };
+    
     // Organize status in a grid layout with colored indicators
     const statusItems = [
       {
         label: "Pending",
-        value: reportData.ordersByStatus.pending,
+        value: ordersByStatus.pending,
         color: [255, 165, 0],
       }, // Orange
       {
         label: "Processing",
-        value: reportData.ordersByStatus.processing,
+        value: ordersByStatus.processing,
         color: [65, 105, 225],
       }, // Royal Blue
       {
         label: "Selesai",
-        value: reportData.ordersByStatus.finished,
+        value: ordersByStatus.finished,
         color: [34, 139, 34],
       }, // Forest Green
       {
         label: "Dibatalkan",
-        value: reportData.ordersByStatus.canceled,
+        value: ordersByStatus.canceled,
         color: [220, 20, 60],
       }, // Crimson
     ];
@@ -1717,7 +1725,7 @@ export async function exportCustomerReportToPDF(
           ],
         ],
         body: topCustomersData,
-        startY: topCustomersStartY + 12, // Start below the header
+        startY: topCustomersStartY + 10, // Start below the header (reduced spacing)
         theme: "grid",
         headStyles: {
           fillColor: [66, 133, 244], // Google Blue
@@ -1732,14 +1740,34 @@ export async function exportCustomerReportToPDF(
         alternateRowStyles: {
           fillColor: [245, 245, 245],
         },
-        tableWidth: "wrap",
+        tableWidth: "auto", // Use auto table width that fits within page
         columnStyles: {
-          0: { cellWidth: "auto", overflow: "linebreak" }, // Customer name column - auto adjust with line break
-          1: { cellWidth: "auto" }, // Phone column - auto adjust
-          2: { cellWidth: "auto", halign: "center" }, // Total orders column - auto adjust
-          3: { cellWidth: "auto", halign: "right" }, // Total spent column - auto adjust
-          4: { cellWidth: "auto", halign: "right" }, // Average order value column - auto adjust
+          0: { cellWidth: "auto", overflow: "linebreak" }, // Customer name column - fixed width with line break
+          1: { cellWidth: "auto" }, // Phone column - fixed width
+          2: { cellWidth: "auto", halign: "center" }, // Total orders column - fixed width
+          3: { cellWidth: "auto", halign: "right" }, // Total spent column - fixed width
+          4: { cellWidth: "auto", halign: "right" }, // Average order value column - fixed width
         },
+        // Add page break options for better handling of long tables
+        margin: { top: 5, right: 10, left: 10 }, // Add horizontal margins
+        styles: {
+          cellPadding: 3,
+          fontSize: 9, // Smaller font size for better fit
+        },
+        headStyles: {
+          fillColor: [66, 133, 244], // Google Blue
+          textColor: [255, 255, 255],
+          fontSize: 10, // Smaller header font
+          fontStyle: "bold",
+          cellPadding: 3,
+        },
+        bodyStyles: {
+          fontSize: 9, // Smaller body font
+          cellPadding: 3,
+        },
+        // Better page break handling
+        pageBreak: 'auto',
+        rowPageBreak: 'avoid',
       });
     }
 
@@ -1796,7 +1824,7 @@ export async function exportCustomerReportToPDF(
           ["Waktu", "No. Order", "Pelanggan", "No. Telepon", "Status", "Total"],
         ],
         body: customerOrdersData,
-        startY: customerOrdersStartY + 12, // Start below the header
+        startY: customerOrdersStartY + 10, // Start below the header (reduced spacing)
         theme: "grid",
         headStyles: {
           fillColor: [66, 133, 244], // Google Blue
@@ -1811,15 +1839,35 @@ export async function exportCustomerReportToPDF(
         alternateRowStyles: {
           fillColor: [245, 245, 245],
         },
-        tableWidth: "wrap",
+        tableWidth: "auto", // Use auto table width that fits within page
         columnStyles: {
-          0: { cellWidth: "auto" }, // Date column - auto adjust
-          1: { cellWidth: "auto" }, // Order number column - auto adjust
-          2: { cellWidth: "auto", overflow: "linebreak" }, // Customer name column - auto adjust with line break
-          3: { cellWidth: "auto" }, // Customer phone column - auto adjust
-          4: { cellWidth: "auto", halign: "center" }, // Status column - auto adjust
-          5: { cellWidth: "auto", halign: "right" }, // Amount column - auto adjust
+          0: { cellWidth: "auto" }, // Date column - fixed width
+          1: { cellWidth: "auto" }, // Order number column - fixed width
+          2: { cellWidth: "auto", overflow: "linebreak" }, // Customer name column - fixed width with line break
+          3: { cellWidth: "auto" }, // Customer phone column - fixed width
+          4: { cellWidth: "auto", halign: "center" }, // Status column - fixed width
+          5: { cellWidth: "auto", halign: "right" }, // Amount column - fixed width
         },
+        // Add page break options for better handling of long tables
+        margin: { top: 5, right: 10, left: 10 }, // Add horizontal margins
+        styles: {
+          cellPadding: 3,
+          fontSize: 9, // Smaller font size for better fit
+        },
+        headStyles: {
+          fillColor: [66, 133, 244], // Google Blue
+          textColor: [255, 255, 255],
+          fontSize: 10, // Smaller header font
+          fontStyle: "bold",
+          cellPadding: 3,
+        },
+        bodyStyles: {
+          fontSize: 9, // Smaller body font
+          cellPadding: 3,
+        },
+        // Better page break handling
+        pageBreak: 'auto',
+        rowPageBreak: 'avoid',
       });
     }
 
@@ -1975,7 +2023,7 @@ export async function exportProductReportToPDF(
           ],
         ],
         body: topProductsData,
-        startY: topProductsStartY + 12, // Start below the header
+        startY: topProductsStartY + 10, // Start below the header (reduced spacing)
         theme: "grid",
         headStyles: {
           fillColor: [66, 133, 244], // Google Blue
@@ -1990,15 +2038,35 @@ export async function exportProductReportToPDF(
         alternateRowStyles: {
           fillColor: [245, 245, 245],
         },
-        tableWidth: "wrap",
+        tableWidth: "auto", // Use auto table width that fits within page
         columnStyles: {
-          0: { cellWidth: "auto", overflow: "linebreak" }, // Product name column - auto adjust with line break
-          1: { cellWidth: "auto" }, // Base code column - auto adjust
-          2: { cellWidth: "auto" }, // Category column - auto adjust
-          3: { cellWidth: "auto", halign: "center" }, // Quantity column - auto adjust
-          4: { cellWidth: "auto", halign: "right" }, // Total revenue column - auto adjust
-          5: { cellWidth: "auto", halign: "right" }, // Average price column - auto adjust
+          0: { cellWidth: "auto", overflow: "linebreak" }, // Product name column - fixed width with line break
+          1: { cellWidth: "auto" }, // Base code column - fixed width
+          2: { cellWidth: "auto" }, // Category column - fixed width
+          3: { cellWidth: "auto", halign: "center" }, // Quantity column - fixed width
+          4: { cellWidth: "auto", halign: "right" }, // Total revenue column - fixed width
+          5: { cellWidth: "auto", halign: "right" }, // Average price column - fixed width
         },
+        // Add page break options for better handling of long tables
+        margin: { top: 5, right: 10, left: 10 }, // Add horizontal margins
+        styles: {
+          cellPadding: 3,
+          fontSize: 9, // Smaller font size for better fit
+        },
+        headStyles: {
+          fillColor: [66, 133, 244], // Google Blue
+          textColor: [255, 255, 255],
+          fontSize: 10, // Smaller header font
+          fontStyle: "bold",
+          cellPadding: 3,
+        },
+        bodyStyles: {
+          fontSize: 9, // Smaller body font
+          cellPadding: 3,
+        },
+        // Better page break handling
+        pageBreak: 'auto',
+        rowPageBreak: 'avoid',
       });
     }
 
@@ -2060,7 +2128,7 @@ export async function exportProductReportToPDF(
           ],
         ],
         body: productSalesData,
-        startY: productSalesStartY + 12, // Start below the header
+        startY: productSalesStartY + 10, // Start below the header (reduced spacing)
         theme: "grid",
         headStyles: {
           fillColor: [66, 133, 244], // Google Blue
@@ -2075,14 +2143,34 @@ export async function exportProductReportToPDF(
         alternateRowStyles: {
           fillColor: [245, 245, 245],
         },
-        tableWidth: "wrap",
+        tableWidth: "auto", // Use auto table width that fits within page
         columnStyles: {
-          0: { cellWidth: "auto", overflow: "linebreak" }, // Product name column - auto adjust with line break
-          1: { cellWidth: "auto" }, // Base code column - auto adjust
-          2: { cellWidth: "auto" }, // Category column - auto adjust
-          3: { cellWidth: "auto", halign: "center" }, // Quantity column - auto adjust
-          4: { cellWidth: "auto", halign: "right" }, // Total revenue column - auto adjust
+          0: { cellWidth: "auto", overflow: "linebreak" }, // Product name column - fixed width with line break
+          1: { cellWidth: "auto" }, // Base code column - fixed width
+          2: { cellWidth: "auto" }, // Category column - fixed width
+          3: { cellWidth: "auto", halign: "center" }, // Quantity column - fixed width
+          4: { cellWidth: "auto", halign: "right" }, // Total revenue column - fixed width
         },
+        // Add page break options for better handling of long tables
+        margin: { top: 5, right: 10, left: 10 }, // Add horizontal margins
+        styles: {
+          cellPadding: 3,
+          fontSize: 9, // Smaller font size for better fit
+        },
+        headStyles: {
+          fillColor: [66, 133, 244], // Google Blue
+          textColor: [255, 255, 255],
+          fontSize: 10, // Smaller header font
+          fontStyle: "bold",
+          cellPadding: 3,
+        },
+        bodyStyles: {
+          fontSize: 9, // Smaller body font
+          cellPadding: 3,
+        },
+        // Better page break handling
+        pageBreak: 'auto',
+        rowPageBreak: 'avoid',
       });
     }
 

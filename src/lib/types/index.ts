@@ -399,6 +399,104 @@ export interface ProductReportData {
   }>;
 }
 
+// ✅ Revenue Report
+export interface RevenueReportData {
+  date: Date;
+  totalRevenue: number;
+  totalOrders: number;
+  totalExpenses: number;
+  netRevenue: number;
+  ordersByStatus: {
+    pending: number;
+    processing: number;
+    finished: number;
+    canceled: number;
+  };
+  revenueByPaymentMethod: {
+    transfer: number;
+    qris: number;
+    cash: number;
+  };
+  topRevenueProducts: Array<{
+    id: number;
+    name: string;
+    totalSold: number;
+    totalRevenue: number;
+  }>;
+  orders: Array<{
+    id: number;
+    orderNumber: string;
+    status: "pending" | "processing" | "finished" | "canceled";
+    paymentMethod: "transfer" | "qris" | "cash";
+    totalAmount: number;
+    createdAt: Date;
+    user: {
+      name: string;
+    };
+  }>;
+}
+
+// ✅ Expense Report
+export interface ExpenseReportData {
+  date: Date;
+  totalExpenses: number;
+  expenseCategories: {
+    operational: number;
+    marketing: number;
+    gaji: number;
+    lainnya: number;
+  };
+  totalOrders: number;
+  totalRevenue: number;
+  expenses: Array<{
+    id: number;
+    nominal: number;
+    category: string;
+    description: string | null;
+    date: Date;
+  }>;
+}
+
+// ✅ Margin Report
+export interface MarginReportData {
+  date: Date;
+  totalRevenue: number;
+  totalCost: number;
+  totalProfit: number;
+  totalOrders: number;
+  totalExpenses: number;
+  grossMargin: number; // Percentage
+  netMargin: number; // Percentage
+  ordersByStatus: {
+    pending: number;
+    processing: number;
+    finished: number;
+    canceled: number;
+  };
+  productMargins: Array<{
+    id: number;
+    name: string;
+    cost: number;
+    revenue: number;
+    profit: number;
+    margin: number; // Percentage
+    totalSold: number;
+  }>;
+  orders: Array<{
+    id: number;
+    orderNumber: string;
+    status: "pending" | "processing" | "finished" | "canceled";
+    totalAmount: number;
+    cost: number;
+    profit: number;
+    margin: number; // Percentage
+    createdAt: Date;
+    user: {
+      name: string;
+    };
+  }>;
+}
+
 // ✅ Product Sort Key
 export type ProductSortKey =
   | "name"

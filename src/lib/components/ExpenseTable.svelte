@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Expense } from "$lib/types";
   import { formatCurrency, capitalizeFirstLetter } from '$lib/utils/formatters';
-  import { formatDateTime } from '$lib/utils/date';
+  import { formatDateTime, formatDate } from '$lib/utils/date';
 
   let { 
     expenses, 
