@@ -82,6 +82,23 @@
 </script>
 
 <DefaultLayout title="Daily Report">
+  <div class="mb-4 breadcrumbs text-sm">
+    <ul>
+      <li>
+        <a href="/" class="flex items-center">
+          <span class="mr-2">🏠</span> Beranda
+        </a>
+      </li>
+      <li>
+        <a href="/reports" class="flex items-center">
+          <span class="mr-2">📊</span> Reports
+        </a>
+      </li>
+      <li class="flex items-center">
+        <span class="mr-2">📅</span> Daily
+      </li>
+    </ul>
+  </div>
   <PageHeader title="Laporan Harian" icon="📅" />
 
   <div class="p-6">

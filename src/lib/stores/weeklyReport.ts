@@ -1,9 +1,9 @@
 import { writable } from "svelte/store";
-import type { DailyReportData } from "$lib/types";
+import type { WeeklyReportData } from "$lib/types";
 
-// Initial state for the daily report store
+// Initial state for the weekly report store
 const initialReportState: {
-  reportData: DailyReportData | null;
+  reportData: WeeklyReportData | null;
   loading: boolean;
   error: string | null;
 } = {
@@ -13,24 +13,26 @@ const initialReportState: {
 };
 
 // Create the store
-const createDailyReportStore = () => {
+const createWeeklyReportStore = () => {
   const { subscribe, set, update } = writable(initialReportState);
 
   return {
     subscribe,
 
-    // Fetch daily report data
-    fetchReport: async (date?: string) => {
+    // Fetch weekly report data
+    fetchReport: async (startDate?: string) => {
       update((state) => ({ ...state, loading: true, error: null }));
 
       try {
         const response = await fetch(
-          date ? `/api/reports/daily?date=${date}` : "/api/reports/daily",
+          startDate
+            ? `/api/reports/weekly?startDate=${startDate}`
+            : "/api/reports/weekly",
         );
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.message || "Failed to fetch daily report");
+          throw new Error(errorData.message || "Failed to fetch weekly report");
         }
 
         const result = await response.json();
@@ -54,7 +56,7 @@ const createDailyReportStore = () => {
     },
 
     // Set report data directly (useful when data is already available)
-    setReportData: (reportData: DailyReportData) => {
+    setReportData: (reportData: WeeklyReportData) => {
       update((state) => ({
         ...state,
         reportData,
@@ -71,4 +73,4 @@ const createDailyReportStore = () => {
 };
 
 // Export the store instance
-export const dailyReportStore = createDailyReportStore();
+export const weeklyReportStore = createWeeklyReportStore();

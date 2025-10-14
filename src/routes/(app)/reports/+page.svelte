@@ -6,11 +6,7 @@
 <DefaultLayout title="Reports">
   <PageHeader title="Laporan" icon="📊" />
   
-  <div class="alert alert-info">
-    <div>
-      <span>Semua laporan sedang dalam perbaikan...</span>
-    </div>
-  </div>
+
   
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
     <a 
@@ -23,7 +19,7 @@
         </div>
         <div>
           <h3 class="font-semibold text-lg">Laporan Harian</h3>
-          <p class="text-gray-600 text-sm mt-1">Sedang dalam perbaikan...</p>
+          <p class="text-gray-600 text-sm mt-1">Laporan penjualan harian</p>
         </div>
       </div>
     </a>
@@ -38,7 +34,7 @@
         </div>
         <div>
           <h3 class="font-semibold text-lg">Laporan Mingguan</h3>
-          <p class="text-gray-600 text-sm mt-1">Sedang dalam perbaikan...</p>
+          <p class="text-gray-600 text-sm mt-1">Laporan penjualan mingguan</p>
         </div>
       </div>
     </a>
