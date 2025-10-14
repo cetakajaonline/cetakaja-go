@@ -259,6 +259,45 @@ export interface WeeklyReportData {
   }>;
 }
 
+// ✅ Monthly Report
+export interface MonthlyReportData {
+  startDate: Date;
+  endDate: Date;
+  totalOrders: number;
+  totalRevenue: number;
+  totalExpenses: number;
+  totalProfit: number;
+  ordersByStatus: {
+    pending: number;
+    processing: number;
+    finished: number;
+    canceled: number;
+  };
+  topSellingProducts: Array<{
+    id: number;
+    name: string;
+    totalSold: number;
+    totalRevenue: number;
+  }>;
+  orders: Array<{
+    id: number;
+    orderNumber: string;
+    status: "pending" | "processing" | "finished" | "canceled";
+    totalAmount: number;
+    createdAt: Date;
+    user: {
+      name: string;
+    };
+  }>;
+  expenses: Array<{
+    id: number;
+    nominal: number;
+    category: string;
+    description: string | null;
+    date: Date;
+  }>;
+}
+
 // ✅ Product Sort Key
 export type ProductSortKey =
   | "name"
