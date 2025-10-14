@@ -1,8 +1,9 @@
-// Client functions for daily, weekly, and monthly report APIs
+// Client functions for daily, weekly, monthly, and annual report APIs
 import type {
   DailyReportData,
   WeeklyReportData,
   MonthlyReportData,
+  AnnualReportData,
 } from "$lib/types";
 
 /**
@@ -75,6 +76,33 @@ export async function getMonthlyReport(
 
   const result = await response.json();
   return result.data as MonthlyReportData;
+}
+
+/**
+ * Fetches annual report data for a specific year
+ * @param year The year to fetch report for
+ * @returns Promise resolving to annual report data
+ */
+export async function getAnnualReport(
+  year?: number,
+): Promise<AnnualReportData> {
+  const params = new URLSearchParams();
+  if (year !== undefined) params.append("year", year.toString());
+
+  const queryString = params.toString();
+  const url = queryString
+    ? `/api/reports/annual?${queryString}`
+    : "/api/reports/annual";
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to fetch annual report");
+  }
+
+  const result = await response.json();
+  return result.data as AnnualReportData;
 }
 
 /**

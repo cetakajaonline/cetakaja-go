@@ -3,6 +3,7 @@ import type {
   DailyReportData,
   WeeklyReportData,
   MonthlyReportData,
+  AnnualReportData,
 } from "$lib/types";
 
 /**
@@ -534,6 +535,178 @@ export async function getMonthlyReport(
   return {
     startDate,
     endDate,
+    totalOrders,
+    totalRevenue,
+    totalExpenses,
+    totalProfit,
+    ordersByStatus,
+    topSellingProducts,
+    orders: formattedOrders,
+    expenses: formattedExpenses,
+  };
+}
+
+/**
+ * Gets annual report data for the specified year.
+ *
+ * @param year The year for the report
+ * @returns Annual report data
+ */
+export async function getAnnualReport(year: number): Promise<AnnualReportData> {
+  // Calculate date range for the selected year (from Jan 1 to Dec 31) in local timezone
+  const startDate = new Date(year, 0, 1, 0, 0, 0, 0); // January 1st
+  const endDate = new Date(year, 11, 31, 23, 59, 59, 999); // December 31st
+
+  // Fetch orders and related data separately to avoid relationship issues
+  const [orders, orderItems, expenses] = await Promise.all([
+    // Fetch orders for the selected year
+    prisma.order.findMany({
+      where: {
+        createdAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      include: {
+        user: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+
+    // Fetch order items for those dates by using a subquery with order IDs
+    prisma.orderItem.findMany({
+      where: {
+        order: {
+          createdAt: {
+            gte: startDate,
+            lte: endDate,
+          },
+        },
+      },
+      include: {
+        product: true,
+        variant: true,
+      },
+    }),
+
+    // Fetch expenses for the selected year
+    prisma.expense.findMany({
+      where: {
+        date: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+    }),
+  ]);
+
+  // Group orderItems by order ID for efficient processing
+  const orderItemsMap: Record<number, typeof orderItems> = {};
+  orderItems.forEach((item: (typeof orderItems)[number]) => {
+    const orderId = item.orderId; // Using the foreign key directly
+    if (!orderItemsMap[orderId]) {
+      orderItemsMap[orderId] = [];
+    }
+    orderItemsMap[orderId].push(item);
+  });
+
+  // Calculate report metrics
+  const totalOrders = orders.length;
+  // Only count revenue from orders with confirmed payments (not pending, failed, or refunded)
+  const totalRevenue = orders
+    .filter((order) => order.paymentStatus === "confirmed")
+    .reduce(
+      (sum: number, order: (typeof orders)[number]) => sum + order.totalAmount,
+      0,
+    );
+  const totalExpenses = expenses.reduce(
+    (sum: number, expense: (typeof expenses)[number]) => sum + expense.nominal,
+    0,
+  );
+  const totalProfit = totalRevenue - totalExpenses;
+
+  // Count orders by status
+  const ordersByStatus = {
+    pending: orders.filter(
+      (order: (typeof orders)[number]) => order.status === "pending",
+    ).length,
+    processing: orders.filter(
+      (order: (typeof orders)[number]) => order.status === "processing",
+    ).length,
+    finished: orders.filter(
+      (order: (typeof orders)[number]) => order.status === "finished",
+    ).length,
+    canceled: orders.filter(
+      (order: (typeof orders)[number]) => order.status === "canceled",
+    ).length,
+  };
+
+  // Calculate top selling products for the year
+  const productSales: Record<
+    number,
+    { name: string; totalSold: number; totalRevenue: number }
+  > = {};
+
+  orders.forEach((order: (typeof orders)[number]) => {
+    const items = orderItemsMap[order.id] || [];
+    items.forEach((item: (typeof orderItems)[number]) => {
+      const productId = item.productId;
+      if (!productSales[productId]) {
+        productSales[productId] = {
+          name: item.product.name,
+          totalSold: 0,
+          totalRevenue: 0,
+        };
+      }
+      productSales[productId].totalSold += item.qty;
+      productSales[productId].totalRevenue += item.subtotal;
+    });
+  });
+
+  // Convert to array and sort by quantity sold
+  const topSellingProducts = Object.entries(productSales)
+    .map(([id, data]) => ({
+      id: parseInt(id),
+      name: data.name,
+      totalSold: data.totalSold,
+      totalRevenue: data.totalRevenue,
+    }))
+    .sort(
+      (a: { totalSold: number }, b: { totalSold: number }) =>
+        b.totalSold - a.totalSold,
+    )
+    .slice(0, 10); // Top 10 selling products
+
+  // Format orders data for the response
+  const formattedOrders = orders.map((order: (typeof orders)[number]) => ({
+    id: order.id,
+    orderNumber: order.orderNumber,
+    status: order.status,
+    totalAmount: order.totalAmount,
+    createdAt: order.createdAt,
+    user: {
+      name: order.user.name,
+    },
+  }));
+
+  // Format expenses data for the response
+  const formattedExpenses = expenses.map((expense) => ({
+    id: expense.id,
+    nominal: expense.nominal,
+    category: expense.category,
+    description: expense.description,
+    date: expense.date,
+  }));
+
+  // Return the annual report data
+  return {
+    year,
     totalOrders,
     totalRevenue,
     totalExpenses,
