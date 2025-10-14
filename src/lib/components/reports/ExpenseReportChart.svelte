@@ -1,89 +1,252 @@
 <script lang="ts">
+  import {
+    Chart as ChartJS,
+    ArcElement,
+    Tooltip,
+    Legend,
+    Title,
+    DoughnutController,
+    BarElement,
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    BarController,
+  } from "chart.js";
   import { onMount, onDestroy } from "svelte";
   import type { ExpenseReportData } from "$lib/types";
-  import { Chart as ChartJS, ArcElement, Tooltip, Legend, Title } from 'chart.js';
-  import type { ChartConfiguration } from 'chart.js';
 
   export let reportData: ExpenseReportData | null | undefined;
 
-  let canvasElement: HTMLCanvasElement;
-  let chart: ChartJS;
+  // Register Chart.js components needed for doughnut and bar charts
+  ChartJS.register(
+    ArcElement,
+    Tooltip,
+    Legend,
+    Title,
+    DoughnutController,
+    BarController,
+    BarElement,
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement
+  );
 
-  // Register ChartJS components
-  ChartJS.register(ArcElement, Tooltip, Legend, Title);
+  // Canvas elements for the charts
+  let expenseDistributionCanvas: HTMLCanvasElement;
+  let expenseCategoriesCanvas: HTMLCanvasElement;
+  let expenseAnalysisCanvas: HTMLCanvasElement;
+
+  // Chart instances
+  let expenseDistributionChart: ChartJS;
+  let expenseCategoriesChart: ChartJS;
+  let expenseAnalysisChart: ChartJS;
+
+  // Prepare data for the charts
+  $: expenseDistributionChartData = {
+    labels: reportData ? ["Pengeluaran", "Pendapatan"] : [],
+    datasets: [
+      {
+        label: "Jumlah (Rp)",
+        data: reportData ? [
+          reportData.totalExpenses || 0,
+          reportData.totalRevenue || 0,
+        ] : [0, 0],
+        backgroundColor: [
+          "rgba(124, 58, 237, 0.8)", // Expenses - daisyUI secondary (violet-600)
+          "rgba(16, 185, 129, 0.8)", // Revenue - daisyUI success (emerald-500)
+        ],
+        borderColor: [
+          "rgba(124, 58, 237, 1)",
+          "rgba(16, 185, 129, 1)",
+        ],
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  // Prepare data for expense categories chart
+  $: expenseCategoriesChartData = {
+    labels: reportData ? ["Operasional", "Marketing", "Gaji", "Lainnya"] : [],
+    datasets: [
+      {
+        label: "Jumlah Pengeluaran",
+        data: reportData ? [
+          reportData.expenseCategories?.operational || 0,
+          reportData.expenseCategories?.marketing || 0,
+          reportData.expenseCategories?.gaji || 0,
+          reportData.expenseCategories?.lainnya || 0,
+        ] : [0, 0, 0, 0],
+        backgroundColor: [
+          "rgba(79, 70, 229, 0.8)", // Operasional - daisyUI primary (indigo-500)
+          "rgba(245, 158, 11, 0.8)", // Marketing - daisyUI warning (amber-500)
+          "rgba(16, 185, 129, 0.8)", // Gaji - daisyUI success (emerald-500)
+          "rgba(124, 58, 237, 0.8)", // Lainnya - daisyUI secondary (violet-600)
+        ],
+        borderColor: [
+          "rgba(79, 70, 229, 1)", // Operasional
+          "rgba(245, 158, 11, 1)", // Marketing
+          "rgba(16, 185, 129, 1)", // Gaji
+          "rgba(124, 58, 237, 1)", // Lainnya
+        ],
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  // Prepare data for expense analysis chart
+  $: expenseAnalysisChartData = {
+    labels: reportData ? ["Operasional", "Marketing", "Gaji", "Lainnya"] : [],
+    datasets: [
+      {
+        label: "Total Pengeluaran (Rp)",
+        data: reportData ? [
+          reportData.expenseCategories?.operational || 0,
+          reportData.expenseCategories?.marketing || 0,
+          reportData.expenseCategories?.gaji || 0,
+          reportData.expenseCategories?.lainnya || 0,
+        ] : [0, 0, 0, 0],
+        backgroundColor: "rgba(124, 58, 237, 0.8)", // daisyUI secondary (violet-600)
+        borderColor: "rgba(124, 58, 237, 1)",
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  // Chart options
+  const expenseDistributionChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "top" as const,
+      },
+      title: {
+        display: true,
+        text: "Distribusi Pengeluaran vs Pendapatan",
+      },
+    },
+  };
+
+  const expenseCategoriesChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "top" as const,
+      },
+      title: {
+        display: true,
+        text: "Distribusi Pengeluaran per Kategori",
+      },
+    },
+  };
+
+  const expenseAnalysisChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "top" as const,
+      },
+      title: {
+        display: true,
+        text: "Analisis Pengeluaran per Kategori",
+      },
+    },
+  };
 
   onMount(() => {
-    if (canvasElement && reportData && reportData.expenseCategories) {
-      // Prepare chart data
-      const labels = ['Operasional', 'Marketing', 'Gaji', 'Lainnya'];
-      const data = [
-        reportData.expenseCategories?.operational || 0,
-        reportData.expenseCategories?.marketing || 0,
-        reportData.expenseCategories?.gaji || 0,
-        reportData.expenseCategories?.lainnya || 0
-      ];
+    // Create expense distribution chart
+    if (expenseDistributionCanvas && reportData) {
+      expenseDistributionChart = new ChartJS(expenseDistributionCanvas, {
+        type: "doughnut",
+        data: expenseDistributionChartData,
+        options: expenseDistributionChartOptions,
+      });
+    }
 
-      // Only include categories with values
-      const validData = labels.map((label, index) => ({ label, value: data[index] }))
-        .filter(item => item.value > 0);
+    // Create expense categories chart
+    if (expenseCategoriesCanvas && reportData) {
+      expenseCategoriesChart = new ChartJS(expenseCategoriesCanvas, {
+        type: "bar",
+        data: expenseCategoriesChartData,
+        options: expenseCategoriesChartOptions,
+      });
+    }
 
-      const chartData = {
-        labels: validData.map(item => item.label),
-        datasets: [
-          {
-            data: validData.map(item => item.value),
-            backgroundColor: [
-              'rgba(54, 162, 235, 0.5)',
-              'rgba(255, 99, 132, 0.5)',
-              'rgba(255, 205, 86, 0.5)',
-              'rgba(75, 192, 192, 0.5)',
-            ],
-            borderColor: [
-              'rgb(54, 162, 235)',
-              'rgb(255, 99, 132)',
-              'rgb(255, 205, 86)',
-              'rgb(75, 192, 192)',
-            ],
-            borderWidth: 1,
-          }
-        ]
-      };
-
-      const chartConfig: ChartConfiguration<'pie'> = {
-        type: 'pie',
-        data: chartData,
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'top' as const,
-            },
-            title: {
-              display: true,
-              text: 'Distribusi Pengeluaran per Kategori'
-            }
-          }
-        }
-      };
-
-      chart = new ChartJS(canvasElement, chartConfig);
+    // Create expense analysis chart
+    if (expenseAnalysisCanvas && reportData) {
+      expenseAnalysisChart = new ChartJS(expenseAnalysisCanvas, {
+        type: "bar",
+        data: expenseAnalysisChartData,
+        options: expenseAnalysisChartOptions,
+      });
     }
   });
 
   onDestroy(() => {
-    if (chart) {
-      chart.destroy();
+    // Clean up charts to prevent memory leaks
+    if (expenseDistributionChart) {
+      expenseDistributionChart.destroy();
+    }
+    if (expenseCategoriesChart) {
+      expenseCategoriesChart.destroy();
+    }
+    if (expenseAnalysisChart) {
+      expenseAnalysisChart.destroy();
     }
   });
+
+  // Update charts when data changes
+  $: if (expenseDistributionChart && reportData) {
+    expenseDistributionChart.data = expenseDistributionChartData;
+    expenseDistributionChart.update();
+  }
+
+  $: if (expenseCategoriesChart && reportData) {
+    expenseCategoriesChart.data = expenseCategoriesChartData;
+    expenseCategoriesChart.update();
+  }
+
+  $: if (expenseAnalysisChart && reportData) {
+    expenseAnalysisChart.data = expenseAnalysisChartData;
+    expenseAnalysisChart.update();
+  }
 </script>
 
-{#if reportData}
-  <div class="bg-white p-6 rounded-xl shadow border h-96">
-    <canvas bind:this={canvasElement}></canvas>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <!-- Expense Distribution Chart -->
+  <div class="bg-base-100 p-4 rounded-lg shadow">
+    {#if reportData && (reportData.totalExpenses || reportData.totalRevenue)}
+      <div class="h-80">
+        <canvas bind:this={expenseDistributionCanvas}></canvas>
+      </div>
+    {:else}
+      <p class="text-center text-gray-500">Tidak ada data</p>
+    {/if}
   </div>
-{:else}
-  <div class="bg-white p-6 rounded-xl shadow border h-96 flex items-center justify-center">
-    <div class="text-gray-500">Loading chart...</div>
+
+  <!-- Expense Categories Chart -->
+  <div class="bg-base-100 p-4 rounded-lg shadow">
+    {#if reportData && reportData.expenseCategories}
+      <div class="h-80">
+        <canvas bind:this={expenseCategoriesCanvas}></canvas>
+      </div>
+    {:else}
+      <p class="text-center text-gray-500">Tidak ada data</p>
+    {/if}
   </div>
-{/if}
+
+  <!-- Expense Analysis Chart -->
+  <div class="bg-base-100 p-4 rounded-lg shadow lg:col-span-2">
+    {#if reportData && reportData.expenseCategories}
+      <div class="h-80">
+        <canvas bind:this={expenseAnalysisCanvas}></canvas>
+      </div>
+    {:else}
+      <p class="text-center text-gray-500">Tidak ada data</p>
+    {/if}
+  </div>
+</div>

@@ -36,16 +36,16 @@
           reportData.ordersByStatus?.canceled || 0,
         ],
         backgroundColor: [
-          "rgba(255, 193, 7, 0.8)", // Pending - yellow
-          "rgba(0, 123, 255, 0.8)", // Processing - blue
-          "rgba(40, 167, 69, 0.8)", // Finished - green
-          "rgba(220, 53, 69, 0.8)", // Canceled - red
+          "rgba(245, 158, 11, 0.8)", // Pending - daisyUI warning (amber-500)
+          "rgba(79, 70, 229, 0.8)",  // Processing - daisyUI primary (indigo-500)
+          "rgba(16, 185, 129, 0.8)", // Finished - daisyUI success (emerald-500)
+          "rgba(124, 58, 237, 0.8)", // Canceled - daisyUI secondary (violet-600)
         ],
         borderColor: [
-          "rgba(255, 193, 7, 1)",
-          "rgba(0, 123, 255, 1)",
-          "rgba(40, 167, 69, 1)",
-          "rgba(220, 53, 69, 1)",
+          "rgba(245, 158, 11, 1)",
+          "rgba(79, 70, 229, 1)",
+          "rgba(16, 185, 129, 1)",
+          "rgba(124, 58, 237, 1)",
         ],
         borderWidth: 1,
       },
@@ -60,10 +60,10 @@
         label: "Rp",
         data: [reportData.totalRevenue || 0, reportData.totalExpenses || 0],
         backgroundColor: [
-          "rgba(40, 167, 69, 0.8)", // Revenue - green
-          "rgba(220, 53, 69, 0.8)", // Expenses - red
+          "rgba(16, 185, 129, 0.8)", // Revenue - daisyUI success (emerald-500)
+          "rgba(124, 58, 237, 0.8)",  // Expenses - daisyUI secondary (violet-600)
         ],
-        borderColor: ["rgba(40, 167, 69, 1)", "rgba(220, 53, 69, 1)"],
+        borderColor: ["rgba(16, 185, 129, 1)", "rgba(124, 58, 237, 1)"],
         borderWidth: 1,
       },
     ],

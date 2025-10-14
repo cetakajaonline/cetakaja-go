@@ -401,7 +401,9 @@ export interface ProductReportData {
 
 // ✅ Revenue Report
 export interface RevenueReportData {
-  date: Date;
+  date?: Date; // For single date reports
+  startDate?: Date; // For date range reports
+  endDate?: Date; // For date range reports
   totalRevenue: number;
   totalOrders: number;
   totalExpenses: number;
@@ -438,7 +440,9 @@ export interface RevenueReportData {
 
 // ✅ Expense Report
 export interface ExpenseReportData {
-  date: Date;
+  date?: Date; // For single date reports
+  startDate?: Date; // For date range reports
+  endDate?: Date; // For date range reports
   totalExpenses: number;
   expenseCategories: {
     operational: number;
@@ -459,7 +463,9 @@ export interface ExpenseReportData {
 
 // ✅ Margin Report
 export interface MarginReportData {
-  date: Date;
+  date?: Date; // For single date reports
+  startDate?: Date; // For date range reports
+  endDate?: Date; // For date range reports
   totalRevenue: number;
   totalCost: number;
   totalProfit: number;

@@ -970,3 +970,362 @@ export async function exportProductReportToExcel(
   const fileName = `laporan-produk-${startDate.toISOString().split("T")[0]}-${endDate.toISOString().split("T")[0]}.xlsx`;
   XLSX.writeFile(wb, fileName);
 }
+
+/**
+ * Exports revenue report data to Excel format
+ * @param reportData The revenue report data to export
+ * @param startDate The start date of the report
+ * @param endDate The end date of the report
+ */
+export async function exportRevenueReportToExcel(
+  reportData: RevenueReportData,
+  startDate: Date,
+  endDate: Date,
+): Promise<void> {
+  const XLSX = await import("xlsx");
+  // Create a new workbook
+  const wb = XLSX.utils.book_new();
+
+  // Add summary sheet
+  const summaryHeaders: (string | number)[] = [
+    "Tanggal Laporan",
+    "Total Pendapatan",
+    "Total Pengeluaran",
+    "Pendapatan Bersih",
+    "Total Order",
+  ];
+
+  // Format dates for the summary row
+  const formattedStartDate = new Date(reportData.startDate).toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "2-digit", 
+    year: "numeric",
+  });
+  const formattedEndDate = new Date(reportData.endDate).toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+
+  const summaryRow: (string | number)[] = [
+    `${formattedStartDate} s.d. ${formattedEndDate}`,
+    reportData.totalRevenue,
+    reportData.totalExpenses,
+    reportData.netRevenue,
+    reportData.totalOrders,
+  ];
+
+  const summaryData: (string | number)[][] = [summaryHeaders, summaryRow];
+  const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
+  XLSX.utils.book_append_sheet(wb, summaryWs, "Ringkasan");
+
+  // Add top revenue products sheet if there are any
+  if (reportData.topRevenueProducts.length > 0) {
+    const topProductsHeaders: (string | number)[] = [
+      "#",
+      "Nama Produk",
+      "Jumlah Terjual",
+      "Total Pendapatan",
+    ];
+
+    // Helper function to ensure type safety
+    const createTopProductRow = (
+      product: (typeof reportData.topRevenueProducts)[number],
+    ): (string | number)[] => {
+      const idNum: number = product.id;
+      const nameStr: string = product.name;
+      const totalSoldNum: number = product.totalSold;
+      const totalRevenueNum: number = product.totalRevenue;
+
+      return [idNum, nameStr, totalSoldNum, totalRevenueNum];
+    };
+
+    const topProductsRows: (string | number)[][] = reportData.topRevenueProducts.map(
+      createTopProductRow,
+    );
+    const topProductsData: (string | number)[][] = [
+      topProductsHeaders,
+      ...topProductsRows,
+    ];
+
+    const topProductsWs = XLSX.utils.aoa_to_sheet(topProductsData);
+    XLSX.utils.book_append_sheet(wb, topProductsWs, "Produk Pendapatan Tertinggi");
+  }
+
+  // Add orders sheet if there are any orders
+  if (reportData.orders.length > 0) {
+    const ordersHeaders: (string | number)[] = [
+      "#",
+      "No. Order",
+      "Status",
+      "Metode Pembayaran", 
+      "Jumlah",
+      "Nama Kasir",
+      "Tanggal",
+    ];
+
+    // Helper function to ensure type safety
+    const createOrderRow = (
+      order: (typeof reportData.orders)[number],
+    ): (string | number)[] => {
+      const indexNum: number = order.id;
+      const orderNumberStr: string = order.orderNumber;
+      const statusStr: string = order.status;
+      const paymentMethodStr: string = order.paymentMethod;
+      const totalAmountNum: number = order.totalAmount;
+      const cashierNameStr: string = order.user.name;
+      const dateStr: string = new Date(order.createdAt).toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+
+      return [indexNum, orderNumberStr, statusStr, paymentMethodStr, totalAmountNum, cashierNameStr, dateStr];
+    };
+
+    const ordersRows: (string | number)[][] = reportData.orders.map(createOrderRow);
+    const ordersData: (string | number)[][] = [ordersHeaders, ...ordersRows];
+
+    const ordersWs = XLSX.utils.aoa_to_sheet(ordersData);
+    XLSX.utils.book_append_sheet(wb, ordersWs, "Daftar Order");
+  }
+
+  // Save the workbook
+  const fileName = `laporan-pendapatan-${startDate.toISOString().split("T")[0]}-${endDate.toISOString().split("T")[0]}.xlsx`;
+  XLSX.writeFile(wb, fileName);
+}
+
+/**
+ * Exports expense report data to Excel format
+ * @param reportData The expense report data to export
+ * @param startDate The start date of the report
+ * @param endDate The end date of the report
+ */
+export async function exportExpenseReportToExcel(
+  reportData: ExpenseReportData,
+  startDate: Date,
+  endDate: Date,
+): Promise<void> {
+  const XLSX = await import("xlsx");
+  // Create a new workbook
+  const wb = XLSX.utils.book_new();
+
+  // Add summary sheet
+  const summaryHeaders: (string | number)[] = [
+    "Tanggal Laporan",
+    "Total Pengeluaran",
+    "Total Pendapatan",
+    "Total Pesanan",
+  ];
+
+  // Format dates for the summary row
+  const formattedStartDate = new Date(reportData.startDate).toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "2-digit", 
+    year: "numeric",
+  });
+  const formattedEndDate = new Date(reportData.endDate).toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+
+  const summaryRow: (string | number)[] = [
+    `${formattedStartDate} s.d. ${formattedEndDate}`,
+    reportData.totalExpenses,
+    reportData.totalRevenue,
+    reportData.totalOrders,
+  ];
+
+  const summaryData: (string | number)[][] = [summaryHeaders, summaryRow];
+  const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
+  XLSX.utils.book_append_sheet(wb, summaryWs, "Ringkasan");
+
+  // Add expense categories sheet
+  const categoriesHeaders: (string | number)[] = [
+    "#",
+    "Kategori",
+    "Jumlah",
+  ];
+
+  const categoriesRows: (string | number)[][] = [
+    [1, "Operasional", reportData.expenseCategories?.operational || 0],
+    [2, "Marketing", reportData.expenseCategories?.marketing || 0],
+    [3, "Gaji", reportData.expenseCategories?.gaji || 0],
+    [4, "Lainnya", reportData.expenseCategories?.lainnya || 0],
+  ];
+  const categoriesData: (string | number)[][] = [
+    categoriesHeaders,
+    ...categoriesRows,
+  ];
+
+  const categoriesWs = XLSX.utils.aoa_to_sheet(categoriesData);
+  XLSX.utils.book_append_sheet(wb, categoriesWs, "Kategori Pengeluaran");
+
+  // Add expenses sheet if there are any expenses
+  if (reportData.expenses.length > 0) {
+    const expensesHeaders: (string | number)[] = [
+      "#",
+      "Kategori",
+      "Nominal",
+      "Deskripsi",
+      "Tanggal",
+    ];
+
+    // Helper function to ensure type safety
+    const createExpenseRow = (
+      expense: (typeof reportData.expenses)[number],
+    ): (string | number)[] => {
+      const indexNum: number = expense.id;
+      const categoryStr: string = expense.category === 'operasional' ? 'Operasional' : 
+                                 expense.category === 'marketing' ? 'Marketing' : 
+                                 expense.category === 'gaji' ? 'Gaji' : 'Lainnya';
+      const nominalNum: number = expense.nominal;
+      const descriptionStr: string = expense.description || '-';
+      const dateStr: string = new Date(expense.date).toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+
+      return [indexNum, categoryStr, nominalNum, descriptionStr, dateStr];
+    };
+
+    const expensesRows: (string | number)[][] = reportData.expenses.map(createExpenseRow);
+    const expensesData: (string | number)[][] = [expensesHeaders, ...expensesRows];
+
+    const expensesWs = XLSX.utils.aoa_to_sheet(expensesData);
+    XLSX.utils.book_append_sheet(wb, expensesWs, "Daftar Pengeluaran");
+  }
+
+  // Save the workbook
+  const fileName = `laporan-pengeluaran-${startDate.toISOString().split("T")[0]}-${endDate.toISOString().split("T")[0]}.xlsx`;
+  XLSX.writeFile(wb, fileName);
+}
+
+/**
+ * Exports margin report data to Excel format
+ * @param reportData The margin report data to export
+ * @param startDate The start date of the report
+ * @param endDate The end date of the report
+ */
+export async function exportMarginReportToExcel(
+  reportData: MarginReportData,
+  startDate: Date,
+  endDate: Date,
+): Promise<void> {
+  const XLSX = await import("xlsx");
+  // Create a new workbook
+  const wb = XLSX.utils.book_new();
+
+  // Add summary sheet
+  const summaryHeaders: (string | number)[] = [
+    "Tanggal Laporan",
+    "Total Pendapatan",
+    "Total Biaya",
+    "Total Laba",
+    "Gross Margin (%)",
+    "Net Margin (%)",
+  ];
+
+  // Format dates for the summary row
+  const formattedStartDate = new Date(reportData.startDate).toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "2-digit", 
+    year: "numeric",
+  });
+  const formattedEndDate = new Date(reportData.endDate).toLocaleDateString("id-ID", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+
+  const summaryRow: (string | number)[] = [
+    `${formattedStartDate} s.d. ${formattedEndDate}`,
+    reportData.totalRevenue,
+    reportData.totalCost,
+    reportData.totalProfit,
+    reportData.grossMargin,
+    reportData.netMargin,
+  ];
+
+  const summaryData: (string | number)[][] = [summaryHeaders, summaryRow];
+  const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
+  XLSX.utils.book_append_sheet(wb, summaryWs, "Ringkasan");
+
+  // Add product margins sheet if there are any
+  if (reportData.productMargins.length > 0) {
+    const marginsHeaders: (string | number)[] = [
+      "#",
+      "Nama Produk",
+      "Biaya",
+      "Pendapatan",
+      "Laba",
+      "Margin (%)",
+      "Jumlah Terjual",
+    ];
+
+    // Helper function to ensure type safety
+    const createMarginRow = (
+      product: (typeof reportData.productMargins)[number],
+    ): (string | number)[] => {
+      const indexNum: number = product.id;
+      const nameStr: string = product.name;
+      const costNum: number = product.cost;
+      const revenueNum: number = product.revenue;
+      const profitNum: number = product.profit;
+      const marginNum: number = product.margin;
+      const totalSoldNum: number = product.totalSold;
+
+      return [indexNum, nameStr, costNum, revenueNum, profitNum, marginNum, totalSoldNum];
+    };
+
+    const marginsRows: (string | number)[][] = reportData.productMargins.map(createMarginRow);
+    const marginsData: (string | number)[][] = [marginsHeaders, ...marginsRows];
+
+    const marginsWs = XLSX.utils.aoa_to_sheet(marginsData);
+    XLSX.utils.book_append_sheet(wb, marginsWs, "Margin Produk");
+  }
+
+  // Add orders sheet if there are any orders
+  if (reportData.orders.length > 0) {
+    const ordersHeaders: (string | number)[] = [
+      "#",
+      "No. Order",
+      "Total",
+      "Biaya",
+      "Laba",
+      "Margin (%)",
+      "Tanggal",
+    ];
+
+    // Helper function to ensure type safety
+    const createOrderRow = (
+      order: typeof reportData.orders[0] // Use proper typing for order
+    ): (string | number)[] => {
+      const indexNum: number = order.id;
+      const orderNumberStr: string = order.orderNumber;
+      const totalNum: number = order.totalAmount;
+      const costNum: number = order.cost;
+      const profitNum: number = order.profit;
+      const marginNum: number = order.margin;
+      const dateStr: string = new Date(order.createdAt).toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+
+      return [indexNum, orderNumberStr, totalNum, costNum, profitNum, marginNum, dateStr];
+    };
+
+    const ordersRows: (string | number)[][] = reportData.orders.map(createOrderRow);
+    const ordersData: (string | number)[][] = [ordersHeaders, ...ordersRows];
+
+    const ordersWs = XLSX.utils.aoa_to_sheet(ordersData);
+    XLSX.utils.book_append_sheet(wb, ordersWs, "Daftar Pesanan");
+  }
+
+  // Save the workbook
+  const fileName = `laporan-margin-${startDate.toISOString().split("T")[0]}-${endDate.toISOString().split("T")[0]}.xlsx`;
+  XLSX.writeFile(wb, fileName);
+}

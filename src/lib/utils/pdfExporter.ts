@@ -2156,3 +2156,658 @@ export async function exportProductReportToPDF(
     throw error; // Re-throw so the calling function can handle it
   }
 }
+
+/**
+ * Exports revenue report data to PDF format
+ * @param reportData The revenue report data to export
+ * @param startDate The start date of the report
+ * @param endDate The end date of the report
+ */
+export async function exportRevenueReportToPDF(
+  reportData: RevenueReportData,
+  startDate: Date,
+  endDate: Date,
+): Promise<void> {
+  try {
+    // Dynamically import jsPDF and autotable plugin to avoid SSR issues
+    const jsPDFModule = await import("jspdf");
+    const { jsPDF } = jsPDFModule;
+    const autoTable = (await import("jspdf-autotable")).default;
+
+    // Create a new PDF document
+    const doc = new jsPDF();
+
+    // Add title
+    const title = `Laporan Pendapatan - ${new Date(
+      reportData.startDate,
+    ).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })} s.d. ${new Date(reportData.endDate).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })}`;
+
+    doc.setFontSize(20);
+    doc.setFont("helvetica", "bold");
+    doc.text(title, doc.internal.pageSize.width / 2, 20, { align: "center" });
+    doc.setFont("helvetica", "normal");
+
+    // Add summary information section
+    doc.setFontSize(12);
+    const summaryStartX = 20;
+    const summaryY = 35; // Starting Y position for summary section
+
+    // Add a header for Ringkasan Laporan
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    const summaryHeader = "Ringkasan Laporan Pendapatan";
+    doc.setTextColor(0, 0, 0);
+    doc.text(summaryHeader, doc.internal.pageSize.width / 2, summaryY, {
+      align: "center",
+    }); // Center text
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0, 0, 0); // Reset text color
+
+    doc.text(
+      `Total Pendapatan: ${formatCurrency(reportData.totalRevenue)}`,
+      summaryStartX,
+      summaryY + 10,
+    );
+    doc.text(
+      `Total Pengeluaran: ${formatCurrency(reportData.totalExpenses)}`,
+      summaryStartX,
+      summaryY + 20,
+    );
+    doc.text(
+      `Pendapatan Bersih: ${formatCurrency(reportData.netRevenue)}`,
+      summaryStartX + 95,
+      summaryY + 10,
+    );
+    doc.text(
+      `Total Order: ${reportData.totalOrders}`,
+      summaryStartX + 95,
+      summaryY + 20,
+    );
+
+    // Add top revenue products table
+    if (reportData.topRevenueProducts.length > 0) {
+      const topProductsStartY = summaryY + 42; // Space below summary section
+
+      // Add header for top products with centered text
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      const topProductsHeader = "Produk Pendapatan Tertinggi:";
+      doc.setTextColor(0, 0, 0);
+      doc.text(
+        topProductsHeader,
+        doc.internal.pageSize.width / 2,
+        topProductsStartY,
+        { align: "center" },
+      ); // Center text
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(0, 0, 0); // Reset text color
+
+      // Table for top revenue products
+      autoTable(doc, {
+        head: [["#", "Nama Produk", "Jumlah Terjual", "Total Pendapatan"]],
+        body: reportData.topRevenueProducts.map((item, index) => [
+          index + 1,
+          item.name,
+          item.totalSold,
+          formatCurrency(item.totalRevenue),
+        ]),
+        startY: topProductsStartY + 5, // Position after the header text
+        styles: {
+          cellPadding: 3,
+          fontSize: 9, // Smaller font size for better fit
+        },
+        headStyles: {
+          fillColor: [66, 133, 244], // Google Blue
+          textColor: [255, 255, 255],
+          fontSize: 10, // Smaller header font
+          fontStyle: "bold",
+          cellPadding: 3,
+        },
+        bodyStyles: {
+          fontSize: 9, // Smaller body font
+          cellPadding: 3,
+        },
+        // Better page break handling
+        pageBreak: 'auto',
+        rowPageBreak: 'avoid',
+      });
+    }
+
+    // Add orders table if there are any orders
+    if (reportData.orders.length > 0) {
+      const ordersHeader = "Daftar Order:";
+      
+      // Add header text for orders
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text(
+        ordersHeader,
+        doc.internal.pageSize.width / 2,
+        (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 15 : 
+        reportData.topRevenueProducts.length > 0 ? 
+        (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 15 : summaryY + 42 + 25 + 15 :
+        summaryY + 42 + 15,
+        { align: "center" },
+      );
+      doc.setFont("helvetica", "normal");
+      
+      // Calculate starting Y position for the table
+      let ordersStartY = (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 20 : 
+        reportData.topRevenueProducts.length > 0 ? 
+        summaryY + 42 + 25 + 20 :
+        summaryY + 42 + 20;
+      
+      // Table for orders
+      autoTable(doc, {
+        head: [
+          ["#", "No. Order", "Status", "Metode Pembayaran", "Jumlah", "Nama Kasir", "Tanggal"],
+        ],
+        body: reportData.orders.map((order, index) => [
+          index + 1,
+          order.orderNumber,
+          order.status,
+          order.paymentMethod,
+          formatCurrency(order.totalAmount),
+          order.user.name,
+          new Date(order.createdAt).toLocaleDateString("id-ID", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          }),
+        ]),
+        startY: ordersStartY,
+        styles: {
+          cellPadding: 3,
+          fontSize: 8, // Smaller font size for better fit
+        },
+        headStyles: {
+          fillColor: [66, 133, 244], // Google Blue
+          textColor: [255, 255, 255],
+          fontSize: 9, // Smaller header font
+          fontStyle: "bold",
+          cellPadding: 3,
+        },
+        bodyStyles: {
+          fontSize: 8, // Smaller body font
+          cellPadding: 3,
+        },
+        // Better page break handling
+        pageBreak: 'auto',
+        rowPageBreak: 'avoid',
+        // Column widths
+        columnStyles: {
+          0: { cellWidth: 10 }, // Index column
+          1: { cellWidth: 30 }, // Order number column
+          2: { cellWidth: 25 }, // Status column
+          3: { cellWidth: 35 }, // Payment method column
+          4: { cellWidth: 30 }, // Amount column - fixed width
+          5: { cellWidth: 30 }, // Cashier column - fixed width
+          6: { cellWidth: 30 }, // Date column - fixed width
+        },
+      });
+    }
+
+    // Add footer
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(10);
+      doc.text(
+        `Halaman ${i} dari ${pageCount}`,
+        doc.internal.pageSize.width / 2,
+        doc.internal.pageSize.height - 10,
+        { align: "center" },
+      );
+    }
+
+    // Save the PDF
+    doc.save(
+      `laporan-pendapatan-${startDate.toISOString().split("T")[0]}-${endDate.toISOString().split("T")[0]}.pdf`,
+    );
+  } catch (error) {
+    console.error("Error generating PDF:", error);
+    throw error; // Re-throw so the calling function can handle it
+  }
+}
+
+/**
+ * Exports expense report data to PDF format
+ * @param reportData The expense report data to export
+ * @param startDate The start date of the report
+ * @param endDate The end date of the report
+ */
+export async function exportExpenseReportToPDF(
+  reportData: ExpenseReportData,
+  startDate: Date,
+  endDate: Date,
+): Promise<void> {
+  try {
+    // Dynamically import jsPDF and autotable plugin to avoid SSR issues
+    const jsPDFModule = await import("jspdf");
+    const { jsPDF } = jsPDFModule;
+    const autoTable = (await import("jspdf-autotable")).default;
+
+    // Create a new PDF document
+    const doc = new jsPDF();
+
+    // Add title
+    const title = `Laporan Pengeluaran - ${new Date(
+      reportData.startDate,
+    ).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })} s.d. ${new Date(reportData.endDate).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })}`;
+
+    doc.setFontSize(20);
+    doc.setFont("helvetica", "bold");
+    doc.text(title, doc.internal.pageSize.width / 2, 20, { align: "center" });
+    doc.setFont("helvetica", "normal");
+
+    // Add summary information section
+    doc.setFontSize(12);
+    const summaryStartX = 20;
+    const summaryY = 35; // Starting Y position for summary section
+
+    // Add a header for Ringkasan Laporan
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    const summaryHeader = "Ringkasan Laporan Pengeluaran";
+    doc.setTextColor(0, 0, 0);
+    doc.text(summaryHeader, doc.internal.pageSize.width / 2, summaryY, {
+      align: "center",
+    }); // Center text
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0, 0, 0); // Reset text color
+
+    doc.text(
+      `Total Pengeluaran: ${formatCurrency(reportData.totalExpenses)}`,
+      summaryStartX,
+      summaryY + 10,
+    );
+    doc.text(
+      `Total Pendapatan: ${formatCurrency(reportData.totalRevenue)}`,
+      summaryStartX,
+      summaryY + 20,
+    );
+    doc.text(
+      `Total Pesanan: ${reportData.totalOrders}`,
+      summaryStartX + 95,
+      summaryY + 10,
+    );
+
+    // Add expense categories table
+    const categoriesStartY = summaryY + 42; // Space below summary section
+
+    // Add header for expense categories with centered text
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    const categoriesHeader = "Kategori Pengeluaran:";
+    doc.setTextColor(0, 0, 0);
+    doc.text(
+      categoriesHeader,
+      doc.internal.pageSize.width / 2,
+      categoriesStartY,
+      { align: "center" },
+    ); // Center text
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0, 0, 0); // Reset text color
+
+    // Table for expense categories
+    autoTable(doc, {
+      head: [["#", "Kategori", "Jumlah"]],
+      body: [
+        [1, "Operasional", formatCurrency(reportData.expenseCategories?.operational || 0)],
+        [2, "Marketing", formatCurrency(reportData.expenseCategories?.marketing || 0)],
+        [3, "Gaji", formatCurrency(reportData.expenseCategories?.gaji || 0)],
+        [4, "Lainnya", formatCurrency(reportData.expenseCategories?.lainnya || 0)],
+      ],
+      startY: categoriesStartY + 5, // Position after the header text
+      styles: {
+        cellPadding: 3,
+        fontSize: 9, // Smaller font size for better fit
+      },
+      headStyles: {
+        fillColor: [66, 133, 244], // Google Blue
+        textColor: [255, 255, 255],
+        fontSize: 10, // Smaller header font
+        fontStyle: "bold",
+        cellPadding: 3,
+      },
+      bodyStyles: {
+        fontSize: 9, // Smaller body font
+        cellPadding: 3,
+      },
+      // Better page break handling
+      pageBreak: 'auto',
+      rowPageBreak: 'avoid',
+    });
+
+    // Add expenses table if there are any expenses
+    if (reportData.expenses.length > 0) {
+      const expensesHeader = "Daftar Pengeluaran:";
+      
+      // Add header text for expenses
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text(
+        expensesHeader,
+        doc.internal.pageSize.width / 2,
+        (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 15 : categoriesStartY + 5 + 25,
+        { align: "center" },
+      );
+      doc.setFont("helvetica", "normal");
+      
+      // Calculate starting Y position for the table
+      const expensesStartY = (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 20 : categoriesStartY + 5 + 30;
+      
+      // Table for expenses
+      autoTable(doc, {
+        head: [
+          ["#", "Kategori", "Nominal", "Deskripsi", "Tanggal"],
+        ],
+        body: reportData.expenses.map((expense, index) => [
+          index + 1,
+          expense.category === 'operasional' ? 'Operasional' : 
+          expense.category === 'marketing' ? 'Marketing' : 
+          expense.category === 'gaji' ? 'Gaji' : 'Lainnya',
+          formatCurrency(expense.nominal),
+          expense.description || '-',
+          new Date(expense.date).toLocaleDateString("id-ID", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          }),
+        ]),
+        startY: expensesStartY,
+        styles: {
+          cellPadding: 3,
+          fontSize: 8, // Smaller font size for better fit
+        },
+        headStyles: {
+          fillColor: [220, 53, 69], // Red
+          textColor: [255, 255, 255],
+          fontSize: 9, // Smaller header font
+          fontStyle: "bold",
+          cellPadding: 3,
+        },
+        bodyStyles: {
+          fontSize: 8, // Smaller body font
+          cellPadding: 3,
+        },
+        // Better page break handling
+        pageBreak: 'auto',
+        rowPageBreak: 'avoid',
+        // Column widths
+        columnStyles: {
+          0: { cellWidth: 8 }, // Index column
+          1: { cellWidth: 30 }, // Category column
+          2: { cellWidth: 30 }, // Amount column
+          3: { cellWidth: 45 }, // Description column
+          4: { cellWidth: 25 }, // Date column
+        },
+      });
+    }
+
+    // Add footer
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(10);
+      doc.text(
+        `Halaman ${i} dari ${pageCount}`,
+        doc.internal.pageSize.width / 2,
+        doc.internal.pageSize.height - 10,
+        { align: "center" },
+      );
+    }
+
+    // Save the PDF
+    doc.save(
+      `laporan-pengeluaran-${startDate.toISOString().split("T")[0]}-${endDate.toISOString().split("T")[0]}.pdf`,
+    );
+  } catch (error) {
+    console.error("Error generating PDF:", error);
+    throw error; // Re-throw so the calling function can handle it
+  }
+}
+
+/**
+ * Exports margin report data to PDF format
+ * @param reportData The margin report data to export
+ * @param startDate The start date of the report
+ * @param endDate The end date of the report
+ */
+export async function exportMarginReportToPDF(
+  reportData: MarginReportData,
+  startDate: Date,
+  endDate: Date,
+): Promise<void> {
+  try {
+    // Dynamically import jsPDF and autotable plugin to avoid SSR issues
+    const jsPDFModule = await import("jspdf");
+    const { jsPDF } = jsPDFModule;
+    const autoTable = (await import("jspdf-autotable")).default;
+
+    // Create a new PDF document
+    const doc = new jsPDF();
+
+    // Add title
+    const title = `Laporan Margin - ${new Date(
+      reportData.startDate,
+    ).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })} s.d. ${new Date(reportData.endDate).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })}`;
+
+    doc.setFontSize(20);
+    doc.setFont("helvetica", "bold");
+    doc.text(title, doc.internal.pageSize.width / 2, 20, { align: "center" });
+    doc.setFont("helvetica", "normal");
+
+    // Add summary information section
+    doc.setFontSize(12);
+    const summaryStartX = 20;
+    const summaryY = 35; // Starting Y position for summary section
+
+    // Add a header for Ringkasan Laporan
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    const summaryHeader = "Ringkasan Laporan Margin";
+    doc.setTextColor(0, 0, 0);
+    doc.text(summaryHeader, doc.internal.pageSize.width / 2, summaryY, {
+      align: "center",
+    }); // Center text
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0, 0, 0); // Reset text color
+
+    doc.text(
+      `Total Pendapatan: ${formatCurrency(reportData.totalRevenue)}`,
+      summaryStartX,
+      summaryY + 10,
+    );
+    doc.text(
+      `Total Biaya: ${formatCurrency(reportData.totalCost)}`,
+      summaryStartX,
+      summaryY + 20,
+    );
+    doc.text(
+      `Total Pendapatan: ${formatCurrency(reportData.totalProfit)}`,
+      summaryStartX + 95,
+      summaryY + 10,
+    );
+    doc.text(
+      `Gross Margin: ${reportData.grossMargin?.toFixed(2) || 0}%`,
+      summaryStartX + 95,
+      summaryY + 20,
+    );
+    doc.text(
+      `Net Margin: ${reportData.netMargin?.toFixed(2) || 0}%`,
+      summaryStartX + 95,
+      summaryY + 30,
+    );
+
+    // Add product margins table
+    if (reportData.productMargins.length > 0) {
+      const productMarginsStartY = summaryY + 65; // Space below summary section
+
+      // Add header for product margins with centered text
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      const productMarginsHeader = "Margin Produk Teratas:";
+      doc.setTextColor(0, 0, 0);
+      doc.text(
+        productMarginsHeader,
+        doc.internal.pageSize.width / 2,
+        productMarginsStartY,
+        { align: "center" },
+      ); // Center text
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(0, 0, 0); // Reset text color
+
+      // Table for product margins
+      autoTable(doc, {
+        head: [["#", "Nama Produk", "Biaya", "Pendapatan", "Laba", "Margin"]],
+        body: reportData.productMargins.map((product, index) => [
+          index + 1,
+          product.name,
+          formatCurrency(product.cost),
+          formatCurrency(product.revenue),
+          formatCurrency(product.profit),
+          `${product.margin.toFixed(2)}%`,
+        ]),
+        startY: productMarginsStartY + 5, // Position after the header text
+        styles: {
+          cellPadding: 3,
+          fontSize: 9, // Smaller font size for better fit
+        },
+        headStyles: {
+          fillColor: [66, 133, 244], // Google Blue
+          textColor: [255, 255, 255],
+          fontSize: 10, // Smaller header font
+          fontStyle: "bold",
+          cellPadding: 3,
+        },
+        bodyStyles: {
+          fontSize: 9, // Smaller body font
+          cellPadding: 3,
+        },
+        // Better page break handling
+        pageBreak: 'auto',
+        rowPageBreak: 'avoid',
+      });
+    }
+
+    // Add orders table if there are any orders
+    if (reportData.orders.length > 0) {
+      const ordersHeader = "Daftar Pesanan dengan Margin:";
+      
+      // Add header text for orders
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text(
+        ordersHeader,
+        doc.internal.pageSize.width / 2,
+        (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 15 : 
+        reportData.productMargins.length > 0 ? 
+        (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 15 : summaryY + 65 + 25 + 15 :
+        summaryY + 65 + 15,
+        { align: "center" },
+      );
+      doc.setFont("helvetica", "normal");
+      
+      // Calculate starting Y position for the table
+      let ordersStartY = (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 20 : 
+        reportData.productMargins.length > 0 ? 
+        summaryY + 65 + 25 + 20 :
+        summaryY + 65 + 20;
+      
+      // Table for orders
+      autoTable(doc, {
+        head: [
+          ["#", "No. Order", "Total", "Biaya", "Laba", "Margin", "Tanggal"],
+        ],
+        body: reportData.orders.map((order, index) => [
+          index + 1,
+          order.orderNumber,
+          formatCurrency(order.totalAmount),
+          formatCurrency(order.cost),
+          formatCurrency(order.profit),
+          `${order.margin.toFixed(2)}%`,
+          new Date(order.createdAt).toLocaleDateString("id-ID", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          }),
+        ]),
+        startY: ordersStartY,
+        styles: {
+          cellPadding: 3,
+          fontSize: 8, // Smaller font size for better fit
+        },
+        headStyles: {
+          fillColor: [52, 199, 89], // Green
+          textColor: [255, 255, 255],
+          fontSize: 9, // Smaller header font
+          fontStyle: "bold",
+          cellPadding: 3,
+        },
+        bodyStyles: {
+          fontSize: 8, // Smaller body font
+          cellPadding: 3,
+        },
+        // Better page break handling
+        pageBreak: 'auto',
+        rowPageBreak: 'avoid',
+        // Column widths
+        columnStyles: {
+          0: { cellWidth: 8 }, // Index column
+          1: { cellWidth: 30 }, // Order number column
+          2: { cellWidth: 25 }, // Total column
+          3: { cellWidth: 25 }, // Cost column
+          4: { cellWidth: 25 }, // Profit column
+          5: { cellWidth: 20 }, // Margin column
+          6: { cellWidth: 25 }, // Date column
+        },
+      });
+    }
+
+    // Add footer
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(10);
+      doc.text(
+        `Halaman ${i} dari ${pageCount}`,
+        doc.internal.pageSize.width / 2,
+        doc.internal.pageSize.height - 10,
+        { align: "center" },
+      );
+    }
+
+    // Save the PDF
+    doc.save(
+      `laporan-margin-${startDate.toISOString().split("T")[0]}-${endDate.toISOString().split("T")[0]}.pdf`,
+    );
+  } catch (error) {
+    console.error("Error generating PDF:", error);
+    throw error; // Re-throw so the calling function can handle it
+  }
+}

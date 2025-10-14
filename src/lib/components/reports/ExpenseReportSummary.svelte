@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { formatCurrency } from "$lib/utils/formatters";
   import type { ExpenseReportData } from "$lib/types";
 
   export let reportData: ExpenseReportData | null | undefined;
@@ -6,108 +7,110 @@
 
 {#if reportData}
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-    <!-- Total Expenses -->
-    <div class="bg-gradient-to-r from-red-500 to-red-600 text-white p-6 rounded-xl shadow">
-      <div class="text-sm font-semibold">Total Pengeluaran</div>
-      <div class="text-2xl font-bold mt-2">
-        Rp {reportData.totalExpenses?.toLocaleString("id-ID") || 0}
-      </div>
-      <div class="mt-4 flex items-center text-sm">
-        <span class="flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-          </svg>
-          Pengeluaran
-        </span>
+    <!-- Total Expenses Card -->
+    <div class="card bg-base-100 shadow-md border border-base-200">
+      <div class="card-body">
+        <h3 class="card-title text-sm opacity-75">Total Pengeluaran</h3>
+        <p class="text-3xl font-bold text-error">{formatCurrency(reportData.totalExpenses)}</p>
+        <div class="text-xs opacity-75">pengeluaran</div>
       </div>
     </div>
 
-    <!-- Total Orders -->
-    <div class="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 rounded-xl shadow">
-      <div class="text-sm font-semibold">Total Pesanan</div>
-      <div class="text-2xl font-bold mt-2">{reportData.totalOrders}</div>
-      <div class="mt-4 flex items-center text-sm">
-        <span class="flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-          </svg>
-          Pesanan
-        </span>
+    <!-- Total Orders Card -->
+    <div class="card bg-base-100 shadow-md border border-base-200">
+      <div class="card-body">
+        <h3 class="card-title text-sm opacity-75">Total Pesanan</h3>
+        <p class="text-3xl font-bold">{reportData.totalOrders}</p>
+        <div class="text-xs opacity-75">pesanan</div>
       </div>
     </div>
 
-    <!-- Total Revenue -->
-    <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-xl shadow">
-      <div class="text-sm font-semibold">Total Pendapatan</div>
-      <div class="text-2xl font-bold mt-2">
-        Rp {reportData.totalRevenue?.toLocaleString("id-ID") || 0}
+    <!-- Total Revenue Card -->
+    <div class="card bg-base-100 shadow-md border border-base-200">
+      <div class="card-body">
+        <h3 class="card-title text-sm opacity-75">Total Pendapatan</h3>
+        <p class="text-3xl font-bold text-success">{formatCurrency(reportData.totalRevenue)}</p>
+        <div class="text-xs opacity-75">pendapatan</div>
       </div>
-      <div class="mt-4 flex items-center text-sm">
-        <span class="flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599-1" />
-          </svg>
-          Pendapatan
-        </span>
+    </div>
+
+    <!-- Net Revenue Card -->
+    <div class="card bg-base-100 shadow-md border border-base-200">
+      <div class="card-body">
+        <h3 class="card-title text-sm opacity-75">Pendapatan Bersih</h3>
+        <p class="text-3xl font-bold text-info">{formatCurrency(reportData.totalRevenue - reportData.totalExpenses)}</p>
+        <div class="text-xs opacity-75">bersih</div>
       </div>
     </div>
   </div>
 
   <!-- Expenses by Category -->
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-    <div class="bg-white p-4 rounded-lg shadow border">
-      <div class="text-sm font-semibold text-gray-700 mb-2">Operasional</div>
-      <div class="text-xl font-bold text-blue-600">
-        Rp {reportData.expenseCategories?.operational?.toLocaleString("id-ID") || 0}
+    <div class="card bg-base-100 shadow-md border border-base-200">
+      <div class="card-body">
+        <h3 class="card-title text-sm opacity-75">Operasional</h3>
+        <p class="text-2xl font-bold">{formatCurrency(reportData.expenseCategories?.operational || 0)}</p>
+        <div class="text-xs opacity-75">pengeluaran</div>
       </div>
     </div>
     
-    <div class="bg-white p-4 rounded-lg shadow border">
-      <div class="text-sm font-semibold text-gray-700 mb-2">Marketing</div>
-      <div class="text-xl font-bold text-green-600">
-        Rp {reportData.expenseCategories?.marketing?.toLocaleString("id-ID") || 0}
+    <div class="card bg-base-100 shadow-md border border-base-200">
+      <div class="card-body">
+        <h3 class="card-title text-sm opacity-75">Marketing</h3>
+        <p class="text-2xl font-bold">{formatCurrency(reportData.expenseCategories?.marketing || 0)}</p>
+        <div class="text-xs opacity-75">pengeluaran</div>
       </div>
     </div>
     
-    <div class="bg-white p-4 rounded-lg shadow border">
-      <div class="text-sm font-semibold text-gray-700 mb-2">Gaji</div>
-      <div class="text-xl font-bold text-yellow-600">
-        Rp {reportData.expenseCategories?.gaji?.toLocaleString("id-ID") || 0}
+    <div class="card bg-base-100 shadow-md border border-base-200">
+      <div class="card-body">
+        <h3 class="card-title text-sm opacity-75">Gaji</h3>
+        <p class="text-2xl font-bold">{formatCurrency(reportData.expenseCategories?.gaji || 0)}</p>
+        <div class="text-xs opacity-75">pengeluaran</div>
       </div>
     </div>
     
-    <div class="bg-white p-4 rounded-lg shadow border">
-      <div class="text-sm font-semibold text-gray-700 mb-2">Lainnya</div>
-      <div class="text-xl font-bold text-purple-600">
-        Rp {reportData.expenseCategories?.lainnya?.toLocaleString("id-ID") || 0}
+    <div class="card bg-base-100 shadow-md border border-base-200">
+      <div class="card-body">
+        <h3 class="card-title text-sm opacity-75">Lainnya</h3>
+        <p class="text-2xl font-bold">{formatCurrency(reportData.expenseCategories?.lainnya || 0)}</p>
+        <div class="text-xs opacity-75">pengeluaran</div>
       </div>
     </div>
   </div>
 {:else}
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
     <!-- Loading placeholders for the summary cards -->
-    <div class="bg-gray-200 p-6 rounded-xl shadow animate-pulse">
-      <div class="h-4 bg-gray-400 rounded w-3/4 mb-4"></div>
-      <div class="h-8 bg-gray-400 rounded w-full mb-4"></div>
-      <div class="h-4 bg-gray-400 rounded w-1/2"></div>
+    <div class="card bg-base-100 shadow-md border border-base-200 animate-pulse">
+      <div class="card-body">
+        <div class="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+        <div class="h-8 bg-gray-200 rounded w-full mb-2"></div>
+        <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+      </div>
     </div>
-    
-    <div class="bg-gray-200 p-6 rounded-xl shadow animate-pulse">
-      <div class="h-4 bg-gray-400 rounded w-3/4 mb-4"></div>
-      <div class="h-8 bg-gray-400 rounded w-full mb-4"></div>
-      <div class="h-4 bg-gray-400 rounded w-1/2"></div>
+
+    <div class="card bg-base-100 shadow-md border border-base-200 animate-pulse">
+      <div class="card-body">
+        <div class="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+        <div class="h-8 bg-gray-200 rounded w-full mb-2"></div>
+        <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+      </div>
     </div>
-    
-    <div class="bg-gray-200 p-6 rounded-xl shadow animate-pulse">
-      <div class="h-4 bg-gray-400 rounded w-3/4 mb-4"></div>
-      <div class="h-8 bg-gray-400 rounded w-full mb-4"></div>
-      <div class="h-4 bg-gray-400 rounded w-1/2"></div>
+
+    <div class="card bg-base-100 shadow-md border border-base-200 animate-pulse">
+      <div class="card-body">
+        <div class="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+        <div class="h-8 bg-gray-200 rounded w-full mb-2"></div>
+        <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+      </div>
     </div>
-    
-    <div class="bg-gray-200 p-6 rounded-xl shadow animate-pulse">
-      <div class="h-4 bg-gray-400 rounded w-3/4 mb-4"></div>
-      <div class="h-8 bg-gray-400 rounded w-full mb-4"></div>
-      <div class="h-4 bg-gray-400 rounded w-1/2"></div>
+
+    <div class="card bg-base-100 shadow-md border border-base-200 animate-pulse">
+      <div class="card-body">
+        <div class="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
+        <div class="h-8 bg-gray-200 rounded w-full mb-2"></div>
+        <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+      </div>
     </div>
   </div>
 {/if}

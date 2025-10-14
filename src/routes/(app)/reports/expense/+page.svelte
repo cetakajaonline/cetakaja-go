@@ -6,93 +6,140 @@
   import ExpenseReportDetails from "$lib/components/reports/ExpenseReportDetails.svelte";
   import type { ExpenseReportData } from "$lib/types";
   import { onMount } from "svelte";
+  import { getExpenseReportForDateRange } from "$lib/services/reportClient";
 
   export let data: { reportData: ExpenseReportData };
 
   const { reportData } = data;
 
-  // Format date for display - only if reportData and date exist
-  let formattedDate = "Loading...";
-  if (reportData && reportData.date) {
-    formattedDate = new Date(reportData.date).toLocaleDateString("id-ID", {
+  // Format date range for display
+  const formattedStartDate = new Date(reportData.startDate).toLocaleDateString(
+    "id-ID",
+    {
       weekday: "long",
       year: "numeric",
       month: "long",
       day: "numeric",
-    });
+    }
+  );
+
+  const formattedEndDate = new Date(reportData.endDate).toLocaleDateString(
+    "id-ID",
+    {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }
+  );
+
+  // Function to refresh the report for a specific date range
+  async function refreshReport(startDate: Date, endDate: Date) {
+    // Format dates to YYYY-MM-DD while preserving the local date
+    const startYear = startDate.getFullYear();
+    const startMonth = String(startDate.getMonth() + 1).padStart(2, "0");
+    const startDay = String(startDate.getDate()).padStart(2, "0");
+    const startFormattedDate = `${startYear}-${startMonth}-${startDay}`;
+
+    const endYear = endDate.getFullYear();
+    const endMonth = String(endDate.getMonth() + 1).padStart(2, "0");
+    const endDay = String(endDate.getDate()).padStart(2, "0");
+    const endFormattedDate = `${endYear}-${endMonth}-${endDay}`;
+
+    window.location.href = `/reports/expense?startDate=${startFormattedDate}&endDate=${endFormattedDate}`;
   }
 
-  // Function to refresh the report for a specific date
-  async function refreshReport(date: Date) {
-    // Format date to YYYY-MM-DD while preserving the local date
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const formattedDate = `${year}-${month}-${day}`;
-    
-    window.location.href = `/reports/expense?date=${formattedDate}`;
-  }
+  // Initialize date pickers with the current report date range
+  let selectedStartDate = new Date(reportData.startDate);
+  let selectedEndDate = new Date(reportData.endDate);
 
-  // Initialize date picker with the current report date - only if reportData and date exist
-  let selectedDate = new Date();
-  if (reportData && reportData.date) {
-    selectedDate = new Date(reportData.date);
-  }
-
-  function handleDateChange(event: Event) {
+  function handleStartDateChange(event: Event) {
     const target = event.target as HTMLInputElement;
     const newDate = new Date(target.value);
-    refreshReport(newDate);
+    selectedStartDate = newDate;
+    // Only refresh if both dates are set
+    if (selectedStartDate && selectedEndDate) {
+      refreshReport(selectedStartDate, selectedEndDate);
+    }
+  }
+
+  function handleEndDateChange(event: Event) {
+    const target = event.target as HTMLInputElement;
+    const newDate = new Date(target.value);
+    selectedEndDate = newDate;
+    // Only refresh if both dates are set
+    if (selectedStartDate && selectedEndDate) {
+      refreshReport(selectedStartDate, selectedEndDate);
+    }
   }
 
   onMount(() => {
-    // Set the date input to the current report date
-    const dateInput = document.getElementById(
-      "report-date"
+    // Set the date inputs to the current report date range
+    const startDateInput = document.getElementById(
+      "report-start-date"
     ) as HTMLInputElement;
-    if (dateInput && reportData && reportData.date) {
+    if (startDateInput) {
       // Format the date to YYYY-MM-DD string to set as the input value, preserving local date
-      const reportDate = new Date(reportData.date);
-      
+      const reportStartDate = new Date(reportData.startDate);
+
       // Format the date manually to avoid timezone conversion issues
-      const year = reportDate.getFullYear();
-      const month = String(reportDate.getMonth() + 1).padStart(2, '0');
-      const day = String(reportDate.getDate()).padStart(2, '0');
+      const year = reportStartDate.getFullYear();
+      const month = String(reportStartDate.getMonth() + 1).padStart(2, "0");
+      const day = String(reportStartDate.getDate()).padStart(2, "0");
       const reportDateStr = `${year}-${month}-${day}`;
-      
-      // Set the input value to the report date, which should be today by default
-      dateInput.value = reportDateStr;
+
+      // Set the input value to the report start date
+      startDateInput.value = reportDateStr;
+    }
+
+    const endDateInput = document.getElementById(
+      "report-end-date"
+    ) as HTMLInputElement;
+    if (endDateInput) {
+      // Format the date to YYYY-MM-DD string to set as the input value, preserving local date
+      const reportEndDate = new Date(reportData.endDate);
+
+      // Format the date manually to avoid timezone conversion issues
+      const year = reportEndDate.getFullYear();
+      const month = String(reportEndDate.getMonth() + 1).padStart(2, "0");
+      const day = String(reportEndDate.getDate()).padStart(2, "0");
+      const reportDateStr = `${year}-${month}-${day}`;
+
+      // Set the input value to the report end date
+      endDateInput.value = reportDateStr;
     }
   });
-  
+
   // Import and use export functions
   async function exportToPDF() {
-    if (!reportData || !reportData.date) {
-      alert('Data laporan tidak tersedia. Silakan coba lagi.');
-      return;
-    }
     try {
-      const { exportDailyReportToPDF } = await import('$lib/utils/pdfExporter');
-      // Using type assertion since export function currently expects DailyReportData
-      await exportDailyReportToPDF(reportData as any, reportData.date instanceof Date ? reportData.date : new Date(reportData.date));
+      const { exportExpenseReportToPDF } = await import(
+        "$lib/utils/pdfExporter"
+      );
+      await exportExpenseReportToPDF(
+        reportData,
+        reportData.startDate,
+        reportData.endDate
+      );
     } catch (error) {
-      console.error('Error exporting to PDF:', error);
-      alert('Gagal mengekspor ke PDF. Silakan coba lagi.');
+      console.error("Error exporting to PDF:", error);
+      alert("Gagal mengekspor ke PDF. Silakan coba lagi.");
     }
   }
-  
+
   async function exportToExcel() {
-    if (!reportData || !reportData.date) {
-      alert('Data laporan tidak tersedia. Silakan coba lagi.');
-      return;
-    }
     try {
-      const { exportDailyReportToExcel } = await import('$lib/utils/excelExporter');
-      // Using type assertion since export function currently expects DailyReportData
-      await exportDailyReportToExcel(reportData as any, reportData.date instanceof Date ? reportData.date : new Date(reportData.date));
+      const { exportExpenseReportToExcel } = await import(
+        "$lib/utils/excelExporter"
+      );
+      await exportExpenseReportToExcel(
+        reportData,
+        reportData.startDate,
+        reportData.endDate
+      );
     } catch (error) {
-      console.error('Error exporting to Excel:', error);
-      alert('Gagal mengekspor ke Excel. Silakan coba lagi.');
+      console.error("Error exporting to Excel:", error);
+      alert("Gagal mengekspor ke Excel. Silakan coba lagi.");
     }
   }
 </script>
@@ -119,55 +166,113 @@
 
   <div class="p-6">
     <!-- Date Selector -->
-    <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between">
-      <div class="mb-4 md:mb-0">
-        <label for="report-date" class="block text-sm font-medium mb-2"
-          >Pilih Tanggal</label
-        >
-        <input
-          id="report-date"
-          type="date"
-          class="input input-bordered w-full max-w-xs"
-          on:change={handleDateChange}
-        />
+    <div
+      class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between"
+    >
+      <div class="mb-4 md:mb-0 flex flex-wrap gap-4">
+        <div>
+          <label for="report-start-date" class="block text-sm font-medium mb-2"
+            >Tanggal Awal</label
+          >
+          <input
+            id="report-start-date"
+            type="date"
+            class="input input-bordered w-full max-w-xs"
+            on:change={handleStartDateChange}
+          />
+        </div>
+
+        <div>
+          <label for="report-end-date" class="block text-sm font-medium mb-2"
+            >Tanggal Akhir</label
+          >
+          <input
+            id="report-end-date"
+            type="date"
+            class="input input-bordered w-full max-w-xs"
+            on:change={handleEndDateChange}
+          />
+        </div>
       </div>
-      
+
       <!-- Export Buttons -->
       <div class="flex space-x-2">
-        <button 
+        <button
           class="btn btn-outline btn-primary"
           on:click={exportToPDF}
           title="Ekspor ke PDF"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            class="w-5 h-5 mr-2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
+            />
           </svg>
           PDF
         </button>
-        <button 
+        <button
           class="btn btn-outline btn-success"
           on:click={exportToExcel}
           title="Ekspor ke Excel"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 8.25H7.5a2.25 2.25 0 00-2.25 2.25v9a2.25 2.25 0 002.25 2.25h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25H15m0-3l-3-3m0 0l-3 3m3-3V15" />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            class="w-5 h-5 mr-2"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M9 8.25H7.5a2.25 2.25 0 00-2.25 2.25v9a2.25 2.25 0 002.25 2.25h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25H15m0-3l-3-3m0 0l-3 3m3-3V15"
+            />
           </svg>
           Excel
         </button>
       </div>
     </div>
 
+    <!-- Report Date Range -->
+    <div class="alert alert-info mb-6">
+      <div>
+        <span
+          >Laporan pengeluaran: <strong>{formattedStartDate}</strong> -
+          <strong>{formattedEndDate}</strong></span
+        >
+      </div>
+    </div>
+
     <!-- Report Summary -->
-    <ExpenseReportSummary {reportData} />
+    <div
+      class="card bg-gradient-to-r from-rose-500 to-orange-600 text-white shadow-xl mb-8"
+    >
+      <div class="card-body">
+        <ExpenseReportSummary {reportData} />
+      </div>
+    </div>
 
     <!-- Chart Section -->
-    <div class="mt-8">
-      <ExpenseReportChart {reportData} />
+    <div class="card bg-base-100 shadow-xl mb-8">
+      <div class="card-body">
+        <ExpenseReportChart {reportData} />
+      </div>
     </div>
 
     <!-- Detailed Report -->
-    <div class="mt-8">
-      <ExpenseReportDetails {reportData} />
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <ExpenseReportDetails {reportData} />
+      </div>
     </div>
   </div>
 </DefaultLayout>

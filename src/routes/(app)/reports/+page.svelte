@@ -5,16 +5,16 @@
 
 <DefaultLayout title="Reports">
   <PageHeader title="Laporan" icon="📊" />
-  
 
-  
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
-    <a 
-      href="/reports/daily" 
+    <a
+      href="/reports/daily"
       class="block card bg-base-100 shadow-md hover:shadow-lg transition-shadow duration-300 p-4 border border-base-300 hover:border-primary"
     >
       <div class="flex items-start">
-        <div class="bg-blue-500 text-white rounded-full w-12 h-12 flex items-center justify-center text-xl mr-4">
+        <div
+          class="bg-blue-500 text-white rounded-full w-12 h-12 flex items-center justify-center text-xl mr-4"
+        >
           📅
         </div>
         <div>
@@ -23,13 +23,15 @@
         </div>
       </div>
     </a>
-    
-    <a 
-      href="/reports/weekly" 
+
+    <a
+      href="/reports/weekly"
       class="block card bg-base-100 shadow-md hover:shadow-lg transition-shadow duration-300 p-4 border border-base-300 hover:border-primary"
     >
       <div class="flex items-start">
-        <div class="bg-green-500 text-white rounded-full w-12 h-12 flex items-center justify-center text-xl mr-4">
+        <div
+          class="bg-green-500 text-white rounded-full w-12 h-12 flex items-center justify-center text-xl mr-4"
+        >
           🗓️
         </div>
         <div>
@@ -38,73 +40,83 @@
         </div>
       </div>
     </a>
-    
-    <a 
-      href="/reports/monthly" 
+
+    <a
+      href="/reports/monthly"
       class="block card bg-base-100 shadow-md hover:shadow-lg transition-shadow duration-300 p-4 border border-base-300 hover:border-primary"
     >
       <div class="flex items-start">
-        <div class="bg-purple-500 text-white rounded-full w-12 h-12 flex items-center justify-center text-xl mr-4">
+        <div
+          class="bg-purple-500 text-white rounded-full w-12 h-12 flex items-center justify-center text-xl mr-4"
+        >
           📆
         </div>
         <div>
           <h3 class="font-semibold text-lg">Laporan Bulanan</h3>
-          <p class="text-gray-600 text-sm mt-1">Sedang dalam perbaikan...</p>
+          <p class="text-gray-600 text-sm mt-1">Laporan penjualan bulanan</p>
         </div>
       </div>
     </a>
-    
-    <a 
-      href="/reports/annual" 
+
+    <a
+      href="/reports/annual"
       class="block card bg-base-100 shadow-md hover:shadow-lg transition-shadow duration-300 p-4 border border-base-300 hover:border-primary"
     >
       <div class="flex items-start">
-        <div class="bg-yellow-500 text-white rounded-full w-12 h-12 flex items-center justify-center text-xl mr-4">
+        <div
+          class="bg-yellow-500 text-white rounded-full w-12 h-12 flex items-center justify-center text-xl mr-4"
+        >
           📆
         </div>
         <div>
           <h3 class="font-semibold text-lg">Laporan Tahunan</h3>
-          <p class="text-gray-600 text-sm mt-1">Sedang dalam perbaikan...</p>
+          <p class="text-gray-600 text-sm mt-1">Laporan penjualan tahunan</p>
         </div>
       </div>
     </a>
-    
-    <a 
-      href="/reports/product" 
+
+    <a
+      href="/reports/product"
       class="block card bg-base-100 shadow-md hover:shadow-lg transition-shadow duration-300 p-4 border border-base-300 hover:border-primary"
     >
       <div class="flex items-start">
-        <div class="bg-red-500 text-white rounded-full w-12 h-12 flex items-center justify-center text-xl mr-4">
+        <div
+          class="bg-red-500 text-white rounded-full w-12 h-12 flex items-center justify-center text-xl mr-4"
+        >
           📦
         </div>
         <div>
           <h3 class="font-semibold text-lg">Laporan Produk</h3>
-          <p class="text-gray-600 text-sm mt-1">Sedang dalam perbaikan...</p>
+          <p class="text-gray-600 text-sm mt-1">Laporan analisis produk</p>
         </div>
       </div>
     </a>
-    
-    <a 
-      href="/reports/customer" 
+
+    <a
+      href="/reports/customer"
       class="block card bg-base-100 shadow-md hover:shadow-lg transition-shadow duration-300 p-4 border border-base-300 hover:border-primary"
     >
       <div class="flex items-start">
-        <div class="bg-indigo-500 text-white rounded-full w-12 h-12 flex items-center justify-center text-xl mr-4">
+        <div
+          class="bg-pink-500 text-white rounded-full w-12 h-12 flex items-center justify-center text-xl mr-4"
+        >
           👤
         </div>
         <div>
           <h3 class="font-semibold text-lg">Laporan Pelanggan</h3>
-          <p class="text-gray-600 text-sm mt-1">Sedang dalam perbaikan...</p>
+          <p class="text-gray-600 text-sm mt-1">Laporan analisis pelanggan</p>
         </div>
       </div>
     </a>
-    
-    <a 
-      href="/reports/revenue" 
+
+    <a
+      href="/reports/revenue"
       class="block card bg-base-100 shadow-md hover:shadow-lg transition-shadow duration-300 p-4 border border-base-300 hover:border-primary"
     >
       <div class="flex items-start">
-        <div class="bg-teal-500 text-white rounded-full w-12 h-12 flex items-center justify-center text-xl mr-4">
+        <div
+          class="bg-teal-500 text-white rounded-full w-12 h-12 flex items-center justify-center text-xl mr-4"
+        >
           💰
         </div>
         <div>
@@ -113,13 +125,15 @@
         </div>
       </div>
     </a>
-    
-    <a 
-      href="/reports/expense" 
+
+    <a
+      href="/reports/expense"
       class="block card bg-base-100 shadow-md hover:shadow-lg transition-shadow duration-300 p-4 border border-base-300 hover:border-primary"
     >
       <div class="flex items-start">
-        <div class="bg-orange-500 text-white rounded-full w-12 h-12 flex items-center justify-center text-xl mr-4">
+        <div
+          class="bg-orange-500 text-white rounded-full w-12 h-12 flex items-center justify-center text-xl mr-4"
+        >
           💸
         </div>
         <div>
@@ -128,13 +142,15 @@
         </div>
       </div>
     </a>
-    
-    <a 
-      href="/reports/margin" 
+
+    <a
+      href="/reports/margin"
       class="block card bg-base-100 shadow-md hover:shadow-lg transition-shadow duration-300 p-4 border border-base-300 hover:border-primary"
     >
       <div class="flex items-start">
-        <div class="bg-cyan-500 text-white rounded-full w-12 h-12 flex items-center justify-center text-xl mr-4">
+        <div
+          class="bg-cyan-500 text-white rounded-full w-12 h-12 flex items-center justify-center text-xl mr-4"
+        >
           📈
         </div>
         <div>

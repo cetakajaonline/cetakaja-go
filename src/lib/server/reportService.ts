@@ -1301,6 +1301,205 @@ export async function getRevenueReport(
 }
 
 /**
+ * Gets revenue report data for the specified date range.
+ *
+ * @param startDate The start date of the report period (inclusive)
+ * @param endDate The end date of the report period (inclusive)
+ * @returns Revenue report data
+ */
+export async function getRevenueReportForDateRange(
+  startDate: Date,
+  endDate: Date,
+): Promise<RevenueReportData> {
+  // Calculate date range for the selected period (from 00:00:00 to 23:59:59) in local timezone
+  const startDateTime = new Date(
+    startDate.getFullYear(),
+    startDate.getMonth(),
+    startDate.getDate(),
+    0,
+    0,
+    0,
+    0,
+  );
+  const endDateTime = new Date(
+    endDate.getFullYear(),
+    endDate.getMonth(),
+    endDate.getDate() + 1,
+    0,
+    0,
+    0,
+    -1,
+  );
+
+  // Fetch orders and related data separately to avoid relationship issues
+  const [orders, orderItems, expenses] = await Promise.all([
+    // Fetch orders for the selected date range
+    prisma.order.findMany({
+      where: {
+        createdAt: {
+          gte: startDateTime,
+          lt: endDateTime,
+        },
+      },
+      include: {
+        user: {
+          select: {
+            name: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+
+    // Fetch order items for those dates by using a subquery with order IDs
+    prisma.orderItem.findMany({
+      where: {
+        order: {
+          createdAt: {
+            gte: startDateTime,
+            lt: endDateTime,
+          },
+        },
+      },
+      include: {
+        product: true,
+        variant: true,
+      },
+    }),
+
+    // Fetch expenses for the selected date range
+    prisma.expense.findMany({
+      where: {
+        date: {
+          gte: startDateTime,
+          lt: endDateTime,
+        },
+      },
+    }),
+  ]);
+
+  // Group orderItems by order ID for efficient processing
+  const orderItemsMap: Record<number, typeof orderItems> = {};
+  orderItems.forEach((item: (typeof orderItems)[number]) => {
+    const orderId = item.orderId; // Using the foreign key directly
+    if (!orderItemsMap[orderId]) {
+      orderItemsMap[orderId] = [];
+    }
+    orderItemsMap[orderId].push(item);
+  });
+
+  // Calculate report metrics
+  const totalOrders = orders.length;
+  // Only count revenue from orders with confirmed payments (not pending, failed, or refunded)
+  const totalRevenue = orders
+    .filter((order) => order.paymentStatus === "confirmed")
+    .reduce(
+      (sum: number, order: (typeof orders)[number]) => sum + order.totalAmount,
+      0,
+    );
+  const totalExpenses = expenses.reduce(
+    (sum: number, expense: (typeof expenses)[number]) => sum + expense.nominal,
+    0,
+  );
+  const netRevenue = totalRevenue - totalExpenses;
+
+  // Count orders by status
+  const ordersByStatus = {
+    pending: orders.filter(
+      (order: (typeof orders)[number]) => order.status === "pending",
+    ).length,
+    processing: orders.filter(
+      (order: (typeof orders)[number]) => order.status === "processing",
+    ).length,
+    finished: orders.filter(
+      (order: (typeof orders)[number]) => order.status === "finished",
+    ).length,
+    canceled: orders.filter(
+      (order: (typeof orders)[number]) => order.status === "canceled",
+    ).length,
+  };
+
+  // Group revenue by payment method
+  const revenueByPaymentMethod = {
+    transfer: orders
+      .filter((order) => order.paymentMethod === "transfer" && order.paymentStatus === "confirmed")
+      .reduce((sum: number, order: (typeof orders)[number]) => sum + order.totalAmount, 0),
+    qris: orders
+      .filter((order) => order.paymentMethod === "qris" && order.paymentStatus === "confirmed")
+      .reduce((sum: number, order: (typeof orders)[number]) => sum + order.totalAmount, 0),
+    cash: orders
+      .filter((order) => order.paymentMethod === "cash" && order.paymentStatus === "confirmed")
+      .reduce((sum: number, order: (typeof orders)[number]) => sum + order.totalAmount, 0),
+  };
+
+  // Calculate top revenue products for the date range
+  const productSales: Record<
+    number,
+    { name: string; totalSold: number; totalRevenue: number }
+  > = {};
+
+  orders.forEach((order: (typeof orders)[number]) => {
+    const items = orderItemsMap[order.id] || [];
+    items.forEach((item: (typeof orderItems)[number]) => {
+      const productId = item.productId;
+      if (!productSales[productId]) {
+        productSales[productId] = {
+          name: item.product.name,
+          totalSold: 0,
+          totalRevenue: 0,
+        };
+      }
+      productSales[productId].totalSold += item.qty;
+      productSales[productId].totalRevenue += item.subtotal;
+    });
+  });
+
+  // Convert to array and sort by revenue
+  const topRevenueProducts = Object.entries(productSales)
+    .map(([id, data]) => ({
+      id: parseInt(id),
+      name: data.name,
+      totalSold: data.totalSold,
+      totalRevenue: data.totalRevenue,
+    }))
+    .sort(
+      (a: { totalRevenue: number }, b: { totalRevenue: number }) =>
+        b.totalRevenue - a.totalRevenue,
+    )
+    .slice(0, 10); // Top 10 revenue products
+
+  // Format orders data for the response
+  const formattedOrders = orders.map((order: (typeof orders)[number]) => ({
+    id: order.id,
+    orderNumber: order.orderNumber,
+    status: order.status,
+    paymentMethod: order.paymentMethod,
+    totalAmount: order.totalAmount,
+    createdAt: order.createdAt,
+    user: {
+      name: order.user.name,
+    },
+  }));
+
+  // Return the revenue report data
+  return {
+    // Use the date range for the report
+    startDate: startDate,
+    endDate: endDate,
+    totalRevenue,
+    totalOrders,
+    totalExpenses,
+    netRevenue,
+    ordersByStatus,
+    revenueByPaymentMethod,
+    topRevenueProducts,
+    orders: formattedOrders,
+  };
+}
+
+/**
  * Gets expense report data for the specified date.
  *
  * @param targetDate The date to get report data for
@@ -1394,6 +1593,112 @@ export async function getExpenseReport(
   // Return the expense report data
   return {
     date: targetDate,
+    totalExpenses,
+    expenseCategories,
+    totalOrders,
+    totalRevenue,
+    expenses: formattedExpenses,
+  };
+}
+
+/**
+ * Gets expense report data for the specified date range.
+ *
+ * @param startDate The start date of the report period (inclusive)
+ * @param endDate The end date of the report period (inclusive)
+ * @returns Expense report data
+ */
+export async function getExpenseReportForDateRange(
+  startDate: Date,
+  endDate: Date,
+): Promise<ExpenseReportData> {
+  // Calculate date range for the selected period (from 00:00:00 to 23:59:59) in local timezone
+  const startDateTime = new Date(
+    startDate.getFullYear(),
+    startDate.getMonth(),
+    startDate.getDate(),
+    0,
+    0,
+    0,
+    0,
+  );
+  const endDateTime = new Date(
+    endDate.getFullYear(),
+    endDate.getMonth(),
+    endDate.getDate() + 1,
+    0,
+    0,
+    0,
+    -1,
+  );
+
+  // Fetch expenses and orders data
+  const [expenses, orders] = await Promise.all([
+    // Fetch expenses for the selected date range
+    prisma.expense.findMany({
+      where: {
+        date: {
+          gte: startDateTime,
+          lt: endDateTime,
+        },
+      },
+    }),
+
+    // Fetch orders for the selected date range
+    prisma.order.findMany({
+      where: {
+        createdAt: {
+          gte: startDateTime,
+          lt: endDateTime,
+        },
+      },
+    }),
+  ]);
+
+  // Calculate report metrics
+  const totalExpenses = expenses.reduce(
+    (sum: number, expense: (typeof expenses)[number]) => sum + expense.nominal,
+    0,
+  );
+  const totalOrders = orders.length;
+  // Only count revenue from orders with confirmed payments
+  const totalRevenue = orders
+    .filter((order) => order.paymentStatus === "confirmed")
+    .reduce(
+      (sum: number, order: (typeof orders)[number]) => sum + order.totalAmount,
+      0,
+    );
+
+  // Group expenses by category
+  const expenseCategories = {
+    operational: expenses
+      .filter((expense) => expense.category === "operasional")
+      .reduce((sum: number, expense: (typeof expenses)[number]) => sum + expense.nominal, 0),
+    marketing: expenses
+      .filter((expense) => expense.category === "marketing")
+      .reduce((sum: number, expense: (typeof expenses)[number]) => sum + expense.nominal, 0),
+    gaji: expenses
+      .filter((expense) => expense.category === "gaji")
+      .reduce((sum: number, expense: (typeof expenses)[number]) => sum + expense.nominal, 0),
+    lainnya: expenses
+      .filter((expense) => expense.category === "lainnya")
+      .reduce((sum: number, expense: (typeof expenses)[number]) => sum + expense.nominal, 0),
+  };
+
+  // Format expenses data for the response
+  const formattedExpenses = expenses.map((expense) => ({
+    id: expense.id,
+    nominal: expense.nominal,
+    category: expense.category,
+    description: expense.description,
+    date: expense.date,
+  }));
+
+  // Return the expense report data
+  return {
+    // Use the date range for the report
+    startDate: startDate,
+    endDate: endDate,
     totalExpenses,
     expenseCategories,
     totalOrders,
@@ -1693,6 +1998,322 @@ export async function getMarginReport(
   // Return the margin report data
   return {
     date: targetDate,
+    totalRevenue,
+    totalCost,
+    totalProfit,
+    totalOrders,
+    totalExpenses,
+    grossMargin,
+    netMargin,
+    ordersByStatus,
+    productMargins: productMarginsArray as Array<{
+      id: number;
+      name: string;
+      cost: number;
+      revenue: number;
+      profit: number;
+      margin: number;
+      totalSold: number;
+    }>,
+    orders: formattedOrders,
+  };
+}
+
+/**
+ * Gets margin report data for the specified date range.
+ *
+ * @param startDate The start date of the report period (inclusive)
+ * @param endDate The end date of the report period (inclusive)
+ * @returns Margin report data
+ */
+export async function getMarginReportForDateRange(
+  startDate: Date,
+  endDate: Date,
+): Promise<MarginReportData> {
+  // Calculate date range for the selected period (from 00:00:00 to 23:59:59) in local timezone
+  const startDateTime = new Date(
+    startDate.getFullYear(),
+    startDate.getMonth(),
+    startDate.getDate(),
+    0,
+    0,
+    0,
+    0,
+  );
+  const endDateTime = new Date(
+    endDate.getFullYear(),
+    endDate.getMonth(),
+    endDate.getDate() + 1,
+    0,
+    0,
+    0,
+    -1,
+  );
+
+  // Fetch orders, order items, products, and expenses separately to avoid relationship issues
+  const [orders, orderItems, expenses] = await Promise.all([
+    // Fetch orders for the selected date range
+    prisma.order.findMany({
+      where: {
+        createdAt: {
+          gte: startDateTime,
+          lt: endDateTime,
+        },
+        paymentStatus: "confirmed", // Only confirmed orders for margin calculation
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            phone: true,
+            address: true,
+          },
+        },
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+          },
+        },
+        orderItems: {
+          select: {
+            id: true,
+            productId: true,
+            variantId: true,
+            qty: true,
+            price: true,
+            subtotal: true,
+            notes: true,
+            product: {
+              select: {
+                id: true,
+                name: true,
+              }
+            },
+            variant: {
+              select: {
+                id: true,
+                variantName: true,
+              }
+            }
+          }
+        },
+        payments: {
+          select: {
+            id: true,
+            orderId: true,
+            userId: true,
+            createdById: true,
+            method: true,
+            amount: true,
+            status: true,
+            transactionRef: true,
+            paidAt: true,
+            createdAt: true,
+            proofs: {
+              select: {
+                id: true,
+                paymentId: true,
+                fileName: true,
+                filePath: true,
+                fileType: true,
+                uploadedAt: true,
+              }
+            }
+          }
+        }
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+
+    // Fetch order items for those dates
+    prisma.orderItem.findMany({
+      where: {
+        order: {
+          createdAt: {
+            gte: startDateTime,
+            lt: endDateTime,
+          },
+          paymentStatus: "confirmed", // Only confirmed orders
+        },
+      },
+      include: {
+        product: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        variant: {
+          select: {
+            id: true,
+            price: true,
+          },
+        },
+      },
+    }),
+
+    // Fetch expenses for the selected date range
+    prisma.expense.findMany({
+      where: {
+        date: {
+          gte: startDateTime,
+          lt: endDateTime,
+        },
+      },
+    }),
+  ]);
+
+  // Group orderItems by order ID for efficient processing
+  const orderItemsMap: Record<number, typeof orderItems> = {};
+  orderItems.forEach((item: (typeof orderItems)[number]) => {
+    const orderId = item.orderId;
+    if (!orderItemsMap[orderId]) {
+      orderItemsMap[orderId] = [];
+    }
+    orderItemsMap[orderId].push(item);
+  });
+
+  // Calculate report metrics
+  const totalOrders = orders.length;
+  const totalRevenue = orders.reduce(
+    (sum: number, order: (typeof orders)[number]) => sum + order.totalAmount,
+    0,
+  );
+  const totalExpenses = expenses.reduce(
+    (sum: number, expense: (typeof expenses)[number]) => sum + expense.nominal,
+    0,
+  );
+
+  // For this example, we'll calculate cost based on available data
+  // In a real system, you would have cost information stored with products/variants
+  let totalCost = 0;
+  const productMargins: Record<number, {
+    id: number;
+    name: string;
+    cost: number;
+    revenue: number;
+    profit: number;
+    totalSold: number;
+  }> = {};
+
+  // Process orders to calculate cost, profit, and margins
+  const ordersWithCostData: Array<{
+    order: (typeof orders)[number];
+    cost: number;
+    profit: number;
+    margin: number;
+  }> = [];
+
+  orders.forEach((order: (typeof orders)[number]) => {
+    const items = orderItemsMap[order.id] || [];
+    let orderCost = 0;
+    let orderProfit = 0;
+
+    items.forEach((item: (typeof orderItems)[number]) => {
+      // Calculate cost for this item (this is a simplified calculation)
+      // In a real system, you would have cost data for each product/variant
+      // For now, using a simple calculation based on the selling price
+      // You might need to adjust this based on your actual cost model
+      const itemCost = item.price * 0.6; // Using 60% of selling price as cost as an example
+      const itemProfit = item.subtotal - (item.qty * itemCost);
+
+      totalCost += item.qty * itemCost;
+      orderCost += item.qty * itemCost;
+      orderProfit += itemProfit;
+
+      // Calculate product margins
+      if (!productMargins[item.productId]) {
+        productMargins[item.productId] = {
+          id: item.productId,
+          name: item.product.name,
+          cost: 0,
+          revenue: 0,
+          profit: 0,
+          totalSold: 0,
+        };
+      }
+
+      productMargins[item.productId].cost += item.qty * itemCost;
+      productMargins[item.productId].revenue += item.subtotal;
+      productMargins[item.productId].profit += itemProfit;
+      productMargins[item.productId].totalSold += item.qty;
+    });
+
+    const margin = totalRevenue > 0 ? (orderProfit / totalRevenue) * 100 : 0;
+    
+    ordersWithCostData.push({
+      order,
+      cost: orderCost,
+      profit: orderProfit,
+      margin
+    });
+  });
+
+  const totalProfit = totalRevenue - totalCost - totalExpenses; // Profit after expenses
+
+  // Calculate gross margin (revenue minus cost of goods sold, before expenses)
+  const grossMargin = (totalRevenue - totalCost) > 0 ? ((totalRevenue - totalCost) / totalRevenue) * 100 : 0;
+  // Calculate net margin (profit after all expenses)
+  const netMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+
+  // Count orders by status
+  const ordersByStatus = {
+    pending: orders.filter(
+      (order: (typeof orders)[number]) => order.status === "pending",
+    ).length,
+    processing: orders.filter(
+      (order: (typeof orders)[number]) => order.status === "processing",
+    ).length,
+    finished: orders.filter(
+      (order: (typeof orders)[number]) => order.status === "finished",
+    ).length,
+    canceled: orders.filter(
+      (order: (typeof orders)[number]) => order.status === "canceled",
+    ).length,
+  };
+
+  // Calculate product margins
+  const productMarginsArray = Object.values(productMargins).map(product => ({
+    ...product,
+    margin: product.revenue > 0 ? (product.profit / product.revenue) * 100 : 0,
+  }));
+
+  // Format orders data for the response with cost and margin info
+  const formattedOrders = ordersWithCostData.map(({ order, cost, profit, margin }) => {
+    return {
+      id: order.id,
+      orderNumber: order.orderNumber,
+      status: order.status,
+      shippingMethod: order.shippingMethod,
+      paymentMethod: order.paymentMethod,
+      paymentStatus: order.paymentStatus,
+      totalAmount: order.totalAmount,
+      notes: order.notes,
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt,
+      userId: order.userId,
+      createdById: order.createdById,
+      user: order.user,
+      createdBy: order.createdBy,
+      orderItems: order.orderItems,
+      payments: order.payments,
+      cost,
+      profit,
+      margin,
+    };
+  });
+
+  // Return the margin report data
+  return {
+    // Use the date range for the report
+    startDate: startDate,
+    endDate: endDate,
     totalRevenue,
     totalCost,
     totalProfit,

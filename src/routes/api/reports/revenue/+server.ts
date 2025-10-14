@@ -1,16 +1,43 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { getRevenueReport } from "$lib/server/reportService";
+import { getRevenueReport, getRevenueReportForDateRange } from "$lib/server/reportService";
 import { z } from "zod";
 
 // GET /api/reports/revenue
 export const GET: RequestHandler = async ({ url }) => {
   try {
-    // Parse date from query parameter, default to today
+    // Parse startDate and endDate from query parameters, default to current week
     const dateParam = url.searchParams.get("date");
-    let targetDate: Date;
+    const startDateParam = url.searchParams.get("startDate");
+    const endDateParam = url.searchParams.get("endDate");
 
-    if (dateParam) {
+    let report;
+
+    if (startDateParam && endDateParam) {
+      // Date range query - parse start and end dates
+      const parsedStartDate = z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/)
+        .safeParse(startDateParam);
+      const parsedEndDate = z
+        .string()
+        .regex(/^\d{4}-\d{2}-\d{2}$/)
+        .safeParse(endDateParam);
+
+      if (!parsedStartDate.success || !parsedEndDate.success) {
+        return json(
+          { success: false, message: "Invalid date format. Use YYYY-MM-DD" },
+          { status: 400 },
+        );
+      }
+
+      const startDate = new Date(`${parsedStartDate.data}T00:00:00`);
+      const endDate = new Date(`${parsedEndDate.data}T23:59:59.999`);
+
+      // Get revenue report for date range
+      report = await getRevenueReportForDateRange(startDate, endDate);
+    } else if (dateParam) {
+      // Single date query
       const parsedDate = z
         .string()
         .regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -21,15 +48,28 @@ export const GET: RequestHandler = async ({ url }) => {
           { status: 400 },
         );
       }
-      targetDate = new Date(`${parsedDate.data}T00:00:00`);
-    } else {
-      // Default to today's date
-      targetDate = new Date();
-      targetDate.setHours(0, 0, 0, 0);
-    }
+      const targetDate = new Date(`${parsedDate.data}T00:00:00`);
 
-    // Get revenue report data
-    const report = await getRevenueReport(targetDate);
+      // Get revenue report for single date
+      report = await getRevenueReport(targetDate);
+    } else {
+      // Default to current week (Monday to Sunday) for date range
+      const today = new Date();
+      const dayOfWeek = today.getDay(); // 0 (Sunday) to 6 (Saturday)
+      // Calculate how many days to subtract to get to Monday
+      const daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // If Sunday, subtract 6; otherwise subtract (dayOfWeek - 1)
+
+      const startDate = new Date(today);
+      startDate.setDate(today.getDate() - daysToSubtract);
+      startDate.setHours(0, 0, 0, 0);
+
+      const endDate = new Date(startDate);
+      endDate.setDate(startDate.getDate() + 6);
+      endDate.setHours(23, 59, 59, 999);
+
+      // Get revenue report for date range
+      report = await getRevenueReportForDateRange(startDate, endDate);
+    }
 
     return json({
       success: true,

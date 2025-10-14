@@ -1,58 +1,87 @@
 <script lang="ts">
+  import { formatCurrency, capitalizeFirstLetter } from "$lib/utils/formatters";
   import type { ExpenseReportData } from "$lib/types";
 
   export let reportData: ExpenseReportData | null | undefined;
 
-  // Format currency
-  function formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0
-    }).format(amount);
+  // Function to determine the time period based on date range
+  function getTimePeriodLabel(): string {
+    if (reportData && reportData.date) {
+      // For expense report, we'll use the date property if available
+      const reportDate = new Date(reportData.date);
+      return reportDate.toLocaleDateString("id-ID", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+    }
+    return "Tahun Ini";
   }
 </script>
 
 {#if reportData}
-  <div class="bg-white p-6 rounded-xl shadow border">
-    <h3 class="text-lg font-semibold mb-4">Detail Pengeluaran</h3>
-    
+  <div>
+    <h3 class="text-xl font-bold m-6 text-center">
+      Rincian Pengeluaran {getTimePeriodLabel()}
+    </h3>
     <div class="overflow-x-auto">
-      <table class="table table-compact w-full">
+      <table class="table table-zebra">
         <thead>
           <tr>
-            <th>Kategori</th>
-            <th>Nominal</th>
-            <th>Deskripsi</th>
             <th>Tanggal</th>
+            <th>Kategori</th>
+            <th>Deskripsi</th>
+            <th class="text-right">Nominal</th>
           </tr>
         </thead>
         <tbody>
           {#each reportData.expenses as expense}
             <tr>
+              <td
+                >{new Date(expense.date).toLocaleDateString("id-ID", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                })}</td
+              >
               <td>
                 <span class="badge badge-primary">
-                  {expense.category === 'operasional' ? 'Operasional' : 
-                   expense.category === 'marketing' ? 'Marketing' : 
-                   expense.category === 'gaji' ? 'Gaji' : 'Lainnya'}
+                  {expense.category === "operasional"
+                    ? "Operasional"
+                    : expense.category === "marketing"
+                      ? "Marketing"
+                      : expense.category === "gaji"
+                        ? "Gaji"
+                        : "Lainnya"}
                 </span>
               </td>
-              <td>{formatCurrency(expense.nominal)}</td>
-              <td>{expense.description || '-'}</td>
-              <td>{new Date(expense.date).toLocaleDateString('id-ID')}</td>
+              <td>{expense.description || "-"}</td>
+              <td class="text-right">{formatCurrency(expense.nominal)}</td>
             </tr>
           {:else}
             <tr>
-              <td colspan="4" class="text-center">Tidak ada data pengeluaran</td>
+              <td colspan="4">Tidak ada data pengeluaran dalam periode ini.</td>
             </tr>
           {/each}
+          <tr class="font-bold">
+            <td></td>
+            <td></td>
+            <td class="text-right">Total</td>
+            <td class="text-right">
+              {formatCurrency(
+                reportData.expenses
+                  ? reportData.expenses.reduce(
+                      (sum, expense) => sum + expense.nominal,
+                      0
+                    )
+                  : 0
+              )}
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
   </div>
 {:else}
-  <div class="bg-white p-6 rounded-xl shadow border">
-    <h3 class="text-lg font-semibold mb-4">Detail Pengeluaran</h3>
-    <div class="text-center text-gray-500 py-8">Loading data...</div>
-  </div>
+  <div class="text-center text-gray-500 py-8">Loading data...</div>
 {/if}

@@ -208,6 +208,29 @@ export async function getRevenueReport(date?: string): Promise<RevenueReportData
 }
 
 /**
+ * Fetches revenue report data for a specific date range
+ * @param startDate The start date of the report period (format: YYYY-MM-DD)
+ * @param endDate The end date of the report period (format: YYYY-MM-DD)
+ * @returns Promise resolving to revenue report data
+ */
+export async function getRevenueReportForDateRange(
+  startDate: string,
+  endDate: string,
+): Promise<RevenueReportData> {
+  const url = `/api/reports/revenue?startDate=${startDate}&endDate=${endDate}`;
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to fetch revenue report");
+  }
+
+  const result = await response.json();
+  return result.data as RevenueReportData;
+}
+
+/**
  * Fetches expense report data for a specific date
  * @param date The date to fetch report for (format: YYYY-MM-DD)
  * @returns Promise resolving to expense report data
@@ -224,6 +247,52 @@ export async function getExpenseReport(date?: string): Promise<ExpenseReportData
 
   const result = await response.json();
   return result.data as ExpenseReportData;
+}
+
+/**
+ * Fetches expense report data for a specific date range
+ * @param startDate The start date of the report period (format: YYYY-MM-DD)
+ * @param endDate The end date of the report period (format: YYYY-MM-DD)
+ * @returns Promise resolving to expense report data
+ */
+export async function getExpenseReportForDateRange(
+  startDate: string,
+  endDate: string,
+): Promise<ExpenseReportData> {
+  const url = `/api/reports/expense?startDate=${startDate}&endDate=${endDate}`;
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to fetch expense report");
+  }
+
+  const result = await response.json();
+  return result.data as ExpenseReportData;
+}
+
+/**
+ * Fetches margin report data for a specific date range
+ * @param startDate The start date of the report period (format: YYYY-MM-DD)
+ * @param endDate The end date of the report period (format: YYYY-MM-DD)
+ * @returns Promise resolving to margin report data
+ */
+export async function getMarginReportForDateRange(
+  startDate: string,
+  endDate: string,
+): Promise<MarginReportData> {
+  const url = `/api/reports/margin?startDate=${startDate}&endDate=${endDate}`;
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to fetch margin report");
+  }
+
+  const result = await response.json();
+  return result.data as MarginReportData;
 }
 
 /**

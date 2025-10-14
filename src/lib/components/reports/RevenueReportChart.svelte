@@ -1,90 +1,244 @@
 <script lang="ts">
+  import {
+    Chart as ChartJS,
+    ArcElement,
+    Tooltip,
+    Legend,
+    Title,
+    DoughnutController,
+    BarElement,
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    BarController,
+  } from "chart.js";
   import { onMount, onDestroy } from "svelte";
   import type { RevenueReportData } from "$lib/types";
-  import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
-  import type { ChartConfiguration } from 'chart.js';
 
   export let reportData: RevenueReportData | null | undefined;
 
-  let canvasElement: HTMLCanvasElement;
-  let chart: ChartJS;
+  // Register Chart.js components needed for doughnut and bar charts
+  ChartJS.register(
+    ArcElement,
+    Tooltip,
+    Legend,
+    Title,
+    DoughnutController,
+    BarController,
+    BarElement,
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement
+  );
 
-  // Register ChartJS components
-  ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+  // Canvas elements for the charts
+  let revenueDistributionCanvas: HTMLCanvasElement;
+  let paymentMethodRevenueCanvas: HTMLCanvasElement;
+  let revenueAnalysisCanvas: HTMLCanvasElement;
+
+  // Chart instances
+  let revenueDistributionChart: ChartJS;
+  let paymentMethodRevenueChart: ChartJS;
+  let revenueAnalysisChart: ChartJS;
+
+  // Prepare data for the charts
+  $: revenueDistributionChartData = {
+    labels: ["Pendapatan", "Pengeluaran"],
+    datasets: [
+      {
+        label: "Jumlah (Rp)",
+        data: [
+          reportData ? reportData.totalRevenue : 0,
+          reportData ? reportData.totalExpenses : 0,
+        ],
+        backgroundColor: [
+          "rgba(16, 185, 129, 0.8)", // Revenue - daisyUI success (emerald-500)
+          "rgba(124, 58, 237, 0.8)", // Expenses - daisyUI secondary (violet-600)
+        ],
+        borderColor: [
+          "rgba(16, 185, 129, 1)",
+          "rgba(124, 58, 237, 1)",
+        ],
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  // Prepare data for payment method revenue chart
+  $: paymentMethodRevenueChartData = {
+    labels: ["Transfer", "QRIS", "Tunai"],
+    datasets: [
+      {
+        label: "Pendapatan per Metode",
+        data: [
+          reportData?.revenueByPaymentMethod?.transfer || 0,
+          reportData?.revenueByPaymentMethod?.qris || 0,
+          reportData?.revenueByPaymentMethod?.cash || 0,
+        ],
+        backgroundColor: [
+          "rgba(79, 70, 229, 0.8)", // Transfer - daisyUI primary (indigo-500)
+          "rgba(124, 58, 237, 0.8)", // QRIS - daisyUI secondary (violet-600)
+          "rgba(245, 158, 11, 0.8)", // Cash - daisyUI warning (amber-500)
+        ],
+        borderColor: [
+          "rgba(79, 70, 229, 1)", // Transfer
+          "rgba(124, 58, 237, 1)", // QRIS
+          "rgba(245, 158, 11, 1)", // Cash
+        ],
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  // Prepare data for revenue analysis chart
+  $: revenueAnalysisChartData = {
+    labels: reportData?.topRevenueProducts?.map(product => product.name) || [],
+    datasets: [
+      {
+        label: "Total Pendapatan (Rp)",
+        data: reportData?.topRevenueProducts?.map(product => product.totalRevenue) || [],
+        backgroundColor: "rgba(245, 158, 11, 0.8)", // daisyUI warning (amber-500)
+        borderColor: "rgba(245, 158, 11, 1)",
+        borderWidth: 1,
+      },
+    ],
+  };
+
+  // Chart options
+  const revenueDistributionChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "top" as const,
+      },
+      title: {
+        display: true,
+        text: "Distribusi Pendapatan vs Pengeluaran",
+      },
+    },
+  };
+
+  const paymentMethodRevenueChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "top" as const,
+      },
+      title: {
+        display: true,
+        text: "Pendapatan berdasarkan Metode Pembayaran",
+      },
+    },
+  };
+
+  const revenueAnalysisChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: "top" as const,
+      },
+      title: {
+        display: true,
+        text: "Analisis Pendapatan Produk Terbaik",
+      },
+    },
+  };
 
   onMount(() => {
-    if (canvasElement && reportData) {
-      // Prepare chart data
-      const chartData = {
-        labels: reportData.topRevenueProducts?.map(product => product.name) || [],
-        datasets: [
-          {
-            label: 'Pendapatan Produk',
-            data: reportData.topRevenueProducts?.map(product => product.totalRevenue) || [],
-            backgroundColor: [
-              'rgba(54, 162, 235, 0.5)',
-              'rgba(255, 99, 132, 0.5)',
-              'rgba(255, 205, 86, 0.5)',
-              'rgba(75, 192, 192, 0.5)',
-              'rgba(153, 102, 255, 0.5)',
-              'rgba(255, 159, 64, 0.5)',
-              'rgba(199, 199, 199, 0.5)',
-              'rgba(83, 102, 255, 0.5)',
-              'rgba(255, 99, 255, 0.5)',
-              'rgba(99, 255, 132, 0.5)'
-            ],
-            borderColor: [
-              'rgb(54, 162, 235)',
-              'rgb(255, 99, 132)',
-              'rgb(255, 205, 86)',
-              'rgb(75, 192, 192)',
-              'rgb(153, 102, 255)',
-              'rgb(255, 159, 64)',
-              'rgb(199, 199, 199)',
-              'rgb(83, 102, 255)',
-              'rgb(255, 99, 255)',
-              'rgb(99, 255, 132)'
-            ],
-            borderWidth: 1,
-          }
-        ]
-      };
+    // Create revenue distribution chart
+    if (revenueDistributionCanvas && reportData) {
+      revenueDistributionChart = new ChartJS(revenueDistributionCanvas, {
+        type: "doughnut",
+        data: revenueDistributionChartData,
+        options: revenueDistributionChartOptions,
+      });
+    }
 
-      const chartConfig: ChartConfiguration<'bar'> = {
-        type: 'bar',
-        data: chartData,
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: 'top' as const,
-            },
-            title: {
-              display: true,
-              text: 'Pendapatan Harian'
-            }
-          }
-        }
-      };
+    // Create payment method revenue chart
+    if (paymentMethodRevenueCanvas && reportData) {
+      paymentMethodRevenueChart = new ChartJS(paymentMethodRevenueCanvas, {
+        type: "bar",
+        data: paymentMethodRevenueChartData,
+        options: paymentMethodRevenueChartOptions,
+      });
+    }
 
-      chart = new ChartJS(canvasElement, chartConfig);
+    // Create revenue analysis chart
+    if (revenueAnalysisCanvas && reportData) {
+      revenueAnalysisChart = new ChartJS(revenueAnalysisCanvas, {
+        type: "bar",
+        data: revenueAnalysisChartData,
+        options: revenueAnalysisChartOptions,
+      });
     }
   });
 
   onDestroy(() => {
-    if (chart) {
-      chart.destroy();
+    // Clean up charts to prevent memory leaks
+    if (revenueDistributionChart) {
+      revenueDistributionChart.destroy();
+    }
+    if (paymentMethodRevenueChart) {
+      paymentMethodRevenueChart.destroy();
+    }
+    if (revenueAnalysisChart) {
+      revenueAnalysisChart.destroy();
     }
   });
+
+  // Update charts when data changes
+  $: if (revenueDistributionChart && reportData) {
+    revenueDistributionChart.data = revenueDistributionChartData;
+    revenueDistributionChart.update();
+  }
+
+  $: if (paymentMethodRevenueChart && reportData) {
+    paymentMethodRevenueChart.data = paymentMethodRevenueChartData;
+    paymentMethodRevenueChart.update();
+  }
+
+  $: if (revenueAnalysisChart && reportData) {
+    revenueAnalysisChart.data = revenueAnalysisChartData;
+    revenueAnalysisChart.update();
+  }
 </script>
 
-{#if reportData}
-  <div class="bg-white p-6 rounded-xl shadow border h-96">
-    <canvas bind:this={canvasElement}></canvas>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <!-- Revenue Distribution Chart -->
+  <div class="bg-base-100 p-4 rounded-lg shadow">
+    {#if reportData && reportData.totalRevenue + reportData.totalExpenses > 0}
+      <div class="h-80">
+        <canvas bind:this={revenueDistributionCanvas}></canvas>
+      </div>
+    {:else}
+      <p class="text-center text-gray-500">Tidak ada data</p>
+    {/if}
   </div>
-{:else}
-  <div class="bg-white p-6 rounded-xl shadow border h-96 flex items-center justify-center">
-    <div class="text-gray-500">Loading chart...</div>
+
+  <!-- Payment Method Revenue Chart -->
+  <div class="bg-base-100 p-4 rounded-lg shadow">
+    {#if reportData && (reportData.revenueByPaymentMethod?.transfer || reportData.revenueByPaymentMethod?.qris || reportData.revenueByPaymentMethod?.cash)}
+      <div class="h-80">
+        <canvas bind:this={paymentMethodRevenueCanvas}></canvas>
+      </div>
+    {:else}
+      <p class="text-center text-gray-500">Tidak ada data</p>
+    {/if}
   </div>
-{/if}
+
+  <!-- Revenue Analysis Chart -->
+  <div class="bg-base-100 p-4 rounded-lg shadow lg:col-span-2">
+    {#if reportData && reportData.topRevenueProducts && reportData.topRevenueProducts.length > 0}
+      <div class="h-80">
+        <canvas bind:this={revenueAnalysisCanvas}></canvas>
+      </div>
+    {:else}
+      <p class="text-center text-gray-500">Tidak ada data</p>
+    {/if}
+  </div>
+</div>

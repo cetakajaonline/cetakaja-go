@@ -54,12 +54,12 @@
           reportData.totalProducts - reportData.totalSold,
         ],
         backgroundColor: [
-          "rgba(40, 167, 69, 0.8)", // Sold products - green
-          "rgba(220, 53, 69, 0.8)", // Unsold products - red
+          "rgba(16, 185, 129, 0.8)", // Sold products - daisyUI success (emerald-500)
+          "rgba(239, 68, 68, 0.8)",  // Unsold products - daisyUI error (red-500)
         ],
         borderColor: [
-          "rgba(40, 167, 69, 1)",
-          "rgba(220, 53, 69, 1)",
+          "rgba(16, 185, 129, 1)",
+          "rgba(239, 68, 68, 1)",
         ],
         borderWidth: 1,
       },
@@ -73,8 +73,8 @@
       {
         label: "Jumlah Terjual",
         data: reportData.topSellingProducts.map(product => product.totalSold),
-        backgroundColor: "rgba(0, 123, 255, 0.8)", // Blue
-        borderColor: "rgba(0, 123, 255, 1)",
+        backgroundColor: "rgba(124, 58, 237, 0.8)", // daisyUI secondary (violet-600)
+        borderColor: "rgba(124, 58, 237, 1)",
         borderWidth: 1,
       },
     ],
@@ -87,8 +87,8 @@
       {
         label: "Total Pendapatan (Rp)",
         data: reportData.topSellingProducts.map(product => product.totalRevenue),
-        backgroundColor: "rgba(255, 193, 7, 0.8)", // Yellow
-        borderColor: "rgba(255, 193, 7, 1)",
+        backgroundColor: "rgba(16, 185, 129, 0.8)", // daisyUI success (emerald-500)
+        borderColor: "rgba(16, 185, 129, 1)",
         borderWidth: 1,
       },
     ],

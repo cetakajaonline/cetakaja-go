@@ -54,12 +54,12 @@
           reportData.topCustomers.length,
         ],
         backgroundColor: [
-          "rgba(255, 193, 7, 0.8)", // New customers - yellow
-          "rgba(40, 167, 69, 0.8)", // Returning customers - green
+          "rgba(245, 158, 11, 0.8)", // New customers - daisyUI warning (amber-500)
+          "rgba(16, 185, 129, 0.8)", // Returning customers - daisyUI success (emerald-500)
         ],
         borderColor: [
-          "rgba(255, 193, 7, 1)",
-          "rgba(40, 167, 69, 1)",
+          "rgba(245, 158, 11, 1)",
+          "rgba(16, 185, 129, 1)",
         ],
         borderWidth: 1,
       },
@@ -73,8 +73,8 @@
       {
         label: "Total Spent (Rp)",
         data: reportData.topCustomers.map(customer => customer.totalSpent),
-        backgroundColor: "rgba(0, 123, 255, 0.8)", // Blue
-        borderColor: "rgba(0, 123, 255, 1)",
+        backgroundColor: "rgba(124, 58, 237, 0.8)", // daisyUI secondary (violet-600)
+        borderColor: "rgba(124, 58, 237, 1)",
         borderWidth: 1,
       },
     ],
@@ -87,8 +87,8 @@
       {
         label: "Total Orders",
         data: reportData.topCustomers.map(customer => customer.totalOrders),
-        backgroundColor: "rgba(220, 53, 69, 0.8)", // Red
-        borderColor: "rgba(220, 53, 69, 1)",
+        backgroundColor: "rgba(239, 68, 68, 0.8)", // daisyUI error (red-500)
+        borderColor: "rgba(239, 68, 68, 1)",
         borderWidth: 1,
       },
     ],
