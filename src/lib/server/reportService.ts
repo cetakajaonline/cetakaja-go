@@ -1445,9 +1445,67 @@ export async function getMarginReport(
       include: {
         user: {
           select: {
+            id: true,
             name: true,
+            username: true,
+            phone: true,
+            address: true,
           },
         },
+        createdBy: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+          },
+        },
+        orderItems: {
+          select: {
+            id: true,
+            productId: true,
+            variantId: true,
+            qty: true,
+            price: true,
+            subtotal: true,
+            notes: true,
+            product: {
+              select: {
+                id: true,
+                name: true,
+              }
+            },
+            variant: {
+              select: {
+                id: true,
+                variantName: true,
+              }
+            }
+          }
+        },
+        payments: {
+          select: {
+            id: true,
+            orderId: true,
+            userId: true,
+            createdById: true,
+            method: true,
+            amount: true,
+            status: true,
+            transactionRef: true,
+            paidAt: true,
+            createdAt: true,
+            proofs: {
+              select: {
+                id: true,
+                paymentId: true,
+                fileName: true,
+                filePath: true,
+                fileType: true,
+                uploadedAt: true,
+              }
+            }
+          }
+        }
       },
       orderBy: {
         createdAt: "desc",
@@ -1516,7 +1574,22 @@ export async function getMarginReport(
   // For this example, we'll calculate cost based on available data
   // In a real system, you would have cost information stored with products/variants
   let totalCost = 0;
-  const productMargins: Record<number, any> = {};
+  const productMargins: Record<number, {
+    id: number;
+    name: string;
+    cost: number;
+    revenue: number;
+    profit: number;
+    totalSold: number;
+  }> = {};
+
+  // Process orders to calculate cost, profit, and margins
+  const ordersWithCostData: Array<{
+    order: (typeof orders)[number];
+    cost: number;
+    profit: number;
+    margin: number;
+  }> = [];
 
   orders.forEach((order: (typeof orders)[number]) => {
     const items = orderItemsMap[order.id] || [];
@@ -1553,10 +1626,14 @@ export async function getMarginReport(
       productMargins[item.productId].totalSold += item.qty;
     });
 
-    // Add margin to order data
-    (order as any).cost = orderCost;
-    (order as any).profit = orderProfit;
-    (order as any).margin = totalRevenue > 0 ? (orderProfit / totalRevenue) * 100 : 0;
+    const margin = totalRevenue > 0 ? (orderProfit / totalRevenue) * 100 : 0;
+    
+    ordersWithCostData.push({
+      order,
+      cost: orderCost,
+      profit: orderProfit,
+      margin
+    });
   });
 
   const totalProfit = totalRevenue - totalCost - totalExpenses; // Profit after expenses
@@ -1589,20 +1666,27 @@ export async function getMarginReport(
   }));
 
   // Format orders data for the response with cost and margin info
-  const formattedOrders = orders.map((order: (typeof orders)[number]) => {
-    const orderWithMargin = order as any;
+  const formattedOrders = ordersWithCostData.map(({ order, cost, profit, margin }) => {
     return {
       id: order.id,
       orderNumber: order.orderNumber,
       status: order.status,
+      shippingMethod: order.shippingMethod,
+      paymentMethod: order.paymentMethod,
+      paymentStatus: order.paymentStatus,
       totalAmount: order.totalAmount,
-      cost: orderWithMargin.cost || 0,
-      profit: orderWithMargin.profit || 0,
-      margin: orderWithMargin.margin || 0,
+      notes: order.notes,
       createdAt: order.createdAt,
-      user: {
-        name: order.user.name,
-      },
+      updatedAt: order.updatedAt,
+      userId: order.userId,
+      createdById: order.createdById,
+      user: order.user,
+      createdBy: order.createdBy,
+      orderItems: order.orderItems,
+      payments: order.payments,
+      cost,
+      profit,
+      margin,
     };
   });
 

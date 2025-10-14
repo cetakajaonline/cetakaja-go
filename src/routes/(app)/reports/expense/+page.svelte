@@ -11,13 +11,16 @@
 
   const { reportData } = data;
 
-  // Format date for display
-  const formattedDate = new Date(reportData.date).toLocaleDateString("id-ID", {
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  // Format date for display - only if reportData and date exist
+  let formattedDate = "Loading...";
+  if (reportData && reportData.date) {
+    formattedDate = new Date(reportData.date).toLocaleDateString("id-ID", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  }
 
   // Function to refresh the report for a specific date
   async function refreshReport(date: Date) {
@@ -30,8 +33,11 @@
     window.location.href = `/reports/expense?date=${formattedDate}`;
   }
 
-  // Initialize date picker with the current report date
-  let selectedDate = new Date(reportData.date);
+  // Initialize date picker with the current report date - only if reportData and date exist
+  let selectedDate = new Date();
+  if (reportData && reportData.date) {
+    selectedDate = new Date(reportData.date);
+  }
 
   function handleDateChange(event: Event) {
     const target = event.target as HTMLInputElement;
@@ -44,7 +50,7 @@
     const dateInput = document.getElementById(
       "report-date"
     ) as HTMLInputElement;
-    if (dateInput) {
+    if (dateInput && reportData && reportData.date) {
       // Format the date to YYYY-MM-DD string to set as the input value, preserving local date
       const reportDate = new Date(reportData.date);
       
@@ -61,9 +67,14 @@
   
   // Import and use export functions
   async function exportToPDF() {
+    if (!reportData || !reportData.date) {
+      alert('Data laporan tidak tersedia. Silakan coba lagi.');
+      return;
+    }
     try {
       const { exportDailyReportToPDF } = await import('$lib/utils/pdfExporter');
-      await exportDailyReportToPDF(reportData, reportData.date);
+      // Using type assertion since export function currently expects DailyReportData
+      await exportDailyReportToPDF(reportData as any, reportData.date instanceof Date ? reportData.date : new Date(reportData.date));
     } catch (error) {
       console.error('Error exporting to PDF:', error);
       alert('Gagal mengekspor ke PDF. Silakan coba lagi.');
@@ -71,9 +82,14 @@
   }
   
   async function exportToExcel() {
+    if (!reportData || !reportData.date) {
+      alert('Data laporan tidak tersedia. Silakan coba lagi.');
+      return;
+    }
     try {
       const { exportDailyReportToExcel } = await import('$lib/utils/excelExporter');
-      await exportDailyReportToExcel(reportData, reportData.date);
+      // Using type assertion since export function currently expects DailyReportData
+      await exportDailyReportToExcel(reportData as any, reportData.date instanceof Date ? reportData.date : new Date(reportData.date));
     } catch (error) {
       console.error('Error exporting to Excel:', error);
       alert('Gagal mengekspor ke Excel. Silakan coba lagi.');

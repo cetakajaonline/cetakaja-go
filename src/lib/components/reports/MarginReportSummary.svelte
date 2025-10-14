@@ -1,10 +1,11 @@
 <script lang="ts">
   import type { MarginReportData } from "$lib/types";
 
-  export let reportData: MarginReportData;
+  export let reportData: MarginReportData | null | undefined;
 </script>
 
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+{#if reportData}
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
   <!-- Total Revenue -->
   <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-xl shadow">
     <div class="text-sm font-semibold">Total Pendapatan</div>
@@ -105,3 +106,31 @@
     <div class="text-sm text-gray-600">Dibatalkan</div>
   </div>
 </div>
+{:else}
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <!-- Loading placeholders for the summary cards -->
+    <div class="bg-gray-200 p-6 rounded-xl shadow animate-pulse">
+      <div class="h-4 bg-gray-400 rounded w-3/4 mb-4"></div>
+      <div class="h-8 bg-gray-400 rounded w-full mb-4"></div>
+      <div class="h-4 bg-gray-400 rounded w-1/2"></div>
+    </div>
+    
+    <div class="bg-gray-200 p-6 rounded-xl shadow animate-pulse">
+      <div class="h-4 bg-gray-400 rounded w-3/4 mb-4"></div>
+      <div class="h-8 bg-gray-400 rounded w-full mb-4"></div>
+      <div class="h-4 bg-gray-400 rounded w-1/2"></div>
+    </div>
+    
+    <div class="bg-gray-200 p-6 rounded-xl shadow animate-pulse">
+      <div class="h-4 bg-gray-400 rounded w-3/4 mb-4"></div>
+      <div class="h-8 bg-gray-400 rounded w-full mb-4"></div>
+      <div class="h-4 bg-gray-400 rounded w-1/2"></div>
+    </div>
+    
+    <div class="bg-gray-200 p-6 rounded-xl shadow animate-pulse">
+      <div class="h-4 bg-gray-400 rounded w-3/4 mb-4"></div>
+      <div class="h-8 bg-gray-400 rounded w-full mb-4"></div>
+      <div class="h-4 bg-gray-400 rounded w-1/2"></div>
+    </div>
+  </div>
+{/if}

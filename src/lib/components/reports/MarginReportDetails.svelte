@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { MarginReportData } from "$lib/types";
 
-  export let reportData: MarginReportData;
+  export let reportData: MarginReportData | null | undefined;
 
   // Format currency
   function formatCurrency(amount: number): string {
@@ -18,56 +18,57 @@
   }
 </script>
 
-<div class="bg-white p-6 rounded-xl shadow border">
-  <h3 class="text-lg font-semibold mb-4">Detail Margin</h3>
-  
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-    <!-- Product Margins -->
-    <div>
-      <h4 class="text-md font-medium mb-3">Margin Produk</h4>
-      <div class="overflow-x-auto">
-        <table class="table table-compact w-full">
-          <thead>
-            <tr>
-              <th>Produk</th>
-              <th>Biaya</th>
-              <th>Pendapatan</th>
-              <th>Laba</th>
-              <th>Margin</th>
-            </tr>
-          </thead>
-          <tbody>
-            {#each reportData.productMargins as product}
+{#if reportData}
+  <div class="bg-white p-6 rounded-xl shadow border">
+    <h3 class="text-lg font-semibold mb-4">Detail Margin</h3>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <!-- Product Margins -->
+      <div>
+        <h4 class="text-md font-medium mb-3">Margin Produk</h4>
+        <div class="overflow-x-auto">
+          <table class="table table-compact w-full">
+            <thead>
               <tr>
-                <td>{product.name}</td>
-                <td>{formatCurrency(product.cost)}</td>
-                <td>{formatCurrency(product.revenue)}</td>
-                <td>{formatCurrency(product.profit)}</td>
-                <td class="font-bold {product.margin >= 0 ? 'text-green-600' : 'text-red-600'}">
-                  {formatPercentage(product.margin)}
-                </td>
+                <th>Produk</th>
+                <th>Biaya</th>
+                <th>Pendapatan</th>
+                <th>Laba</th>
+                <th>Margin</th>
               </tr>
-            {:else}
-              <tr>
-                <td colspan="5" class="text-center">Tidak ada data margin produk</td>
-              </tr>
-            {/each}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {#each reportData.productMargins as product}
+                <tr>
+                  <td>{product.name}</td>
+                  <td>{formatCurrency(product.cost)}</td>
+                  <td>{formatCurrency(product.revenue)}</td>
+                  <td>{formatCurrency(product.profit)}</td>
+                  <td class="font-bold {product.margin >= 0 ? 'text-green-600' : 'text-red-600'}">
+                    {formatPercentage(product.margin)}
+                  </td>
+                </tr>
+              {:else}
+                <tr>
+                  <td colspan="5" class="text-center">Tidak ada data margin produk</td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
 
-    <!-- Order Details -->
-    <div>
-      <h4 class="text-md font-medium mb-3">Daftar Pesanan</h4>
-      <div class="overflow-x-auto">
-        <table class="table table-compact w-full">
-          <thead>
-            <tr>
-              <th>No. Pesanan</th>
-              <th>Pelanggan</th>
-              <th>Total</th>
-              <th>Margin</th>
+      <!-- Order Details -->
+      <div>
+        <h4 class="text-md font-medium mb-3">Daftar Pesanan</h4>
+        <div class="overflow-x-auto">
+          <table class="table table-compact w-full">
+            <thead>
+              <tr>
+                <th>No. Pesanan</th>
+                <th>Pelanggan</th>
+                <th>Total</th>
+                <th>Margin</th>
             </tr>
           </thead>
           <tbody>
@@ -90,4 +91,9 @@
       </div>
     </div>
   </div>
-</div>
+{:else}
+  <div class="bg-white p-6 rounded-xl shadow border">
+    <h3 class="text-lg font-semibold mb-4">Detail Margin</h3>
+    <div class="text-center text-gray-500 py-8">Loading data...</div>
+  </div>
+{/if}

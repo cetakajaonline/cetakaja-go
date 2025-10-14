@@ -482,19 +482,41 @@ export interface MarginReportData {
     margin: number; // Percentage
     totalSold: number;
   }>;
-  orders: Array<{
-    id: number;
-    orderNumber: string;
-    status: "pending" | "processing" | "finished" | "canceled";
-    totalAmount: number;
-    cost: number;
-    profit: number;
-    margin: number; // Percentage
-    createdAt: Date;
-    user: {
-      name: string;
-    };
-  }>;
+  orders: OrderWithCostData[];
+}
+
+// Order with added margin data
+export interface OrderWithMargin {
+  id: number;
+  orderNumber: string;
+  status: "pending" | "processing" | "finished" | "canceled";
+  totalAmount: number;
+  cost: number;
+  profit: number;
+  margin: number; // Percentage
+  createdAt: Date;
+  user: {
+    name: string;
+  };
+}
+
+// Product margin data
+export interface ProductMargin {
+  id: number;
+  name: string;
+  cost: number;
+  revenue: number;
+  profit: number;
+  margin: number; // Percentage
+  totalSold: number;
+}
+
+// Extension interface for Order with cost, profit, and margin data
+export interface OrderWithCostData extends Omit<Order, 'cost' | 'profit' | 'margin'> {
+  // Properties added during margin calculation
+  cost: number;
+  profit: number;
+  margin: number;
 }
 
 // ✅ Product Sort Key

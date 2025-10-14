@@ -1727,16 +1727,6 @@ export async function exportCustomerReportToPDF(
         body: topCustomersData,
         startY: topCustomersStartY + 10, // Start below the header (reduced spacing)
         theme: "grid",
-        headStyles: {
-          fillColor: [66, 133, 244], // Google Blue
-          textColor: [255, 255, 255],
-          fontSize: 11,
-          fontStyle: "bold",
-        },
-        bodyStyles: {
-          fontSize: 10,
-          cellPadding: 5,
-        },
         alternateRowStyles: {
           fillColor: [245, 245, 245],
         },
@@ -1826,16 +1816,6 @@ export async function exportCustomerReportToPDF(
         body: customerOrdersData,
         startY: customerOrdersStartY + 10, // Start below the header (reduced spacing)
         theme: "grid",
-        headStyles: {
-          fillColor: [66, 133, 244], // Google Blue
-          textColor: [255, 255, 255],
-          fontSize: 11,
-          fontStyle: "bold",
-        },
-        bodyStyles: {
-          fontSize: 10,
-          cellPadding: 5,
-        },
         alternateRowStyles: {
           fillColor: [245, 245, 245],
         },
@@ -2025,16 +2005,6 @@ export async function exportProductReportToPDF(
         body: topProductsData,
         startY: topProductsStartY + 10, // Start below the header (reduced spacing)
         theme: "grid",
-        headStyles: {
-          fillColor: [66, 133, 244], // Google Blue
-          textColor: [255, 255, 255],
-          fontSize: 11,
-          fontStyle: "bold",
-        },
-        bodyStyles: {
-          fontSize: 10,
-          cellPadding: 5,
-        },
         alternateRowStyles: {
           fillColor: [245, 245, 245],
         },
@@ -2130,16 +2100,6 @@ export async function exportProductReportToPDF(
         body: productSalesData,
         startY: productSalesStartY + 10, // Start below the header (reduced spacing)
         theme: "grid",
-        headStyles: {
-          fillColor: [66, 133, 244], // Google Blue
-          textColor: [255, 255, 255],
-          fontSize: 11,
-          fontStyle: "bold",
-        },
-        bodyStyles: {
-          fontSize: 10,
-          cellPadding: 5,
-        },
         alternateRowStyles: {
           fillColor: [245, 245, 245],
         },
