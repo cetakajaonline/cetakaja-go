@@ -5,6 +5,7 @@
   import Modal from '$lib/components/ui/Modal.svelte';
   import type { Product, ProductVariant } from '$lib/types';
   import { getAllCategories } from '$lib/services/categoryClient';
+  import { formatCurrency, parseCurrency } from '$lib/utils/formatters';
 
   export let show = false;
   export let isEditMode = false;
@@ -151,19 +152,7 @@
     });
   }
   
-  // Helper function to format currency
-  function formatCurrency(price: number): string {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0
-    }).format(price);
-  }
   
-  // Helper function to parse currency input
-  function parseCurrency(value: string): number {
-    return parseInt(value.replace(/[^0-9]/g, '')) || 0;
-  }
 </script>
 
 <Modal {show} size="xl" on:close={() => dispatch('close')}>

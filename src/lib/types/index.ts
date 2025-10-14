@@ -336,6 +336,69 @@ export interface AnnualReportData {
   }>;
 }
 
+// ✅ Customer Report
+export interface CustomerReportData {
+  startDate: Date;
+  endDate: Date;
+  totalCustomers: number;
+  totalOrders: number;
+  totalRevenue: number;
+  averageOrderValue: number;
+  topCustomers: Array<{
+    id: number;
+    name: string;
+    phone: string;
+    totalOrders: number;
+    totalSpent: number;
+    averageOrderValue: number;
+  }>;
+  customerOrders: Array<{
+    id: number;
+    customerId: number;
+    customerName: string;
+    customerPhone: string;
+    orderNumber: string;
+    totalAmount: number;
+    status: "pending" | "processing" | "finished" | "canceled";
+    createdAt: Date;
+  }>;
+}
+
+// ✅ Product Report
+export interface ProductReportData {
+  startDate: Date;
+  endDate: Date;
+  totalProducts: number;
+  totalSold: number;
+  totalRevenue: number;
+  topSellingProducts: Array<{
+    id: number;
+    name: string;
+    baseCode: string;
+    category: string;
+    totalSold: number;
+    totalRevenue: number;
+    averagePrice: number;
+  }>;
+  productSales: Array<{
+    id: number;
+    productId: number;
+    productName: string;
+    baseCode: string;
+    category: string;
+    totalSold: number;
+    totalRevenue: number;
+    orders: Array<{
+      orderId: number;
+      orderNumber: string;
+      customerName: string;
+      quantity: number;
+      totalPrice: number;
+      orderDate: Date;
+    }>;
+  }>;
+}
+
 // ✅ Product Sort Key
 export type ProductSortKey =
   | "name"

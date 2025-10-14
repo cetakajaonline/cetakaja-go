@@ -16,6 +16,7 @@
   import { tick } from "svelte";
   import { onDestroy } from "svelte";
   import type { Expense } from "$lib/types";
+  import { formatCurrency } from "$lib/utils/formatters";
 
   export let data: {
     isAdmin: boolean;
@@ -71,14 +72,6 @@
   let validationMessages: string[] = [];
   let showValidationModal = false;
 
-  function formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(amount);
-  }
 
   function formatCategory(category: string): string {
     const categoryMap: Record<string, string> = {

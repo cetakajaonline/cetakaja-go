@@ -2,6 +2,8 @@
   import Modal from "$lib/components/ui/Modal.svelte";
   import type { Order, User } from "$lib/types";
   import { updateOrder, uploadPaymentProof, getOrder } from "$lib/services/orderClient";
+  import { formatCurrency, capitalizeFirstLetter, getStatusClass } from "$lib/utils/formatters";
+  import { formatDateTime } from "$lib/utils/date";
 
   let { 
     show = false, 
@@ -86,23 +88,7 @@
     uploadProofError = "";
   }
 
-  function formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0
-    }).format(amount);
-  }
 
-  function formatDate(dateString: string | Date): string {
-    return new Date(dateString).toLocaleDateString('id-ID', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  }
 </script>
 
 {#if show && order}
@@ -130,18 +116,18 @@
               <div class="flex">
                 <div class="w-2/5 font-medium">Status :</div>
                 <div class="w-3/5 text-right">
-                  <span class={`badge ${order.status === 'pending' ? 'badge-warning' : order.status === 'processing' ? 'badge-info' : order.status === 'finished' ? 'badge-success' : 'badge-error'}`}>
-                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                  <span class={`badge ${getStatusClass(order.status)}`}>
+                    {capitalizeFirstLetter(order.status)}
                   </span>
                 </div>
               </div>
               <div class="flex">
                 <div class="w-2/5 font-medium">Tanggal :</div>
-                <div class="w-3/5 text-right">{formatDate(order.createdAt)}</div>
+                <div class="w-3/5 text-right">{formatDateTime(order.createdAt)}</div>
               </div>
               <div class="flex">
                 <div class="w-2/5 font-medium">Diperbarui :</div>
-                <div class="w-3/5 text-right">{formatDate(order.updatedAt)}</div>
+                <div class="w-3/5 text-right">{formatDateTime(order.updatedAt)}</div>
               </div>
             </div>
           </div>
@@ -161,7 +147,7 @@
                 <div class="w-2/5 font-medium">Status :</div>
                 <div class="w-3/5 text-right">
                   <span class={`badge ${order.paymentStatus === 'confirmed' ? 'badge-success' : order.paymentStatus === 'failed' ? 'badge-error' : order.paymentStatus === 'refunded' ? 'badge-neutral' : 'badge-warning'}`}>
-                    {order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)}
+                    {capitalizeFirstLetter(order.paymentStatus)}
                   </span>
                 </div>
               </div>
@@ -325,7 +311,7 @@
                             <span class="text-sm">{proof.fileName}</span>
                           </div>
                           <div class="text-xs text-gray-500">
-                            {new Date(proof.uploadedAt).toLocaleDateString('id-ID')}
+                            {formatDate(proof.uploadedAt)}
                           </div>
                         </div>
                         

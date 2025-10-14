@@ -1,9 +1,11 @@
-// Client functions for daily, weekly, monthly, and annual report APIs
+// Client functions for daily, weekly, monthly, annual, customer, and product report APIs
 import type {
   DailyReportData,
   WeeklyReportData,
   MonthlyReportData,
   AnnualReportData,
+  CustomerReportData,
+  ProductReportData,
 } from "$lib/types";
 
 /**
@@ -103,6 +105,66 @@ export async function getAnnualReport(
 
   const result = await response.json();
   return result.data as AnnualReportData;
+}
+
+/**
+ * Fetches customer report data for a specific date range
+ * @param startDate The start date for the report (format: YYYY-MM-DD)
+ * @param endDate The end date for the report (format: YYYY-MM-DD)
+ * @returns Promise resolving to customer report data
+ */
+export async function getCustomerReport(
+  startDate?: string,
+  endDate?: string,
+): Promise<CustomerReportData> {
+  const params = new URLSearchParams();
+  if (startDate !== undefined) params.append("startDate", startDate);
+  if (endDate !== undefined) params.append("endDate", endDate);
+
+  const queryString = params.toString();
+  const url = queryString
+    ? `/api/reports/customer?${queryString}`
+    : "/api/reports/customer";
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to fetch customer report");
+  }
+
+  const result = await response.json();
+  return result.data as CustomerReportData;
+}
+
+/**
+ * Fetches product report data for a specific date range
+ * @param startDate The start date for the report (format: YYYY-MM-DD)
+ * @param endDate The end date for the report (format: YYYY-MM-DD)
+ * @returns Promise resolving to product report data
+ */
+export async function getProductReport(
+  startDate?: string,
+  endDate?: string,
+): Promise<ProductReportData> {
+  const params = new URLSearchParams();
+  if (startDate !== undefined) params.append("startDate", startDate);
+  if (endDate !== undefined) params.append("endDate", endDate);
+
+  const queryString = params.toString();
+  const url = queryString
+    ? `/api/reports/product?${queryString}`
+    : "/api/reports/product";
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || "Failed to fetch product report");
+  }
+
+  const result = await response.json();
+  return result.data as ProductReportData;
 }
 
 /**

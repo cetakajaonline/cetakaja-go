@@ -36,6 +36,7 @@ export function formatDateForInput(date: Date): string {
  */
 export function getStatusClass(status: string): string {
   switch (status) {
+    // Order statuses
     case "pending":
       return "badge-warning";
     case "processing":
@@ -44,6 +45,13 @@ export function getStatusClass(status: string): string {
       return "badge-success";
     case "canceled":
       return "badge-error";
+    // Payment statuses
+    case "confirmed":
+      return "badge-success";
+    case "failed":
+      return "badge-error";
+    case "refunded":
+      return "badge-info";
     default:
       return "badge-neutral";
   }
@@ -68,3 +76,23 @@ export function getStatusDisplayText(status: string): string {
       return status;
   }
 }
+
+/**
+ * Parse a currency string to a number
+ * @param value The currency string to parse (removes all non-numeric characters except decimals)
+ * @returns The parsed number or 0 if parsing fails
+ */
+export function parseCurrency(value: string): number {
+  return parseInt(value.replace(/[^0-9]/g, '')) || 0;
+}
+
+/**
+ * Capitalize the first letter of a string
+ * @param str The string to capitalize
+ * @returns The string with the first letter capitalized
+ */
+export function capitalizeFirstLetter(str: string): string {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+

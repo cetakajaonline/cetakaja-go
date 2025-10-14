@@ -1,5 +1,7 @@
 <script lang="ts">
   import type { Order } from "$lib/types";
+  import { formatCurrency, capitalizeFirstLetter, getStatusClass } from "$lib/utils/formatters";
+  import { formatDate } from "$lib/utils/date";
 
   let { 
     orders, 
@@ -23,23 +25,6 @@
     sortDirection: "asc" | "desc";
   } = $props();
 
-  function formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0
-    }).format(amount);
-  }
-
-  function formatDate(dateString: string | Date): string {
-    return new Date(dateString).toLocaleDateString('id-ID', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  }
 </script>
 
 <div class="bg-base-100 rounded-lg shadow">
@@ -69,7 +54,7 @@
               <div class="w-2/5 font-semibold">Metode Pembayaran:</div>
               <div class="w-3/5 text-right">
                 <span class={`badge ${order.paymentMethod === 'transfer' ? 'badge-primary' : order.paymentMethod === 'qris' ? 'badge-info' : 'badge-warning'}`}>
-                  {order.paymentMethod.charAt(0).toUpperCase() + order.paymentMethod.slice(1)}
+                  {capitalizeFirstLetter(order.paymentMethod)}
                 </span>
               </div>
             </div>
@@ -77,8 +62,8 @@
             <div class="flex">
               <div class="w-2/5 font-semibold">Status Pembayaran:</div>
               <div class="w-3/5 text-right">
-                <span class={`badge ${order.paymentStatus === 'confirmed' ? 'badge-success' : order.paymentStatus === 'failed' ? 'badge-error' : order.paymentStatus === 'refunded' ? 'badge-info' : 'badge-warning'}`}>
-                  {order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)}
+                <span class={`badge ${getStatusClass(order.paymentStatus)}`}>
+                  {capitalizeFirstLetter(order.paymentStatus)}
                 </span>
               </div>
             </div>
@@ -87,7 +72,7 @@
               <div class="w-2/5 font-semibold">Metode Pengiriman:</div>
               <div class="w-3/5 text-right">
                 <span class={`badge ${order.shippingMethod === 'pickup' ? 'badge-info' : 'badge-success'}`}>
-                  {order.shippingMethod.charAt(0).toUpperCase() + order.shippingMethod.slice(1)}
+                  {capitalizeFirstLetter(order.shippingMethod)}
                 </span>
               </div>
             </div>
@@ -95,8 +80,8 @@
             <div class="flex">
               <div class="w-2/5 font-semibold">Status Order:</div>
               <div class="w-3/5 text-right">
-                <span class={`badge ${order.status === 'pending' ? 'badge-warning' : order.status === 'processing' ? 'badge-info' : order.status === 'finished' ? 'badge-success' : 'badge-error'}`}>
-                  {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                <span class={`badge ${getStatusClass(order.status)}`}>
+                  {capitalizeFirstLetter(order.status)}
                 </span>
               </div>
             </div>
@@ -217,22 +202,22 @@
               </td>
               <td>
                 <span class={`badge ${order.paymentMethod === 'transfer' ? 'badge-primary' : order.paymentMethod === 'qris' ? 'badge-info' : 'badge-warning'}`}>
-                  {order.paymentMethod.charAt(0).toUpperCase() + order.paymentMethod.slice(1)}
+                  {capitalizeFirstLetter(order.paymentMethod)}
                 </span>
               </td>
               <td>
-                <span class={`badge ${order.paymentStatus === 'confirmed' ? 'badge-success' : order.paymentStatus === 'failed' ? 'badge-error' : order.paymentStatus === 'refunded' ? 'badge-info' : 'badge-warning'}`}>
-                  {order.paymentStatus.charAt(0).toUpperCase() + order.paymentStatus.slice(1)}
+                <span class={`badge ${getStatusClass(order.paymentStatus)}`}>
+                  {capitalizeFirstLetter(order.paymentStatus)}
                 </span>
               </td>
               <td>
                 <span class={`badge ${order.shippingMethod === 'pickup' ? 'badge-info' : 'badge-success'}`}>
-                  {order.shippingMethod.charAt(0).toUpperCase() + order.shippingMethod.slice(1)}
+                  {capitalizeFirstLetter(order.shippingMethod)}
                 </span>
               </td>
               <td>
-                <span class={`badge ${order.status === 'pending' ? 'badge-warning' : order.status === 'processing' ? 'badge-info' : order.status === 'finished' ? 'badge-success' : 'badge-error'}`}>
-                  {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                <span class={`badge ${getStatusClass(order.status)}`}>
+                  {capitalizeFirstLetter(order.status)}
                 </span>
               </td>
               <td class="text-right">

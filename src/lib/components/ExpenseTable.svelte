@@ -1,5 +1,7 @@
 <script lang="ts">
   import type { Expense } from "$lib/types";
+  import { formatCurrency, capitalizeFirstLetter } from '$lib/utils/formatters';
+  import { formatDateTime } from '$lib/utils/date';
 
   let { 
     expenses, 
@@ -23,24 +25,6 @@
     sortDirection: "asc" | "desc";
   } = $props();
 
-  function formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0
-    }).format(amount);
-  }
-
-  function formatDate(dateString: string | Date): string {
-    return new Date(dateString).toLocaleDateString('id-ID', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  }
-
   function formatCategory(category: string): string {
     const categoryMap: Record<string, string> = {
       operasional: "Operasional",
@@ -58,7 +42,7 @@
     {#if expenses.length > 0}
       {#each expenses as expense (expense.id)}
         <div class="p-4">
-          <div class="font-bold text-lg mb-2">{formatDate(expense.date)}</div>
+          <div class="font-bold text-lg mb-2">{formatDateTime(expense.date)}</div>
           
           <div class="space-y-2 mb-4">
             <div class="flex">
@@ -169,8 +153,8 @@
           {#each expenses as expense (expense.id)}
             <tr class="hover">
               <td>
-                <div class="font-medium">{formatDate(expense.date)}</div>
-                <div class="text-sm opacity-70">{new Date(expense.date).toLocaleDateString('id-ID')}</div>
+                <div class="font-medium">{formatDateTime(expense.date)}</div>
+                <div class="text-sm opacity-70">{formatDate(expense.date)}</div>
               </td>
               <td>
                 <span class={`badge ${expense.category === 'operasional' ? 'badge-primary' : expense.category === 'marketing' ? 'badge-info' : expense.category === 'gaji' ? 'badge-warning' : 'badge-neutral'}`}>

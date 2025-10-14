@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Product } from "$lib/types";
   import IconButton from "$lib/components/ui/IconButton.svelte";
+  import { formatCurrency } from "$lib/utils/formatters";
 
   export let products: Product[] = [];
   export let onEdit: (product: Product) => void;
@@ -13,15 +14,6 @@
   export let onSort: (key: ProductSortKey) => void;
 
   export let isAdmin: boolean = false;
-
-  // Helper function to format currency
-  function formatCurrency(price: number): string {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0
-    }).format(price);
-  }
 </script>
 
 <div class="rounded-xl shadow border border-base-200 bg-base-100">

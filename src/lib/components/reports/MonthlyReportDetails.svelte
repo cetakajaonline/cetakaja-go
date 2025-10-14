@@ -4,6 +4,7 @@
     formatDate,
     getStatusClass,
     getStatusDisplayText,
+    capitalizeFirstLetter,
   } from "$lib/utils/formatters";
   import type { MonthlyReportData } from "$lib/types";
 
@@ -128,7 +129,7 @@
             <tr>
               <td>{formatDate(expense.date)}</td>
               <td>
-                <span class="badge badge-primary">{expense.category.charAt(0).toUpperCase() + expense.category.slice(1)}</span>
+                <span class="badge badge-primary">{capitalizeFirstLetter(expense.category)}</span>
               </td>
               <td>{expense.description || "-"}</td>
               <td class="text-right">{formatCurrency(expense.nominal)}</td>

@@ -4,7 +4,11 @@ import type {
   WeeklyReportData,
   MonthlyReportData,
   AnnualReportData,
+  CustomerReportData,
+  ProductReportData,
 } from "$lib/types";
+
+import { formatCurrency } from "./formatters";
 
 /**
  * Exports daily report data to PDF format
@@ -820,15 +824,6 @@ export async function exportWeeklyReportToPDF(
   }
 }
 
-// Helper function to format currency
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-  }).format(amount);
-}
-
 /**
  * Exports monthly report data to PDF format
  * @param reportData The monthly report data to export
@@ -1537,6 +1532,577 @@ export async function exportAnnualReportToPDF(
 
     // Save the PDF
     doc.save(`laporan-tahunan-${year}.pdf`);
+  } catch (error) {
+    console.error("Error generating PDF:", error);
+    throw error; // Re-throw so the calling function can handle it
+  }
+}
+
+/**
+ * Exports customer report data to PDF format
+ * @param reportData The customer report data to export
+ * @param startDate The start date of the report
+ * @param endDate The end date of the report
+ */
+export async function exportCustomerReportToPDF(
+  reportData: CustomerReportData,
+  startDate: Date,
+  endDate: Date,
+): Promise<void> {
+  try {
+    // Dynamically import jsPDF and autotable plugin to avoid SSR issues
+    const jsPDFModule = await import("jspdf");
+    const { jsPDF } = jsPDFModule;
+    const autoTable = (await import("jspdf-autotable")).default;
+
+    // Create a new PDF document
+    const doc = new jsPDF();
+
+    // Add title
+    const title = `Laporan Pelanggan - ${new Date(
+      reportData.startDate,
+    ).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })} s.d. ${new Date(reportData.endDate).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })}`;
+
+    doc.setFontSize(20);
+    doc.setFont("helvetica", "bold");
+    doc.text(title, doc.internal.pageSize.width / 2, 20, { align: "center" });
+    doc.setFont("helvetica", "normal");
+
+    // Add summary information section with better layout
+    doc.setFontSize(12);
+    const summaryStartX = 20;
+    const summaryY = 35; // Starting Y position for summary section
+
+    // Add a header for Ringkasan Laporan
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    const summaryHeader = "Ringkasan Laporan Pelanggan";
+    doc.setTextColor(0, 0, 0);
+    doc.text(summaryHeader, doc.internal.pageSize.width / 2, summaryY, {
+      align: "center",
+    }); // Center text
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0, 0, 0); // Reset text color
+
+    doc.text(
+      `Total Pelanggan: ${reportData.totalCustomers}`,
+      summaryStartX,
+      summaryY + 10,
+    );
+    doc.text(
+      `Total Orders: ${reportData.totalOrders}`,
+      summaryStartX,
+      summaryY + 20,
+    );
+    doc.text(
+      `Total Pendapatan: ${formatCurrency(reportData.totalRevenue)}`,
+      summaryStartX + 95,
+      summaryY + 10,
+    );
+    doc.text(
+      `Rata-rata Nilai Pesanan: ${formatCurrency(reportData.averageOrderValue)}`,
+      summaryStartX + 95,
+      summaryY + 20,
+    );
+
+    // Add order status summary - positioned below summary section with adequate spacing
+    const statusY = summaryY + 45; // Space below summary section
+
+    // Add a header for Status Order
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    const statusHeader = "Status Order";
+    doc.setTextColor(0, 0, 0);
+    doc.text(statusHeader, doc.internal.pageSize.width / 2, statusY, {
+      align: "center",
+    }); // Center text
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0, 0, 0); // Reset text color
+
+    // Organize status in a grid layout with colored indicators
+    const statusItems = [
+      {
+        label: "Pending",
+        value: reportData.ordersByStatus.pending,
+        color: [255, 165, 0],
+      }, // Orange
+      {
+        label: "Processing",
+        value: reportData.ordersByStatus.processing,
+        color: [65, 105, 225],
+      }, // Royal Blue
+      {
+        label: "Selesai",
+        value: reportData.ordersByStatus.finished,
+        color: [34, 139, 34],
+      }, // Forest Green
+      {
+        label: "Dibatalkan",
+        value: reportData.ordersByStatus.canceled,
+        color: [220, 20, 60],
+      }, // Crimson
+    ];
+
+    const itemWidth = 45; // Width for each status item (180/4)
+    const statusStartX = 20; // Starting X position for status items
+
+    for (let i = 0; i < statusItems.length; i++) {
+      const item = statusItems[i];
+      const itemX = statusStartX + i * itemWidth;
+
+      // Draw colored indicator
+      doc.setFillColor(item.color[0], item.color[1], item.color[2]);
+      doc.rect(itemX, statusY + 8, 6, 6, "F");
+
+      // Draw status text with colored label
+      doc.setTextColor(item.color[0], item.color[1], item.color[2]);
+      doc.setFont("helvetica", "bold");
+      doc.text(item.label, itemX + 8, statusY + 10);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(0, 0, 0); // Reset to black
+
+      // Draw the value
+      doc.text(item.value.toString(), itemX + 8, statusY + 20);
+    }
+
+    // Add top customers table
+    if (reportData.topCustomers.length > 0) {
+      const topCustomersStartY = statusY + 42; // Space below status section
+
+      // Add header for top customers with centered text
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      const topCustomersHeader = "Pelanggan Terbaik:";
+      doc.setTextColor(0, 0, 0);
+      doc.text(
+        topCustomersHeader,
+        doc.internal.pageSize.width / 2,
+        topCustomersStartY,
+        { align: "center" },
+      ); // Center text
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(0, 0, 0); // Reset text color
+
+      // Prepare data for the table
+      const topCustomersData: string[][] = reportData.topCustomers.map(
+        (customer) => {
+          const row: string[] = [
+            customer.name,
+            customer.phone,
+            customer.totalOrders.toString(),
+            formatCurrency(customer.totalSpent),
+            formatCurrency(customer.averageOrderValue),
+          ];
+          return row;
+        },
+      );
+
+      // Add table for top customers with improved styling
+      autoTable(doc, {
+        head: [
+          [
+            "Nama Pelanggan",
+            "No. Telepon",
+            "Total Orders",
+            "Total Pengeluaran",
+            "Rata-rata Nilai Pesanan",
+          ],
+        ],
+        body: topCustomersData,
+        startY: topCustomersStartY + 12, // Start below the header
+        theme: "grid",
+        headStyles: {
+          fillColor: [66, 133, 244], // Google Blue
+          textColor: [255, 255, 255],
+          fontSize: 11,
+          fontStyle: "bold",
+        },
+        bodyStyles: {
+          fontSize: 10,
+          cellPadding: 5,
+        },
+        alternateRowStyles: {
+          fillColor: [245, 245, 245],
+        },
+        tableWidth: "wrap",
+        columnStyles: {
+          0: { cellWidth: "auto", overflow: "linebreak" }, // Customer name column - auto adjust with line break
+          1: { cellWidth: "auto" }, // Phone column - auto adjust
+          2: { cellWidth: "auto", halign: "center" }, // Total orders column - auto adjust
+          3: { cellWidth: "auto", halign: "right" }, // Total spent column - auto adjust
+          4: { cellWidth: "auto", halign: "right" }, // Average order value column - auto adjust
+        },
+      });
+    }
+
+    // Add customer orders table if there are orders
+    if (reportData.customerOrders.length > 0) {
+      // Calculate Y position based on previous elements or last auto table
+      let customerOrdersStartY = 150; // Default position if no previous elements
+      if (reportData.topCustomers.length > 0) {
+        // Position after top customers table
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if ((doc as any).lastAutoTable) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          customerOrdersStartY = (doc as any).lastAutoTable.finalY + 15; // Space below previous table
+        }
+      } else {
+        // Position after status section if no top customers
+        customerOrdersStartY = statusY + 42 + 15; // Space below status section
+      }
+
+      // Add header for customer orders with centered text
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      const customerOrdersHeader = "Rincian Pesanan Pelanggan:";
+      doc.setTextColor(0, 0, 0);
+      doc.text(
+        customerOrdersHeader,
+        doc.internal.pageSize.width / 2,
+        customerOrdersStartY,
+        {
+          align: "center",
+        },
+      ); // Center text
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(0, 0, 0); // Reset text color
+
+      // Prepare data for the table
+      const customerOrdersData: string[][] = reportData.customerOrders.map(
+        (order) => {
+          const row: string[] = [
+            new Date(order.createdAt).toLocaleDateString("id-ID"),
+            order.orderNumber,
+            order.customerName,
+            order.customerPhone,
+            order.status,
+            formatCurrency(order.totalAmount),
+          ];
+          return row;
+        },
+      );
+
+      // Add table for customer orders with improved styling
+      autoTable(doc, {
+        head: [
+          ["Waktu", "No. Order", "Pelanggan", "No. Telepon", "Status", "Total"],
+        ],
+        body: customerOrdersData,
+        startY: customerOrdersStartY + 12, // Start below the header
+        theme: "grid",
+        headStyles: {
+          fillColor: [66, 133, 244], // Google Blue
+          textColor: [255, 255, 255],
+          fontSize: 11,
+          fontStyle: "bold",
+        },
+        bodyStyles: {
+          fontSize: 10,
+          cellPadding: 5,
+        },
+        alternateRowStyles: {
+          fillColor: [245, 245, 245],
+        },
+        tableWidth: "wrap",
+        columnStyles: {
+          0: { cellWidth: "auto" }, // Date column - auto adjust
+          1: { cellWidth: "auto" }, // Order number column - auto adjust
+          2: { cellWidth: "auto", overflow: "linebreak" }, // Customer name column - auto adjust with line break
+          3: { cellWidth: "auto" }, // Customer phone column - auto adjust
+          4: { cellWidth: "auto", halign: "center" }, // Status column - auto adjust
+          5: { cellWidth: "auto", halign: "right" }, // Amount column - auto adjust
+        },
+      });
+    }
+
+    // Add footer
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(10);
+      doc.text(
+        `Halaman ${i} dari ${pageCount}`,
+        doc.internal.pageSize.width / 2,
+        doc.internal.pageSize.height - 10,
+        { align: "center" },
+      );
+    }
+
+    // Save the PDF
+    doc.save(
+      `laporan-pelanggan-${startDate.toISOString().split("T")[0]}-${endDate.toISOString().split("T")[0]}.pdf`,
+    );
+  } catch (error) {
+    console.error("Error generating PDF:", error);
+    throw error; // Re-throw so the calling function can handle it
+  }
+}
+
+/**
+ * Exports product report data to PDF format
+ * @param reportData The product report data to export
+ * @param startDate The start date of the report
+ * @param endDate The end date of the report
+ */
+export async function exportProductReportToPDF(
+  reportData: ProductReportData,
+  startDate: Date,
+  endDate: Date,
+): Promise<void> {
+  try {
+    // Dynamically import jsPDF and autotable plugin to avoid SSR issues
+    const jsPDFModule = await import("jspdf");
+    const { jsPDF } = jsPDFModule;
+    const autoTable = (await import("jspdf-autotable")).default;
+
+    // Create a new PDF document
+    const doc = new jsPDF();
+
+    // Add title
+    const title = `Laporan Produk - ${new Date(
+      reportData.startDate,
+    ).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })} s.d. ${new Date(reportData.endDate).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })}`;
+
+    doc.setFontSize(20);
+    doc.setFont("helvetica", "bold");
+    doc.text(title, doc.internal.pageSize.width / 2, 20, { align: "center" });
+    doc.setFont("helvetica", "normal");
+
+    // Add summary information section with better layout
+    doc.setFontSize(12);
+    const summaryStartX = 20;
+    const summaryY = 35; // Starting Y position for summary section
+
+    // Add a header for Ringkasan Laporan
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    const summaryHeader = "Ringkasan Laporan Produk";
+    doc.setTextColor(0, 0, 0);
+    doc.text(summaryHeader, doc.internal.pageSize.width / 2, summaryY, {
+      align: "center",
+    }); // Center text
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0, 0, 0); // Reset text color
+
+    doc.text(
+      `Total Produk: ${reportData.totalProducts}`,
+      summaryStartX,
+      summaryY + 10,
+    );
+    doc.text(
+      `Total Terjual: ${reportData.totalSold}`,
+      summaryStartX,
+      summaryY + 20,
+    );
+    doc.text(
+      `Total Pendapatan: ${formatCurrency(reportData.totalRevenue)}`,
+      summaryStartX + 95,
+      summaryY + 10,
+    );
+    doc.text(
+      `Harga Rata-rata: ${formatCurrency(
+        reportData.totalSold > 0
+          ? reportData.totalRevenue / reportData.totalSold
+          : 0,
+      )}`,
+      summaryStartX + 95,
+      summaryY + 20,
+    );
+
+    // Add top selling products table
+    if (reportData.topSellingProducts.length > 0) {
+      const topProductsStartY = summaryY + 42; // Space below summary section
+
+      // Add header for top products with centered text
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      const topProductsHeader = "Produk Terlaris:";
+      doc.setTextColor(0, 0, 0);
+      doc.text(
+        topProductsHeader,
+        doc.internal.pageSize.width / 2,
+        topProductsStartY,
+        { align: "center" },
+      ); // Center text
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(0, 0, 0); // Reset text color
+
+      // Prepare data for the table
+      const topProductsData: string[][] = reportData.topSellingProducts.map(
+        (product) => {
+          const row: string[] = [
+            product.name,
+            product.baseCode,
+            product.category,
+            product.totalSold.toString(),
+            formatCurrency(product.totalRevenue),
+            formatCurrency(
+              product.totalSold > 0
+                ? product.totalRevenue / product.totalSold
+                : 0,
+            ),
+          ];
+          return row;
+        },
+      );
+
+      // Add table for top products with improved styling
+      autoTable(doc, {
+        head: [
+          [
+            "Nama Produk",
+            "Kode Dasar",
+            "Kategori",
+            "Jumlah Terjual",
+            "Total Pendapatan",
+            "Harga Rata-rata",
+          ],
+        ],
+        body: topProductsData,
+        startY: topProductsStartY + 12, // Start below the header
+        theme: "grid",
+        headStyles: {
+          fillColor: [66, 133, 244], // Google Blue
+          textColor: [255, 255, 255],
+          fontSize: 11,
+          fontStyle: "bold",
+        },
+        bodyStyles: {
+          fontSize: 10,
+          cellPadding: 5,
+        },
+        alternateRowStyles: {
+          fillColor: [245, 245, 245],
+        },
+        tableWidth: "wrap",
+        columnStyles: {
+          0: { cellWidth: "auto", overflow: "linebreak" }, // Product name column - auto adjust with line break
+          1: { cellWidth: "auto" }, // Base code column - auto adjust
+          2: { cellWidth: "auto" }, // Category column - auto adjust
+          3: { cellWidth: "auto", halign: "center" }, // Quantity column - auto adjust
+          4: { cellWidth: "auto", halign: "right" }, // Total revenue column - auto adjust
+          5: { cellWidth: "auto", halign: "right" }, // Average price column - auto adjust
+        },
+      });
+    }
+
+    // Add product sales table if there are products
+    if (reportData.productSales.length > 0) {
+      // Calculate Y position based on previous elements or last auto table
+      let productSalesStartY = 150; // Default position if no previous elements
+      if (reportData.topSellingProducts.length > 0) {
+        // Position after top products table
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if ((doc as any).lastAutoTable) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          productSalesStartY = (doc as any).lastAutoTable.finalY + 15; // Space below previous table
+        }
+      } else {
+        // Position after summary section if no top products
+        productSalesStartY = summaryY + 42 + 15; // Space below summary section
+      }
+
+      // Add header for product sales with centered text
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      const productSalesHeader = "Rincian Penjualan Produk:";
+      doc.setTextColor(0, 0, 0);
+      doc.text(
+        productSalesHeader,
+        doc.internal.pageSize.width / 2,
+        productSalesStartY,
+        {
+          align: "center",
+        },
+      ); // Center text
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(0, 0, 0); // Reset text color
+
+      // Prepare data for the table
+      const productSalesData: string[][] = reportData.productSales.map(
+        (product) => {
+          const row: string[] = [
+            product.productName,
+            product.baseCode,
+            product.category,
+            product.totalSold.toString(),
+            formatCurrency(product.totalRevenue),
+          ];
+          return row;
+        },
+      );
+
+      // Add table for product sales with improved styling
+      autoTable(doc, {
+        head: [
+          [
+            "Nama Produk",
+            "Kode Dasar",
+            "Kategori",
+            "Jumlah Terjual",
+            "Total Pendapatan",
+          ],
+        ],
+        body: productSalesData,
+        startY: productSalesStartY + 12, // Start below the header
+        theme: "grid",
+        headStyles: {
+          fillColor: [66, 133, 244], // Google Blue
+          textColor: [255, 255, 255],
+          fontSize: 11,
+          fontStyle: "bold",
+        },
+        bodyStyles: {
+          fontSize: 10,
+          cellPadding: 5,
+        },
+        alternateRowStyles: {
+          fillColor: [245, 245, 245],
+        },
+        tableWidth: "wrap",
+        columnStyles: {
+          0: { cellWidth: "auto", overflow: "linebreak" }, // Product name column - auto adjust with line break
+          1: { cellWidth: "auto" }, // Base code column - auto adjust
+          2: { cellWidth: "auto" }, // Category column - auto adjust
+          3: { cellWidth: "auto", halign: "center" }, // Quantity column - auto adjust
+          4: { cellWidth: "auto", halign: "right" }, // Total revenue column - auto adjust
+        },
+      });
+    }
+
+    // Add footer
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(10);
+      doc.text(
+        `Halaman ${i} dari ${pageCount}`,
+        doc.internal.pageSize.width / 2,
+        doc.internal.pageSize.height - 10,
+        { align: "center" },
+      );
+    }
+
+    // Save the PDF
+    doc.save(
+      `laporan-produk-${startDate.toISOString().split("T")[0]}-${endDate.toISOString().split("T")[0]}.pdf`,
+    );
   } catch (error) {
     console.error("Error generating PDF:", error);
     throw error; // Re-throw so the calling function can handle it

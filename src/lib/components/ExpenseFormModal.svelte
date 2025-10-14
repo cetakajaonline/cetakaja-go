@@ -2,6 +2,8 @@
   import { createEventDispatcher } from "svelte";
   import Modal from '$lib/components/ui/Modal.svelte';
   import Button from '$lib/components/ui/Button.svelte';
+  import { formatCurrency } from '$lib/utils/formatters';
+  import { dateToDateTimeLocal, dateTimeLocalToDate } from '$lib/utils/date';
 
   export let show: boolean = false;
   export let isEditMode: boolean = false;
@@ -18,17 +20,6 @@
 
   let form = { ...initial };
   let proofFilePreview: string | null = null;
-
-  // Convert Date object to datetime-local format (YYYY-MM-DDTHH:mm)
-  function dateToDateTimeLocal(date: Date): string {
-    const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-    return localDate.toISOString().slice(0, 16);
-  }
-
-  // Convert datetime-local format to Date object
-  function dateTimeLocalToDate(value: string): Date {
-    return new Date(value);
-  }
 
   // Reset form and preview when modal is shown
   $: if (show) {
@@ -72,14 +63,7 @@
     proofFilePreview = null;
   }
 
-  // Helper function to format currency
-  function formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0
-    }).format(amount);
-  }
+
 </script>
 
 <Modal {show} size="lg" on:close={handleClose}>

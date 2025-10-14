@@ -2,27 +2,11 @@
   import DefaultLayout from "$lib/layouts/DefaultLayout.svelte";
   import PageHeader from "$lib/components/PageHeader.svelte";
   import type { DashboardPageData } from "$lib/types";
+  import { formatCurrency } from "$lib/utils/formatters";
+  import { formatDate } from "$lib/utils/date";
 
   export let data: DashboardPageData;
   const { user, users, orders, stats, products } = data;
-
-  // Format currency for Indonesian Rupiah
-  function formatCurrency(amount: number): string {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  }
-
-  // Format date
-  function formatDate(date: Date | string): string {
-    return new Date(date).toLocaleDateString("id-ID", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  }
 
   // Calculate progress percentage
   function getProgressPercentage(value: number, total: number): number {

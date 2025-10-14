@@ -6,6 +6,7 @@
   import { getPublicSettings } from "$lib/services/settingClient";
   import SearchSelect from "$lib/components/ui/SearchSelect.svelte";
   import type { User, Product, ProductVariant, OrderItem } from "$lib/types";
+  import { formatCurrency } from "$lib/utils/formatters";
 
   // Define our own public product functions
   async function getAllPublicProducts(): Promise<Product[]> {
@@ -596,14 +597,6 @@
         ]
   );
 
-  // Helper function to format currency
-  function formatCurrency(amount: number): string {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  }
 
   // Calculate amount to pay based on shipping method
   function getAmountToPay(): number {

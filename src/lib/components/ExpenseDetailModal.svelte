@@ -1,19 +1,12 @@
 <script lang="ts">
   import type { Expense } from "$lib/types";
+  import { formatDate } from "$lib/utils/date";
 
   export let show: boolean = false;
   export let expense: Expense | null;
   export let onClose: () => void;
   export let formatCurrency: (amount: number) => string;
   export let formatCategory: (category: string) => string;
-
-  function formatDate(date: Date): string {
-    return new Date(date).toLocaleDateString('id-ID', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric'
-    });
-  }
 </script>
 
 <div class="modal {show ? 'modal-open' : ''}">

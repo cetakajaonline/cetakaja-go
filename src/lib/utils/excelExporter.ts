@@ -4,7 +4,11 @@ import type {
   WeeklyReportData,
   MonthlyReportData,
   AnnualReportData,
+  CustomerReportData,
+  ProductReportData,
 } from "$lib/types";
+
+import { formatCurrency, capitalizeFirstLetter } from "./formatters";
 
 /**
  * Exports daily report data to Excel format
@@ -140,7 +144,7 @@ export async function exportDailyReportToExcel(
         "id-ID",
       );
       const categoryStr: string =
-        expense.category.charAt(0).toUpperCase() + expense.category.slice(1);
+        capitalizeFirstLetter(expense.category);
       const descriptionStr: string = expense.description || "-";
       const nominalNum: number = expense.nominal;
 
@@ -312,7 +316,7 @@ export async function exportWeeklyReportToExcel(
         "id-ID",
       );
       const categoryStr: string =
-        expense.category.charAt(0).toUpperCase() + expense.category.slice(1);
+        capitalizeFirstLetter(expense.category);
       const descriptionStr: string = expense.description || "-";
       const nominalNum: number = expense.nominal;
 
@@ -483,7 +487,7 @@ export async function exportMonthlyReportToExcel(
         "id-ID",
       );
       const categoryStr: string =
-        expense.category.charAt(0).toUpperCase() + expense.category.slice(1);
+        capitalizeFirstLetter(expense.category);
       const descriptionStr: string = expense.description || "-";
       const nominalNum: number = expense.nominal;
 
@@ -510,13 +514,162 @@ export async function exportMonthlyReportToExcel(
   XLSX.writeFile(wb, fileName);
 }
 
-// Helper function to format currency
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-  }).format(amount);
+
+
+/**
+ * Exports annual report data to Excel format
+ * @param reportData The annual report data to export
+ * @param year The year of the report
+ */
+export async function exportAnnualReportToExcel(
+  reportData: AnnualReportData,
+  year: number,
+): Promise<void> {
+  // Dynamically import xlsx (SheetJS) to avoid SSR issues
+  const XLSX = await import("xlsx");
+
+  // Create a new workbook
+  const wb = XLSX.utils.book_new();
+
+  // 1. Summary Sheet
+  const summaryHeaders: (string | number)[] = [
+    "Laporan Tahunan",
+    `Tahun ${reportData.year}`,
+  ];
+
+  const emptyRow: (string | number)[] = [""];
+
+  const summaryRows: (string | number)[][] = [
+    ["Total Orders", reportData.totalOrders],
+    ["Total Pendapatan", formatCurrency(reportData.totalRevenue)],
+    ["Total Pengeluaran", formatCurrency(reportData.totalExpenses)],
+    ["Keuntungan", formatCurrency(reportData.totalProfit)],
+    emptyRow,
+    ["Ringkasan Status Order Tahunan", ""],
+    ["Pending", reportData.ordersByStatus.pending],
+    ["Processing", reportData.ordersByStatus.processing],
+    ["Selesai", reportData.ordersByStatus.finished],
+    ["Dibatalkan", reportData.ordersByStatus.canceled],
+  ];
+
+  const summaryData: (string | number)[][] = [
+    summaryHeaders,
+    emptyRow,
+    ...summaryRows,
+  ];
+
+  const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
+  XLSX.utils.book_append_sheet(wb, summaryWs, "Ringkasan Tahunan");
+
+  // 2. Top Selling Products Sheet
+  if (reportData.topSellingProducts.length > 0) {
+    const topProductsHeaders: (string | number)[] = [
+      "Nama Produk",
+      "Jumlah Terjual",
+      "Total Pendapatan",
+    ];
+
+    // Helper function to ensure type safety
+    const createTopProductRow = (
+      product: (typeof reportData.topSellingProducts)[number],
+    ): (string | number)[] => {
+      const nameStr: string = product.name;
+      const totalSoldNum: number = product.totalSold;
+      const totalRevenueNum: number = product.totalRevenue;
+
+      return [nameStr, totalSoldNum, totalRevenueNum];
+    };
+
+    const topProductsRows: (string | number)[][] =
+      reportData.topSellingProducts.map(createTopProductRow);
+    const topProductsData: (string | number)[][] = [
+      topProductsHeaders,
+      ...topProductsRows,
+    ];
+
+    const topProductsWs = XLSX.utils.aoa_to_sheet(topProductsData);
+    XLSX.utils.book_append_sheet(
+      wb,
+      topProductsWs,
+      "Produk Terlaris Tahun Ini",
+    );
+  }
+
+  // 3. Orders Sheet
+  if (reportData.orders.length > 0) {
+    const ordersHeaders: (string | number)[] = [
+      "Waktu",
+      "No. Order",
+      "Pelanggan",
+      "Status",
+      "Total",
+    ];
+
+    // Helper function to ensure type safety
+    const createOrderRow = (
+      order: (typeof reportData.orders)[number],
+    ): (string | number)[] => {
+      const dateStr: string = new Date(order.createdAt).toLocaleDateString(
+        "id-ID",
+      );
+      const orderNumberStr: string = order.orderNumber;
+      const userNameStr: string = order.user.name;
+      const statusStr: string = order.status;
+      const totalAmountNum: number = order.totalAmount;
+
+      return [dateStr, orderNumberStr, userNameStr, statusStr, totalAmountNum];
+    };
+
+    const ordersRows: (string | number)[][] =
+      reportData.orders.map(createOrderRow);
+    const ordersData: (string | number)[][] = [ordersHeaders, ...ordersRows];
+
+    const ordersWs = XLSX.utils.aoa_to_sheet(ordersData);
+    XLSX.utils.book_append_sheet(wb, ordersWs, "Rincian Pendapatan Tahun Ini");
+  }
+
+  // 4. Expenses Sheet
+  if (reportData.expenses.length > 0) {
+    const expensesHeaders: (string | number)[] = [
+      "Waktu",
+      "Kategori",
+      "Deskripsi",
+      "Nominal",
+    ];
+
+    // Helper function to ensure type safety
+    const createExpenseRow = (
+      expense: (typeof reportData.expenses)[number],
+    ): (string | number)[] => {
+      const dateStr: string = new Date(expense.date).toLocaleDateString(
+        "id-ID",
+      );
+      const categoryStr: string =
+        capitalizeFirstLetter(expense.category);
+      const descriptionStr: string = expense.description || "-";
+      const nominalNum: number = expense.nominal;
+
+      return [dateStr, categoryStr, descriptionStr, nominalNum];
+    };
+
+    const expensesRows: (string | number)[][] =
+      reportData.expenses.map(createExpenseRow);
+    const expensesData: (string | number)[][] = [
+      expensesHeaders,
+      ...expensesRows,
+    ];
+
+    const expensesWs = XLSX.utils.aoa_to_sheet(expensesData);
+    XLSX.utils.book_append_sheet(
+      wb,
+      expensesWs,
+      "Rincian Pengeluaran Tahun Ini",
+    );
+  }
+
+  // Save the workbook
+  const fileName = `laporan-tahunan-${year}.xlsx`;
+  XLSX.writeFile(wb, fileName);
 }
 
 /**
@@ -648,7 +801,7 @@ export async function exportAnnualReportToExcel(
         "id-ID",
       );
       const categoryStr: string =
-        expense.category.charAt(0).toUpperCase() + expense.category.slice(1);
+        capitalizeFirstLetter(expense.category);
       const descriptionStr: string = expense.description || "-";
       const nominalNum: number = expense.nominal;
 
@@ -672,5 +825,296 @@ export async function exportAnnualReportToExcel(
 
   // Save the workbook
   const fileName = `laporan-tahunan-${year}.xlsx`;
+  XLSX.writeFile(wb, fileName);
+}
+
+/**
+ * Exports customer report data to Excel format
+ * @param reportData The customer report data to export
+ * @param startDate The start date of the report
+ * @param endDate The end date of the report
+ */
+export async function exportCustomerReportToExcel(
+  reportData: CustomerReportData,
+  startDate: Date,
+  endDate: Date,
+): Promise<void> {
+  // Dynamically import xlsx (SheetJS) to avoid SSR issues
+  const XLSX = await import("xlsx");
+
+  // Create a new workbook
+  const wb = XLSX.utils.book_new();
+
+  // 1. Summary Sheet
+  const summaryHeaders: (string | number)[] = [
+    "Laporan Pelanggan",
+    `${new Date(reportData.startDate).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })} s.d. ${new Date(reportData.endDate).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })}`,
+  ];
+
+  const emptyRow: (string | number)[] = [""];
+
+  const summaryRows: (string | number)[][] = [
+    ["Total Pelanggan", reportData.totalCustomers],
+    ["Total Orders", reportData.totalOrders],
+    ["Total Pendapatan", formatCurrency(reportData.totalRevenue)],
+    ["Rata-rata Nilai Pesanan", formatCurrency(reportData.averageOrderValue)],
+    emptyRow,
+    ["Ringkasan Status Order", ""],
+    ["Pending", reportData.ordersByStatus.pending],
+    ["Processing", reportData.ordersByStatus.processing],
+    ["Selesai", reportData.ordersByStatus.finished],
+    ["Dibatalkan", reportData.ordersByStatus.canceled],
+  ];
+
+  const summaryData: (string | number)[][] = [
+    summaryHeaders,
+    emptyRow,
+    ...summaryRows,
+  ];
+
+  const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
+  XLSX.utils.book_append_sheet(wb, summaryWs, "Ringkasan Pelanggan");
+
+  // 2. Top Customers Sheet
+  if (reportData.topCustomers.length > 0) {
+    const topCustomersHeaders: (string | number)[] = [
+      "Nama Pelanggan",
+      "No. Telepon",
+      "Total Orders",
+      "Total Pengeluaran",
+      "Rata-rata Nilai Pesanan",
+    ];
+
+    // Helper function to ensure type safety
+    const createTopCustomerRow = (
+      customer: (typeof reportData.topCustomers)[number],
+    ): (string | number)[] => {
+      const nameStr: string = customer.name;
+      const phoneStr: string = customer.phone;
+      const totalOrdersNum: number = customer.totalOrders;
+      const totalSpentNum: number = customer.totalSpent;
+      const averageOrderValueNum: number = customer.averageOrderValue;
+
+      return [
+        nameStr,
+        phoneStr,
+        totalOrdersNum,
+        totalSpentNum,
+        averageOrderValueNum,
+      ];
+    };
+
+    const topCustomersRows: (string | number)[][] =
+      reportData.topCustomers.map(createTopCustomerRow);
+    const topCustomersData: (string | number)[][] = [
+      topCustomersHeaders,
+      ...topCustomersRows,
+    ];
+
+    const topCustomersWs = XLSX.utils.aoa_to_sheet(topCustomersData);
+    XLSX.utils.book_append_sheet(wb, topCustomersWs, "Pelanggan Terbaik");
+  }
+
+  // 3. Customer Orders Sheet
+  if (reportData.customerOrders.length > 0) {
+    const customerOrdersHeaders: (string | number)[] = [
+      "Waktu",
+      "No. Order",
+      "Pelanggan",
+      "No. Telepon",
+      "Status",
+      "Total",
+    ];
+
+    // Helper function to ensure type safety
+    const createCustomerOrderRow = (
+      order: (typeof reportData.customerOrders)[number],
+    ): (string | number)[] => {
+      const dateStr: string = new Date(order.createdAt).toLocaleDateString(
+        "id-ID",
+      );
+      const orderNumberStr: string = order.orderNumber;
+      const customerNameStr: string = order.customerName;
+      const customerPhoneStr: string = order.customerPhone;
+      const statusStr: string = order.status;
+      const totalAmountNum: number = order.totalAmount;
+
+      return [
+        dateStr,
+        orderNumberStr,
+        customerNameStr,
+        customerPhoneStr,
+        statusStr,
+        totalAmountNum,
+      ];
+    };
+
+    const customerOrdersRows: (string | number)[][] =
+      reportData.customerOrders.map(createCustomerOrderRow);
+    const customerOrdersData: (string | number)[][] = [
+      customerOrdersHeaders,
+      ...customerOrdersRows,
+    ];
+
+    const customerOrdersWs = XLSX.utils.aoa_to_sheet(customerOrdersData);
+    XLSX.utils.book_append_sheet(
+      wb,
+      customerOrdersWs,
+      "Rincian Pesanan Pelanggan",
+    );
+  }
+
+  // Save the workbook
+  const fileName = `laporan-pelanggan-${startDate.toISOString().split("T")[0]}-${endDate.toISOString().split("T")[0]}.xlsx`;
+  XLSX.writeFile(wb, fileName);
+}
+
+/**
+ * Exports product report data to Excel format
+ * @param reportData The product report data to export
+ * @param startDate The start date of the report
+ * @param endDate The end date of the report
+ */
+export async function exportProductReportToExcel(
+  reportData: ProductReportData,
+  startDate: Date,
+  endDate: Date,
+): Promise<void> {
+  // Dynamically import xlsx (SheetJS) to avoid SSR issues
+  const XLSX = await import("xlsx");
+
+  // Create a new workbook
+  const wb = XLSX.utils.book_new();
+
+  // 1. Summary Sheet
+  const summaryHeaders: (string | number)[] = [
+    "Laporan Produk",
+    `${new Date(reportData.startDate).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })} s.d. ${new Date(reportData.endDate).toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })}`,
+  ];
+
+  const emptyRow: (string | number)[] = [""];
+
+  const summaryRows: (string | number)[][] = [
+    ["Total Produk", reportData.totalProducts],
+    ["Total Terjual", reportData.totalSold],
+    ["Total Pendapatan", formatCurrency(reportData.totalRevenue)],
+    [
+      "Harga Rata-rata",
+      formatCurrency(
+        reportData.totalSold > 0
+          ? reportData.totalRevenue / reportData.totalSold
+          : 0,
+      ),
+    ],
+    emptyRow,
+    ["Ringkasan Penjualan Produk", ""],
+    ["Produk Terlaris", reportData.topSellingProducts.length],
+  ];
+
+  const summaryData: (string | number)[][] = [
+    summaryHeaders,
+    emptyRow,
+    ...summaryRows,
+  ];
+
+  const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
+  XLSX.utils.book_append_sheet(wb, summaryWs, "Ringkasan Produk");
+
+  // 2. Top Selling Products Sheet
+  if (reportData.topSellingProducts.length > 0) {
+    const topProductsHeaders: (string | number)[] = [
+      "Nama Produk",
+      "Kode Dasar",
+      "Kategori",
+      "Jumlah Terjual",
+      "Total Pendapatan",
+      "Harga Rata-rata",
+    ];
+
+    // Helper function to ensure type safety
+    const createTopProductRow = (
+      product: (typeof reportData.topSellingProducts)[number],
+    ): (string | number)[] => {
+      const nameStr: string = product.name;
+      const baseCodeStr: string = product.baseCode;
+      const categoryStr: string = product.category;
+      const totalSoldNum: number = product.totalSold;
+      const totalRevenueNum: number = product.totalRevenue;
+      const averagePriceNum: number =
+        product.totalSold > 0 ? product.totalRevenue / product.totalSold : 0;
+
+      return [
+        nameStr,
+        baseCodeStr,
+        categoryStr,
+        totalSoldNum,
+        totalRevenueNum,
+        averagePriceNum,
+      ];
+    };
+
+    const topProductsRows: (string | number)[][] =
+      reportData.topSellingProducts.map(createTopProductRow);
+    const topProductsData: (string | number)[][] = [
+      topProductsHeaders,
+      ...topProductsRows,
+    ];
+
+    const topProductsWs = XLSX.utils.aoa_to_sheet(topProductsData);
+    XLSX.utils.book_append_sheet(wb, topProductsWs, "Produk Terlaris");
+  }
+
+  // 3. Product Sales Sheet
+  if (reportData.productSales.length > 0) {
+    const productSalesHeaders: (string | number)[] = [
+      "Nama Produk",
+      "Kode Dasar",
+      "Kategori",
+      "Jumlah Terjual",
+      "Total Pendapatan",
+    ];
+
+    // Helper function to ensure type safety
+    const createProductSaleRow = (
+      product: (typeof reportData.productSales)[number],
+    ): (string | number)[] => {
+      const nameStr: string = product.productName;
+      const baseCodeStr: string = product.baseCode;
+      const categoryStr: string = product.category;
+      const totalSoldNum: number = product.totalSold;
+      const totalRevenueNum: number = product.totalRevenue;
+
+      return [nameStr, baseCodeStr, categoryStr, totalSoldNum, totalRevenueNum];
+    };
+
+    const productSalesRows: (string | number)[][] =
+      reportData.productSales.map(createProductSaleRow);
+    const productSalesData: (string | number)[][] = [
+      productSalesHeaders,
+      ...productSalesRows,
+    ];
+
+    const productSalesWs = XLSX.utils.aoa_to_sheet(productSalesData);
+    XLSX.utils.book_append_sheet(wb, productSalesWs, "Penjualan Produk");
+  }
+
+  // Save the workbook
+  const fileName = `laporan-produk-${startDate.toISOString().split("T")[0]}-${endDate.toISOString().split("T")[0]}.xlsx`;
   XLSX.writeFile(wb, fileName);
 }

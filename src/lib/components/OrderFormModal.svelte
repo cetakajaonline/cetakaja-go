@@ -4,6 +4,7 @@
   import Button from '$lib/components/ui/Button.svelte';
   import SearchSelect from '$lib/components/ui/SearchSelect.svelte';
   import type { User, Product, ProductVariant, OrderItem } from '$lib/types';
+  import { formatCurrency } from '$lib/utils/formatters';
 
   let { 
     show, 
@@ -228,13 +229,6 @@
   }
 
   // Helper function to format currency
-  function formatCurrency(amount: number): string {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0
-    }).format(amount);
-  }
 
   // Prepare options for SearchSelect
   let customerOptions = $derived(
