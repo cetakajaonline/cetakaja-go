@@ -6,6 +6,9 @@ import type {
   AnnualReportData,
   CustomerReportData,
   ProductReportData,
+  RevenueReportData,
+  ExpenseReportData,
+  MarginReportData,
 } from "$lib/types";
 
 import { formatCurrency, capitalizeFirstLetter } from "./formatters";
@@ -143,8 +146,7 @@ export async function exportDailyReportToExcel(
       const dateStr: string = new Date(expense.date).toLocaleDateString(
         "id-ID",
       );
-      const categoryStr: string =
-        capitalizeFirstLetter(expense.category);
+      const categoryStr: string = capitalizeFirstLetter(expense.category);
       const descriptionStr: string = expense.description || "-";
       const nominalNum: number = expense.nominal;
 
@@ -315,8 +317,7 @@ export async function exportWeeklyReportToExcel(
       const dateStr: string = new Date(expense.date).toLocaleDateString(
         "id-ID",
       );
-      const categoryStr: string =
-        capitalizeFirstLetter(expense.category);
+      const categoryStr: string = capitalizeFirstLetter(expense.category);
       const descriptionStr: string = expense.description || "-";
       const nominalNum: number = expense.nominal;
 
@@ -486,8 +487,7 @@ export async function exportMonthlyReportToExcel(
       const dateStr: string = new Date(expense.date).toLocaleDateString(
         "id-ID",
       );
-      const categoryStr: string =
-        capitalizeFirstLetter(expense.category);
+      const categoryStr: string = capitalizeFirstLetter(expense.category);
       const descriptionStr: string = expense.description || "-";
       const nominalNum: number = expense.nominal;
 
@@ -513,8 +513,6 @@ export async function exportMonthlyReportToExcel(
   const fileName = `laporan-bulanan-${startDate.toISOString().split("T")[0]}-${endDate.toISOString().split("T")[0]}.xlsx`;
   XLSX.writeFile(wb, fileName);
 }
-
-
 
 /**
  * Exports annual report data to Excel format
@@ -644,8 +642,7 @@ export async function exportAnnualReportToExcel(
       const dateStr: string = new Date(expense.date).toLocaleDateString(
         "id-ID",
       );
-      const categoryStr: string =
-        capitalizeFirstLetter(expense.category);
+      const categoryStr: string = capitalizeFirstLetter(expense.category);
       const descriptionStr: string = expense.description || "-";
       const nominalNum: number = expense.nominal;
 
@@ -707,10 +704,18 @@ export async function exportCustomerReportToExcel(
 
   // Count orders by status from customerOrders
   const ordersByStatus = {
-    pending: reportData.customerOrders.filter(order => order.status === 'pending').length,
-    processing: reportData.customerOrders.filter(order => order.status === 'processing').length,
-    finished: reportData.customerOrders.filter(order => order.status === 'finished').length,
-    canceled: reportData.customerOrders.filter(order => order.status === 'canceled').length,
+    pending: reportData.customerOrders.filter(
+      (order) => order.status === "pending",
+    ).length,
+    processing: reportData.customerOrders.filter(
+      (order) => order.status === "processing",
+    ).length,
+    finished: reportData.customerOrders.filter(
+      (order) => order.status === "finished",
+    ).length,
+    canceled: reportData.customerOrders.filter(
+      (order) => order.status === "canceled",
+    ).length,
   };
 
   const summaryRows: (string | number)[][] = [
@@ -996,16 +1001,22 @@ export async function exportRevenueReportToExcel(
   ];
 
   // Format dates for the summary row
-  const formattedStartDate = new Date(reportData.startDate).toLocaleDateString("id-ID", {
-    day: "2-digit",
-    month: "2-digit", 
-    year: "numeric",
-  });
-  const formattedEndDate = new Date(reportData.endDate).toLocaleDateString("id-ID", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
+  const formattedStartDate = new Date(reportData.startDate).toLocaleDateString(
+    "id-ID",
+    {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    },
+  );
+  const formattedEndDate = new Date(reportData.endDate).toLocaleDateString(
+    "id-ID",
+    {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    },
+  );
 
   const summaryRow: (string | number)[] = [
     `${formattedStartDate} s.d. ${formattedEndDate}`,
@@ -1040,16 +1051,19 @@ export async function exportRevenueReportToExcel(
       return [idNum, nameStr, totalSoldNum, totalRevenueNum];
     };
 
-    const topProductsRows: (string | number)[][] = reportData.topRevenueProducts.map(
-      createTopProductRow,
-    );
+    const topProductsRows: (string | number)[][] =
+      reportData.topRevenueProducts.map(createTopProductRow);
     const topProductsData: (string | number)[][] = [
       topProductsHeaders,
       ...topProductsRows,
     ];
 
     const topProductsWs = XLSX.utils.aoa_to_sheet(topProductsData);
-    XLSX.utils.book_append_sheet(wb, topProductsWs, "Produk Pendapatan Tertinggi");
+    XLSX.utils.book_append_sheet(
+      wb,
+      topProductsWs,
+      "Produk Pendapatan Tertinggi",
+    );
   }
 
   // Add orders sheet if there are any orders
@@ -1058,7 +1072,7 @@ export async function exportRevenueReportToExcel(
       "#",
       "No. Order",
       "Status",
-      "Metode Pembayaran", 
+      "Metode Pembayaran",
       "Jumlah",
       "Nama Kasir",
       "Tanggal",
@@ -1074,16 +1088,28 @@ export async function exportRevenueReportToExcel(
       const paymentMethodStr: string = order.paymentMethod;
       const totalAmountNum: number = order.totalAmount;
       const cashierNameStr: string = order.user.name;
-      const dateStr: string = new Date(order.createdAt).toLocaleDateString("id-ID", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      });
+      const dateStr: string = new Date(order.createdAt).toLocaleDateString(
+        "id-ID",
+        {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        },
+      );
 
-      return [indexNum, orderNumberStr, statusStr, paymentMethodStr, totalAmountNum, cashierNameStr, dateStr];
+      return [
+        indexNum,
+        orderNumberStr,
+        statusStr,
+        paymentMethodStr,
+        totalAmountNum,
+        cashierNameStr,
+        dateStr,
+      ];
     };
 
-    const ordersRows: (string | number)[][] = reportData.orders.map(createOrderRow);
+    const ordersRows: (string | number)[][] =
+      reportData.orders.map(createOrderRow);
     const ordersData: (string | number)[][] = [ordersHeaders, ...ordersRows];
 
     const ordersWs = XLSX.utils.aoa_to_sheet(ordersData);
@@ -1119,16 +1145,22 @@ export async function exportExpenseReportToExcel(
   ];
 
   // Format dates for the summary row
-  const formattedStartDate = new Date(reportData.startDate).toLocaleDateString("id-ID", {
-    day: "2-digit",
-    month: "2-digit", 
-    year: "numeric",
-  });
-  const formattedEndDate = new Date(reportData.endDate).toLocaleDateString("id-ID", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
+  const formattedStartDate = new Date(reportData.startDate).toLocaleDateString(
+    "id-ID",
+    {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    },
+  );
+  const formattedEndDate = new Date(reportData.endDate).toLocaleDateString(
+    "id-ID",
+    {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    },
+  );
 
   const summaryRow: (string | number)[] = [
     `${formattedStartDate} s.d. ${formattedEndDate}`,
@@ -1142,11 +1174,7 @@ export async function exportExpenseReportToExcel(
   XLSX.utils.book_append_sheet(wb, summaryWs, "Ringkasan");
 
   // Add expense categories sheet
-  const categoriesHeaders: (string | number)[] = [
-    "#",
-    "Kategori",
-    "Jumlah",
-  ];
+  const categoriesHeaders: (string | number)[] = ["#", "Kategori", "Jumlah"];
 
   const categoriesRows: (string | number)[][] = [
     [1, "Operasional", reportData.expenseCategories?.operational || 0],
@@ -1177,22 +1205,34 @@ export async function exportExpenseReportToExcel(
       expense: (typeof reportData.expenses)[number],
     ): (string | number)[] => {
       const indexNum: number = expense.id;
-      const categoryStr: string = expense.category === 'operasional' ? 'Operasional' : 
-                                 expense.category === 'marketing' ? 'Marketing' : 
-                                 expense.category === 'gaji' ? 'Gaji' : 'Lainnya';
+      const categoryStr: string =
+        expense.category === "operasional"
+          ? "Operasional"
+          : expense.category === "marketing"
+            ? "Marketing"
+            : expense.category === "gaji"
+              ? "Gaji"
+              : "Lainnya";
       const nominalNum: number = expense.nominal;
-      const descriptionStr: string = expense.description || '-';
-      const dateStr: string = new Date(expense.date).toLocaleDateString("id-ID", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      });
+      const descriptionStr: string = expense.description || "-";
+      const dateStr: string = new Date(expense.date).toLocaleDateString(
+        "id-ID",
+        {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        },
+      );
 
       return [indexNum, categoryStr, nominalNum, descriptionStr, dateStr];
     };
 
-    const expensesRows: (string | number)[][] = reportData.expenses.map(createExpenseRow);
-    const expensesData: (string | number)[][] = [expensesHeaders, ...expensesRows];
+    const expensesRows: (string | number)[][] =
+      reportData.expenses.map(createExpenseRow);
+    const expensesData: (string | number)[][] = [
+      expensesHeaders,
+      ...expensesRows,
+    ];
 
     const expensesWs = XLSX.utils.aoa_to_sheet(expensesData);
     XLSX.utils.book_append_sheet(wb, expensesWs, "Daftar Pengeluaran");
@@ -1229,16 +1269,22 @@ export async function exportMarginReportToExcel(
   ];
 
   // Format dates for the summary row
-  const formattedStartDate = new Date(reportData.startDate).toLocaleDateString("id-ID", {
-    day: "2-digit",
-    month: "2-digit", 
-    year: "numeric",
-  });
-  const formattedEndDate = new Date(reportData.endDate).toLocaleDateString("id-ID", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
+  const formattedStartDate = new Date(reportData.startDate).toLocaleDateString(
+    "id-ID",
+    {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    },
+  );
+  const formattedEndDate = new Date(reportData.endDate).toLocaleDateString(
+    "id-ID",
+    {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    },
+  );
 
   const summaryRow: (string | number)[] = [
     `${formattedStartDate} s.d. ${formattedEndDate}`,
@@ -1277,10 +1323,19 @@ export async function exportMarginReportToExcel(
       const marginNum: number = product.margin;
       const totalSoldNum: number = product.totalSold;
 
-      return [indexNum, nameStr, costNum, revenueNum, profitNum, marginNum, totalSoldNum];
+      return [
+        indexNum,
+        nameStr,
+        costNum,
+        revenueNum,
+        profitNum,
+        marginNum,
+        totalSoldNum,
+      ];
     };
 
-    const marginsRows: (string | number)[][] = reportData.productMargins.map(createMarginRow);
+    const marginsRows: (string | number)[][] =
+      reportData.productMargins.map(createMarginRow);
     const marginsData: (string | number)[][] = [marginsHeaders, ...marginsRows];
 
     const marginsWs = XLSX.utils.aoa_to_sheet(marginsData);
@@ -1301,7 +1356,7 @@ export async function exportMarginReportToExcel(
 
     // Helper function to ensure type safety
     const createOrderRow = (
-      order: typeof reportData.orders[0] // Use proper typing for order
+      order: (typeof reportData.orders)[0], // Use proper typing for order
     ): (string | number)[] => {
       const indexNum: number = order.id;
       const orderNumberStr: string = order.orderNumber;
@@ -1309,16 +1364,28 @@ export async function exportMarginReportToExcel(
       const costNum: number = order.cost;
       const profitNum: number = order.profit;
       const marginNum: number = order.margin;
-      const dateStr: string = new Date(order.createdAt).toLocaleDateString("id-ID", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      });
+      const dateStr: string = new Date(order.createdAt).toLocaleDateString(
+        "id-ID",
+        {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        },
+      );
 
-      return [indexNum, orderNumberStr, totalNum, costNum, profitNum, marginNum, dateStr];
+      return [
+        indexNum,
+        orderNumberStr,
+        totalNum,
+        costNum,
+        profitNum,
+        marginNum,
+        dateStr,
+      ];
     };
 
-    const ordersRows: (string | number)[][] = reportData.orders.map(createOrderRow);
+    const ordersRows: (string | number)[][] =
+      reportData.orders.map(createOrderRow);
     const ordersData: (string | number)[][] = [ordersHeaders, ...ordersRows];
 
     const ordersWs = XLSX.utils.aoa_to_sheet(ordersData);

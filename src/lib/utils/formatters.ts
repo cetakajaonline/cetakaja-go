@@ -83,7 +83,7 @@ export function getStatusDisplayText(status: string): string {
  * @returns The parsed number or 0 if parsing fails
  */
 export function parseCurrency(value: string): number {
-  return parseInt(value.replace(/[^0-9]/g, '')) || 0;
+  return parseInt(value.replace(/[^0-9]/g, "")) || 0;
 }
 
 /**
@@ -94,5 +94,3 @@ export function parseCurrency(value: string): number {
 export function capitalizeFirstLetter(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
-
-

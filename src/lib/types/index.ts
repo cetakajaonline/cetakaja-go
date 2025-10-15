@@ -518,7 +518,8 @@ export interface ProductMargin {
 }
 
 // Extension interface for Order with cost, profit, and margin data
-export interface OrderWithCostData extends Omit<Order, 'cost' | 'profit' | 'margin'> {
+export interface OrderWithCostData
+  extends Omit<Order, "cost" | "profit" | "margin"> {
   // Properties added during margin calculation
   cost: number;
   profit: number;

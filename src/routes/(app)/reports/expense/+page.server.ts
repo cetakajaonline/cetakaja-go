@@ -1,6 +1,9 @@
 import { error } from "@sveltejs/kit";
 import type { PageServerLoad } from "./$types";
-import { getExpenseReport, getExpenseReportForDateRange } from "$lib/server/reportService";
+import {
+  getExpenseReport,
+  getExpenseReportForDateRange,
+} from "$lib/server/reportService";
 import { z } from "zod";
 
 /**
@@ -35,10 +38,22 @@ export const load: PageServerLoad = async ({ url }) => {
       }
 
       // Parse the date strings without time to avoid timezone issues
-      const [startYear, startMonth, startDay] = parsedStartDate.data.split("-").map(Number);
-      const startDate = new Date(startYear, startMonth - 1, startDay, 0, 0, 0, 0); // month is 0-indexed
+      const [startYear, startMonth, startDay] = parsedStartDate.data
+        .split("-")
+        .map(Number);
+      const startDate = new Date(
+        startYear,
+        startMonth - 1,
+        startDay,
+        0,
+        0,
+        0,
+        0,
+      ); // month is 0-indexed
 
-      const [endYear, endMonth, endDay] = parsedEndDate.data.split("-").map(Number);
+      const [endYear, endMonth, endDay] = parsedEndDate.data
+        .split("-")
+        .map(Number);
       const endDate = new Date(endYear, endMonth - 1, endDay, 0, 0, 0, 0); // month is 0-indexed
 
       // Get expense report data for date range using the service

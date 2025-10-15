@@ -1,6 +1,9 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { getRevenueReport, getRevenueReportForDateRange } from "$lib/server/reportService";
+import {
+  getRevenueReport,
+  getRevenueReportForDateRange,
+} from "$lib/server/reportService";
 import { z } from "zod";
 
 // GET /api/reports/revenue

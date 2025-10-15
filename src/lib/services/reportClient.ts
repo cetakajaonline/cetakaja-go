@@ -193,8 +193,12 @@ export async function getReportForDate(date: Date): Promise<DailyReportData> {
  * @param date The date to fetch report for (format: YYYY-MM-DD)
  * @returns Promise resolving to revenue report data
  */
-export async function getRevenueReport(date?: string): Promise<RevenueReportData> {
-  const url = date ? `/api/reports/revenue?date=${date}` : "/api/reports/revenue";
+export async function getRevenueReport(
+  date?: string,
+): Promise<RevenueReportData> {
+  const url = date
+    ? `/api/reports/revenue?date=${date}`
+    : "/api/reports/revenue";
 
   const response = await fetch(url);
 
@@ -235,8 +239,12 @@ export async function getRevenueReportForDateRange(
  * @param date The date to fetch report for (format: YYYY-MM-DD)
  * @returns Promise resolving to expense report data
  */
-export async function getExpenseReport(date?: string): Promise<ExpenseReportData> {
-  const url = date ? `/api/reports/expense?date=${date}` : "/api/reports/expense";
+export async function getExpenseReport(
+  date?: string,
+): Promise<ExpenseReportData> {
+  const url = date
+    ? `/api/reports/expense?date=${date}`
+    : "/api/reports/expense";
 
   const response = await fetch(url);
 
@@ -300,7 +308,9 @@ export async function getMarginReportForDateRange(
  * @param date The date to fetch report for (format: YYYY-MM-DD)
  * @returns Promise resolving to margin report data
  */
-export async function getMarginReport(date?: string): Promise<MarginReportData> {
+export async function getMarginReport(
+  date?: string,
+): Promise<MarginReportData> {
   const url = date ? `/api/reports/margin?date=${date}` : "/api/reports/margin";
 
   const response = await fetch(url);

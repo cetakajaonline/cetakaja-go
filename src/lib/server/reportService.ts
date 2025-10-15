@@ -1042,7 +1042,7 @@ export async function getProductReport(
         averagePrice: averagePrice,
       };
     })
-    .filter((item): item is NonNullable<(typeof item)> => item !== null)
+    .filter((item): item is NonNullable<typeof item> => item !== null)
     .sort((a, b) => b.totalSold - a.totalSold)
     .slice(0, 10); // Top 10 selling products
 
@@ -1091,7 +1091,7 @@ export async function getProductReport(
         orders: data.orders,
       };
     })
-    .filter((item): item is NonNullable<(typeof item)> => item !== null);
+    .filter((item): item is NonNullable<typeof item> => item !== null);
 
   // Return the product report data
   return {
@@ -1227,14 +1227,36 @@ export async function getRevenueReport(
   // Group revenue by payment method
   const revenueByPaymentMethod = {
     transfer: orders
-      .filter((order) => order.paymentMethod === "transfer" && order.paymentStatus === "confirmed")
-      .reduce((sum: number, order: (typeof orders)[number]) => sum + order.totalAmount, 0),
+      .filter(
+        (order) =>
+          order.paymentMethod === "transfer" &&
+          order.paymentStatus === "confirmed",
+      )
+      .reduce(
+        (sum: number, order: (typeof orders)[number]) =>
+          sum + order.totalAmount,
+        0,
+      ),
     qris: orders
-      .filter((order) => order.paymentMethod === "qris" && order.paymentStatus === "confirmed")
-      .reduce((sum: number, order: (typeof orders)[number]) => sum + order.totalAmount, 0),
+      .filter(
+        (order) =>
+          order.paymentMethod === "qris" && order.paymentStatus === "confirmed",
+      )
+      .reduce(
+        (sum: number, order: (typeof orders)[number]) =>
+          sum + order.totalAmount,
+        0,
+      ),
     cash: orders
-      .filter((order) => order.paymentMethod === "cash" && order.paymentStatus === "confirmed")
-      .reduce((sum: number, order: (typeof orders)[number]) => sum + order.totalAmount, 0),
+      .filter(
+        (order) =>
+          order.paymentMethod === "cash" && order.paymentStatus === "confirmed",
+      )
+      .reduce(
+        (sum: number, order: (typeof orders)[number]) =>
+          sum + order.totalAmount,
+        0,
+      ),
   };
 
   // Calculate top revenue products for the day
@@ -1424,14 +1446,36 @@ export async function getRevenueReportForDateRange(
   // Group revenue by payment method
   const revenueByPaymentMethod = {
     transfer: orders
-      .filter((order) => order.paymentMethod === "transfer" && order.paymentStatus === "confirmed")
-      .reduce((sum: number, order: (typeof orders)[number]) => sum + order.totalAmount, 0),
+      .filter(
+        (order) =>
+          order.paymentMethod === "transfer" &&
+          order.paymentStatus === "confirmed",
+      )
+      .reduce(
+        (sum: number, order: (typeof orders)[number]) =>
+          sum + order.totalAmount,
+        0,
+      ),
     qris: orders
-      .filter((order) => order.paymentMethod === "qris" && order.paymentStatus === "confirmed")
-      .reduce((sum: number, order: (typeof orders)[number]) => sum + order.totalAmount, 0),
+      .filter(
+        (order) =>
+          order.paymentMethod === "qris" && order.paymentStatus === "confirmed",
+      )
+      .reduce(
+        (sum: number, order: (typeof orders)[number]) =>
+          sum + order.totalAmount,
+        0,
+      ),
     cash: orders
-      .filter((order) => order.paymentMethod === "cash" && order.paymentStatus === "confirmed")
-      .reduce((sum: number, order: (typeof orders)[number]) => sum + order.totalAmount, 0),
+      .filter(
+        (order) =>
+          order.paymentMethod === "cash" && order.paymentStatus === "confirmed",
+      )
+      .reduce(
+        (sum: number, order: (typeof orders)[number]) =>
+          sum + order.totalAmount,
+        0,
+      ),
   };
 
   // Calculate top revenue products for the date range
@@ -1569,16 +1613,32 @@ export async function getExpenseReport(
   const expenseCategories = {
     operational: expenses
       .filter((expense) => expense.category === "operasional")
-      .reduce((sum: number, expense: (typeof expenses)[number]) => sum + expense.nominal, 0),
+      .reduce(
+        (sum: number, expense: (typeof expenses)[number]) =>
+          sum + expense.nominal,
+        0,
+      ),
     marketing: expenses
       .filter((expense) => expense.category === "marketing")
-      .reduce((sum: number, expense: (typeof expenses)[number]) => sum + expense.nominal, 0),
+      .reduce(
+        (sum: number, expense: (typeof expenses)[number]) =>
+          sum + expense.nominal,
+        0,
+      ),
     gaji: expenses
       .filter((expense) => expense.category === "gaji")
-      .reduce((sum: number, expense: (typeof expenses)[number]) => sum + expense.nominal, 0),
+      .reduce(
+        (sum: number, expense: (typeof expenses)[number]) =>
+          sum + expense.nominal,
+        0,
+      ),
     lainnya: expenses
       .filter((expense) => expense.category === "lainnya")
-      .reduce((sum: number, expense: (typeof expenses)[number]) => sum + expense.nominal, 0),
+      .reduce(
+        (sum: number, expense: (typeof expenses)[number]) =>
+          sum + expense.nominal,
+        0,
+      ),
   };
 
   // Format expenses data for the response
@@ -1673,16 +1733,32 @@ export async function getExpenseReportForDateRange(
   const expenseCategories = {
     operational: expenses
       .filter((expense) => expense.category === "operasional")
-      .reduce((sum: number, expense: (typeof expenses)[number]) => sum + expense.nominal, 0),
+      .reduce(
+        (sum: number, expense: (typeof expenses)[number]) =>
+          sum + expense.nominal,
+        0,
+      ),
     marketing: expenses
       .filter((expense) => expense.category === "marketing")
-      .reduce((sum: number, expense: (typeof expenses)[number]) => sum + expense.nominal, 0),
+      .reduce(
+        (sum: number, expense: (typeof expenses)[number]) =>
+          sum + expense.nominal,
+        0,
+      ),
     gaji: expenses
       .filter((expense) => expense.category === "gaji")
-      .reduce((sum: number, expense: (typeof expenses)[number]) => sum + expense.nominal, 0),
+      .reduce(
+        (sum: number, expense: (typeof expenses)[number]) =>
+          sum + expense.nominal,
+        0,
+      ),
     lainnya: expenses
       .filter((expense) => expense.category === "lainnya")
-      .reduce((sum: number, expense: (typeof expenses)[number]) => sum + expense.nominal, 0),
+      .reduce(
+        (sum: number, expense: (typeof expenses)[number]) =>
+          sum + expense.nominal,
+        0,
+      ),
   };
 
   // Format expenses data for the response
@@ -1777,15 +1853,15 @@ export async function getMarginReport(
               select: {
                 id: true,
                 name: true,
-              }
+              },
             },
             variant: {
               select: {
                 id: true,
                 variantName: true,
-              }
-            }
-          }
+              },
+            },
+          },
         },
         payments: {
           select: {
@@ -1807,10 +1883,10 @@ export async function getMarginReport(
                 filePath: true,
                 fileType: true,
                 uploadedAt: true,
-              }
-            }
-          }
-        }
+              },
+            },
+          },
+        },
       },
       orderBy: {
         createdAt: "desc",
@@ -1879,14 +1955,17 @@ export async function getMarginReport(
   // For this example, we'll calculate cost based on available data
   // In a real system, you would have cost information stored with products/variants
   let totalCost = 0;
-  const productMargins: Record<number, {
-    id: number;
-    name: string;
-    cost: number;
-    revenue: number;
-    profit: number;
-    totalSold: number;
-  }> = {};
+  const productMargins: Record<
+    number,
+    {
+      id: number;
+      name: string;
+      cost: number;
+      revenue: number;
+      profit: number;
+      totalSold: number;
+    }
+  > = {};
 
   // Process orders to calculate cost, profit, and margins
   const ordersWithCostData: Array<{
@@ -1907,7 +1986,7 @@ export async function getMarginReport(
       // For now, using a simple calculation based on the selling price
       // You might need to adjust this based on your actual cost model
       const itemCost = item.price * 0.6; // Using 60% of selling price as cost as an example
-      const itemProfit = item.subtotal - (item.qty * itemCost);
+      const itemProfit = item.subtotal - item.qty * itemCost;
 
       totalCost += item.qty * itemCost;
       orderCost += item.qty * itemCost;
@@ -1932,19 +2011,22 @@ export async function getMarginReport(
     });
 
     const margin = totalRevenue > 0 ? (orderProfit / totalRevenue) * 100 : 0;
-    
+
     ordersWithCostData.push({
       order,
       cost: orderCost,
       profit: orderProfit,
-      margin
+      margin,
     });
   });
 
   const totalProfit = totalRevenue - totalCost - totalExpenses; // Profit after expenses
 
   // Calculate gross margin (revenue minus cost of goods sold, before expenses)
-  const grossMargin = (totalRevenue - totalCost) > 0 ? ((totalRevenue - totalCost) / totalRevenue) * 100 : 0;
+  const grossMargin =
+    totalRevenue - totalCost > 0
+      ? ((totalRevenue - totalCost) / totalRevenue) * 100
+      : 0;
   // Calculate net margin (profit after all expenses)
   const netMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
 
@@ -1965,35 +2047,37 @@ export async function getMarginReport(
   };
 
   // Calculate product margins
-  const productMarginsArray = Object.values(productMargins).map(product => ({
+  const productMarginsArray = Object.values(productMargins).map((product) => ({
     ...product,
     margin: product.revenue > 0 ? (product.profit / product.revenue) * 100 : 0,
   }));
 
   // Format orders data for the response with cost and margin info
-  const formattedOrders = ordersWithCostData.map(({ order, cost, profit, margin }) => {
-    return {
-      id: order.id,
-      orderNumber: order.orderNumber,
-      status: order.status,
-      shippingMethod: order.shippingMethod,
-      paymentMethod: order.paymentMethod,
-      paymentStatus: order.paymentStatus,
-      totalAmount: order.totalAmount,
-      notes: order.notes,
-      createdAt: order.createdAt,
-      updatedAt: order.updatedAt,
-      userId: order.userId,
-      createdById: order.createdById,
-      user: order.user,
-      createdBy: order.createdBy,
-      orderItems: order.orderItems,
-      payments: order.payments,
-      cost,
-      profit,
-      margin,
-    };
-  });
+  const formattedOrders = ordersWithCostData.map(
+    ({ order, cost, profit, margin }) => {
+      return {
+        id: order.id,
+        orderNumber: order.orderNumber,
+        status: order.status,
+        shippingMethod: order.shippingMethod,
+        paymentMethod: order.paymentMethod,
+        paymentStatus: order.paymentStatus,
+        totalAmount: order.totalAmount,
+        notes: order.notes,
+        createdAt: order.createdAt,
+        updatedAt: order.updatedAt,
+        userId: order.userId,
+        createdById: order.createdById,
+        user: order.user,
+        createdBy: order.createdBy,
+        orderItems: order.orderItems,
+        payments: order.payments,
+        cost,
+        profit,
+        margin,
+      };
+    },
+  );
 
   // Return the margin report data
   return {
@@ -2091,15 +2175,15 @@ export async function getMarginReportForDateRange(
               select: {
                 id: true,
                 name: true,
-              }
+              },
             },
             variant: {
               select: {
                 id: true,
                 variantName: true,
-              }
-            }
-          }
+              },
+            },
+          },
         },
         payments: {
           select: {
@@ -2121,10 +2205,10 @@ export async function getMarginReportForDateRange(
                 filePath: true,
                 fileType: true,
                 uploadedAt: true,
-              }
-            }
-          }
-        }
+              },
+            },
+          },
+        },
       },
       orderBy: {
         createdAt: "desc",
@@ -2193,14 +2277,17 @@ export async function getMarginReportForDateRange(
   // For this example, we'll calculate cost based on available data
   // In a real system, you would have cost information stored with products/variants
   let totalCost = 0;
-  const productMargins: Record<number, {
-    id: number;
-    name: string;
-    cost: number;
-    revenue: number;
-    profit: number;
-    totalSold: number;
-  }> = {};
+  const productMargins: Record<
+    number,
+    {
+      id: number;
+      name: string;
+      cost: number;
+      revenue: number;
+      profit: number;
+      totalSold: number;
+    }
+  > = {};
 
   // Process orders to calculate cost, profit, and margins
   const ordersWithCostData: Array<{
@@ -2221,7 +2308,7 @@ export async function getMarginReportForDateRange(
       // For now, using a simple calculation based on the selling price
       // You might need to adjust this based on your actual cost model
       const itemCost = item.price * 0.6; // Using 60% of selling price as cost as an example
-      const itemProfit = item.subtotal - (item.qty * itemCost);
+      const itemProfit = item.subtotal - item.qty * itemCost;
 
       totalCost += item.qty * itemCost;
       orderCost += item.qty * itemCost;
@@ -2246,19 +2333,22 @@ export async function getMarginReportForDateRange(
     });
 
     const margin = totalRevenue > 0 ? (orderProfit / totalRevenue) * 100 : 0;
-    
+
     ordersWithCostData.push({
       order,
       cost: orderCost,
       profit: orderProfit,
-      margin
+      margin,
     });
   });
 
   const totalProfit = totalRevenue - totalCost - totalExpenses; // Profit after expenses
 
   // Calculate gross margin (revenue minus cost of goods sold, before expenses)
-  const grossMargin = (totalRevenue - totalCost) > 0 ? ((totalRevenue - totalCost) / totalRevenue) * 100 : 0;
+  const grossMargin =
+    totalRevenue - totalCost > 0
+      ? ((totalRevenue - totalCost) / totalRevenue) * 100
+      : 0;
   // Calculate net margin (profit after all expenses)
   const netMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
 
@@ -2279,35 +2369,37 @@ export async function getMarginReportForDateRange(
   };
 
   // Calculate product margins
-  const productMarginsArray = Object.values(productMargins).map(product => ({
+  const productMarginsArray = Object.values(productMargins).map((product) => ({
     ...product,
     margin: product.revenue > 0 ? (product.profit / product.revenue) * 100 : 0,
   }));
 
   // Format orders data for the response with cost and margin info
-  const formattedOrders = ordersWithCostData.map(({ order, cost, profit, margin }) => {
-    return {
-      id: order.id,
-      orderNumber: order.orderNumber,
-      status: order.status,
-      shippingMethod: order.shippingMethod,
-      paymentMethod: order.paymentMethod,
-      paymentStatus: order.paymentStatus,
-      totalAmount: order.totalAmount,
-      notes: order.notes,
-      createdAt: order.createdAt,
-      updatedAt: order.updatedAt,
-      userId: order.userId,
-      createdById: order.createdById,
-      user: order.user,
-      createdBy: order.createdBy,
-      orderItems: order.orderItems,
-      payments: order.payments,
-      cost,
-      profit,
-      margin,
-    };
-  });
+  const formattedOrders = ordersWithCostData.map(
+    ({ order, cost, profit, margin }) => {
+      return {
+        id: order.id,
+        orderNumber: order.orderNumber,
+        status: order.status,
+        shippingMethod: order.shippingMethod,
+        paymentMethod: order.paymentMethod,
+        paymentStatus: order.paymentStatus,
+        totalAmount: order.totalAmount,
+        notes: order.notes,
+        createdAt: order.createdAt,
+        updatedAt: order.updatedAt,
+        userId: order.userId,
+        createdById: order.createdById,
+        user: order.user,
+        createdBy: order.createdBy,
+        orderItems: order.orderItems,
+        payments: order.payments,
+        cost,
+        profit,
+        margin,
+      };
+    },
+  );
 
   // Return the margin report data
   return {
