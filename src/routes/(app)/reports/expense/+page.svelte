@@ -13,7 +13,7 @@
   const { reportData } = data;
 
   // Format date range for display
-  const formattedStartDate = new Date(reportData.startDate).toLocaleDateString(
+  const formattedStartDate = reportData.startDate ? new Date(reportData.startDate).toLocaleDateString(
     "id-ID",
     {
       weekday: "long",
@@ -21,9 +21,9 @@
       month: "long",
       day: "numeric",
     }
-  );
+  ) : "";
 
-  const formattedEndDate = new Date(reportData.endDate).toLocaleDateString(
+  const formattedEndDate = reportData.endDate ? new Date(reportData.endDate).toLocaleDateString(
     "id-ID",
     {
       weekday: "long",
@@ -31,7 +31,7 @@
       month: "long",
       day: "numeric",
     }
-  );
+  ) : "";
 
   // Function to refresh the report for a specific date range
   async function refreshReport(startDate: Date, endDate: Date) {
@@ -50,8 +50,8 @@
   }
 
   // Initialize date pickers with the current report date range
-  let selectedStartDate = new Date(reportData.startDate);
-  let selectedEndDate = new Date(reportData.endDate);
+  let selectedStartDate = reportData.startDate ? new Date(reportData.startDate) : new Date();
+  let selectedEndDate = reportData.endDate ? new Date(reportData.endDate) : new Date();
 
   function handleStartDateChange(event: Event) {
     const target = event.target as HTMLInputElement;
@@ -79,34 +79,38 @@
       "report-start-date"
     ) as HTMLInputElement;
     if (startDateInput) {
-      // Format the date to YYYY-MM-DD string to set as the input value, preserving local date
-      const reportStartDate = new Date(reportData.startDate);
+      if (reportData.startDate) {
+        // Format the date to YYYY-MM-DD string to set as the input value, preserving local date
+        const reportStartDate = new Date(reportData.startDate);
 
-      // Format the date manually to avoid timezone conversion issues
-      const year = reportStartDate.getFullYear();
-      const month = String(reportStartDate.getMonth() + 1).padStart(2, "0");
-      const day = String(reportStartDate.getDate()).padStart(2, "0");
-      const reportDateStr = `${year}-${month}-${day}`;
+        // Format the date manually to avoid timezone conversion issues
+        const year = reportStartDate.getFullYear();
+        const month = String(reportStartDate.getMonth() + 1).padStart(2, "0");
+        const day = String(reportStartDate.getDate()).padStart(2, "0");
+        const reportDateStr = `${year}-${month}-${day}`;
 
-      // Set the input value to the report start date
-      startDateInput.value = reportDateStr;
+        // Set the input value to the report start date
+        startDateInput.value = reportDateStr;
+      }
     }
 
     const endDateInput = document.getElementById(
       "report-end-date"
     ) as HTMLInputElement;
     if (endDateInput) {
-      // Format the date to YYYY-MM-DD string to set as the input value, preserving local date
-      const reportEndDate = new Date(reportData.endDate);
+      if (reportData.endDate) {
+        // Format the date to YYYY-MM-DD string to set as the input value, preserving local date
+        const reportEndDate = new Date(reportData.endDate);
 
-      // Format the date manually to avoid timezone conversion issues
-      const year = reportEndDate.getFullYear();
-      const month = String(reportEndDate.getMonth() + 1).padStart(2, "0");
-      const day = String(reportEndDate.getDate()).padStart(2, "0");
-      const reportDateStr = `${year}-${month}-${day}`;
+        // Format the date manually to avoid timezone conversion issues
+        const year = reportEndDate.getFullYear();
+        const month = String(reportEndDate.getMonth() + 1).padStart(2, "0");
+        const day = String(reportEndDate.getDate()).padStart(2, "0");
+        const reportDateStr = `${year}-${month}-${day}`;
 
-      // Set the input value to the report end date
-      endDateInput.value = reportDateStr;
+        // Set the input value to the report end date
+        endDateInput.value = reportDateStr;
+      }
     }
   });
 
@@ -118,8 +122,8 @@
       );
       await exportExpenseReportToPDF(
         reportData,
-        reportData.startDate,
-        reportData.endDate
+        reportData.startDate || new Date(),
+        reportData.endDate || new Date()
       );
     } catch (error) {
       console.error("Error exporting to PDF:", error);
@@ -134,8 +138,8 @@
       );
       await exportExpenseReportToExcel(
         reportData,
-        reportData.startDate,
-        reportData.endDate
+        reportData.startDate || new Date(),
+        reportData.endDate || new Date()
       );
     } catch (error) {
       console.error("Error exporting to Excel:", error);
