@@ -101,7 +101,14 @@ export async function POST(event: RequestEvent) {
       paymentMethod: data.paymentMethod,
       totalAmount: data.totalAmount,
       notes: data.notes,
-      orderItems: data.orderItems || [],
+      orderItems: (data.orderItems || []).map((item) => ({
+        productId: item.productId,
+        qty: item.qty,
+        price: item.price,
+        subtotal: item.subtotal,
+        notes: item.notes,
+        options: item.options || [],
+      })),
     });
 
     // Update payment status if provided (payment record is created by createOrderService)

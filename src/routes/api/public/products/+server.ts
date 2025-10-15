@@ -19,7 +19,11 @@ export const GET: RequestHandler = async () => {
       variants: product.variants.map((variant) => ({
         id: variant.id,
         variantName: variant.variantName,
-        price: variant.price,
+        options: variant.options.map((option) => ({
+          id: option.id,
+          optionName: option.optionName,
+          price: option.price,
+        })),
       })),
     }));
 

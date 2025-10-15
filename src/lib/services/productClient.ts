@@ -10,7 +10,12 @@ interface ProductInput {
   variants?: {
     id?: number;
     variantName: string;
-    price: number;
+    options: {
+      id?: number;
+      optionName: string;
+      price: number;
+      delete?: boolean;
+    }[];
     delete?: boolean;
   }[];
 }

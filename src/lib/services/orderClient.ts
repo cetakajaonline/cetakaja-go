@@ -11,10 +11,14 @@ interface OrderCreationData {
   notes?: string;
   orderItems?: Array<{
     productId: number;
-    variantId?: number;
     qty: number;
     price: number;
     subtotal: number;
+    options?: Array<{
+      optionId: number;
+      optionName: string;
+      price: number;
+    }>;
   }>;
   createdById?: number | null;
   paymentProofFile?: File;
@@ -33,10 +37,14 @@ interface OrderUpdateData {
   orderItems?: Array<{
     id?: number;
     productId: number;
-    variantId?: number;
     qty: number;
     price: number;
     subtotal: number;
+    options?: Array<{
+      optionId: number;
+      optionName: string;
+      price: number;
+    }>;
   }>;
   createdById?: number | null;
   paymentProofFile?: File;

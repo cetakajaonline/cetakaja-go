@@ -74,7 +74,15 @@ export async function getDailyReport(
       },
       include: {
         product: true,
-        variant: true,
+        options: {
+          include: {
+            option: {
+              include: {
+                variant: true,
+              },
+            },
+          },
+        },
       },
     }),
 
@@ -246,7 +254,15 @@ export async function getWeeklyReport(
       },
       include: {
         product: true,
-        variant: true,
+        options: {
+          include: {
+            option: {
+              include: {
+                variant: true,
+              },
+            },
+          },
+        },
       },
     }),
 
@@ -423,7 +439,15 @@ export async function getMonthlyReport(
       },
       include: {
         product: true,
-        variant: true,
+        options: {
+          include: {
+            option: {
+              include: {
+                variant: true,
+              },
+            },
+          },
+        },
       },
     }),
 
@@ -596,7 +620,15 @@ export async function getAnnualReport(year: number): Promise<AnnualReportData> {
       },
       include: {
         product: true,
-        variant: true,
+        options: {
+          include: {
+            option: {
+              include: {
+                variant: true,
+              },
+            },
+          },
+        },
       },
     }),
 
@@ -786,7 +818,15 @@ export async function getCustomerReport(
       },
       include: {
         product: true,
-        variant: true,
+        options: {
+          include: {
+            option: {
+              include: {
+                variant: true,
+              },
+            },
+          },
+        },
       },
     }),
   ]);
@@ -936,7 +976,15 @@ export async function getProductReport(
             },
           },
         },
-        variant: true,
+        options: {
+          include: {
+            option: {
+              include: {
+                variant: true,
+              },
+            },
+          },
+        },
         order: {
           include: {
             user: {
@@ -1168,7 +1216,15 @@ export async function getRevenueReport(
       },
       include: {
         product: true,
-        variant: true,
+        options: {
+          include: {
+            option: {
+              include: {
+                variant: true,
+              },
+            },
+          },
+        },
       },
     }),
 
@@ -1387,7 +1443,15 @@ export async function getRevenueReportForDateRange(
       },
       include: {
         product: true,
-        variant: true,
+        options: {
+          include: {
+            option: {
+              include: {
+                variant: true,
+              },
+            },
+          },
+        },
       },
     }),
 
@@ -1841,26 +1905,25 @@ export async function getMarginReport(
           },
         },
         orderItems: {
-          select: {
-            id: true,
-            productId: true,
-            variantId: true,
-            qty: true,
-            price: true,
-            subtotal: true,
-            notes: true,
+          include: {
             product: {
-              select: {
-                id: true,
-                name: true,
-              },
+              include: {
+                variants: {
+                  include: {
+                    options: true
+                  }
+                }
+              }
             },
-            variant: {
-              select: {
-                id: true,
-                variantName: true,
-              },
-            },
+            options: {
+              include: {
+                option: {
+                  include: {
+                    variant: true
+                  }
+                }
+              }
+            }
           },
         },
         payments: {
@@ -1911,10 +1974,25 @@ export async function getMarginReport(
             name: true,
           },
         },
-        variant: {
+        options: {
           select: {
             id: true,
+            optionId: true,
+            optionName: true,
             price: true,
+            option: {
+              select: {
+                id: true,
+                optionName: true,
+                price: true,
+                variant: {
+                  select: {
+                    id: true,
+                    variantName: true,
+                  },
+                },
+              },
+            },
           },
         },
       },
@@ -2163,26 +2241,25 @@ export async function getMarginReportForDateRange(
           },
         },
         orderItems: {
-          select: {
-            id: true,
-            productId: true,
-            variantId: true,
-            qty: true,
-            price: true,
-            subtotal: true,
-            notes: true,
+          include: {
             product: {
-              select: {
-                id: true,
-                name: true,
-              },
+              include: {
+                variants: {
+                  include: {
+                    options: true
+                  }
+                }
+              }
             },
-            variant: {
-              select: {
-                id: true,
-                variantName: true,
-              },
-            },
+            options: {
+              include: {
+                option: {
+                  include: {
+                    variant: true
+                  }
+                }
+              }
+            }
           },
         },
         payments: {
@@ -2233,10 +2310,25 @@ export async function getMarginReportForDateRange(
             name: true,
           },
         },
-        variant: {
+        options: {
           select: {
             id: true,
+            optionId: true,
+            optionName: true,
             price: true,
+            option: {
+              select: {
+                id: true,
+                optionName: true,
+                price: true,
+                variant: {
+                  select: {
+                    id: true,
+                    variantName: true,
+                  },
+                },
+              },
+            },
           },
         },
       },

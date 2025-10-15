@@ -270,7 +270,9 @@ export async function exportDailyReportToPDF(
       const ordersData: string[][] = reportData.orders.map((order, index) => {
         const row: string[] = [
           (index + 1).toString(), // Add index column
-          order.createdAt ? new Date(order.createdAt).toLocaleDateString("id-ID") : "",
+          order.createdAt
+            ? new Date(order.createdAt).toLocaleDateString("id-ID")
+            : "",
           order.orderNumber,
           order.user?.name || "N/A",
           capitalizeFirstLetter(order.status),
@@ -379,7 +381,9 @@ export async function exportDailyReportToPDF(
         (expense, index) => {
           const row: string[] = [
             (index + 1).toString(), // Add index column
-            expense.date ? new Date(expense.date).toLocaleDateString("id-ID") : "",
+            expense.date
+              ? new Date(expense.date).toLocaleDateString("id-ID")
+              : "",
             expense.category
               ? expense.category.charAt(0).toUpperCase() +
                 expense.category.slice(1)
@@ -711,7 +715,9 @@ export async function exportWeeklyReportToPDF(
       const ordersData: string[][] = reportData.orders.map((order, index) => {
         const row: string[] = [
           (index + 1).toString(), // Add index column
-          order.createdAt ? new Date(order.createdAt).toLocaleDateString("id-ID") : "",
+          order.createdAt
+            ? new Date(order.createdAt).toLocaleDateString("id-ID")
+            : "",
           order.orderNumber,
           order.user?.name || "N/A",
           capitalizeFirstLetter(order.status),
@@ -820,7 +826,9 @@ export async function exportWeeklyReportToPDF(
         (expense, index) => {
           const row: string[] = [
             (index + 1).toString(), // Add index column
-            expense.date ? new Date(expense.date).toLocaleDateString("id-ID") : "",
+            expense.date
+              ? new Date(expense.date).toLocaleDateString("id-ID")
+              : "",
             expense.category
               ? expense.category.charAt(0).toUpperCase() +
                 expense.category.slice(1)
@@ -1123,7 +1131,9 @@ export async function exportMonthlyReportToPDF(
       const ordersData: string[][] = reportData.orders.map((order, index) => {
         const row: string[] = [
           (index + 1).toString(), // Add index column
-          order.createdAt ? new Date(order.createdAt).toLocaleDateString("id-ID") : "",
+          order.createdAt
+            ? new Date(order.createdAt).toLocaleDateString("id-ID")
+            : "",
           order.orderNumber,
           order.user?.name || "N/A",
           capitalizeFirstLetter(order.status),
@@ -1216,7 +1226,9 @@ export async function exportMonthlyReportToPDF(
         (expense, index) => {
           const row: string[] = [
             (index + 1).toString(), // Add index column
-            expense.date ? new Date(expense.date).toLocaleDateString("id-ID") : "",
+            expense.date
+              ? new Date(expense.date).toLocaleDateString("id-ID")
+              : "",
             expense.category
               ? expense.category.charAt(0).toUpperCase() +
                 expense.category.slice(1)
@@ -1538,7 +1550,9 @@ export async function exportAnnualReportToPDF(
       const ordersData: string[][] = reportData.orders.map((order, index) => {
         const row: string[] = [
           (index + 1).toString(), // Add index column
-          order.createdAt ? new Date(order.createdAt).toLocaleDateString("id-ID") : "",
+          order.createdAt
+            ? new Date(order.createdAt).toLocaleDateString("id-ID")
+            : "",
           order.orderNumber,
           order.user?.name || "N/A",
           capitalizeFirstLetter(order.status),
@@ -1647,7 +1661,9 @@ export async function exportAnnualReportToPDF(
         (expense, index) => {
           const row: string[] = [
             (index + 1).toString(), // Add index column
-            expense.date ? new Date(expense.date).toLocaleDateString("id-ID") : "",
+            expense.date
+              ? new Date(expense.date).toLocaleDateString("id-ID")
+              : "",
             expense.category
               ? expense.category.charAt(0).toUpperCase() +
                 expense.category.slice(1)
@@ -1990,7 +2006,9 @@ export async function exportCustomerReportToPDF(
       const customerOrdersData: string[][] = reportData.customerOrders.map(
         (order) => {
           const row: string[] = [
-            order.createdAt ? new Date(order.createdAt).toLocaleDateString("id-ID") : "",
+            order.createdAt
+              ? new Date(order.createdAt).toLocaleDateString("id-ID")
+              : "",
             order.orderNumber,
             order.customerName,
             order.customerPhone,
@@ -2576,11 +2594,13 @@ export async function exportRevenueReportToPDF(
           index: number,
         ) => [
           index + 1,
-          order.createdAt ? new Date(order.createdAt).toLocaleDateString("id-ID", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-          }) : "",
+          order.createdAt
+            ? new Date(order.createdAt).toLocaleDateString("id-ID", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+              })
+            : "",
           order.orderNumber,
           order.user.name,
           capitalizeFirstLetter(order.status),
@@ -2862,11 +2882,13 @@ export async function exportExpenseReportToPDF(
           index: number,
         ) => [
           index + 1,
-          expense.date ? new Date(expense.date).toLocaleDateString("id-ID", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-          }) : "",
+          expense.date
+            ? new Date(expense.date).toLocaleDateString("id-ID", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+              })
+            : "",
           expense.category === "operasional"
             ? "Operasional"
             : expense.category === "marketing"
@@ -3196,11 +3218,13 @@ export async function exportMarginReportToPDF(
               index: number,
             ) => [
               index + 1,
-              order.createdAt ? new Date(order.createdAt).toLocaleDateString("id-ID", {
-                day: "2-digit",
-                month: "2-digit",
-                year: "numeric",
-              }) : "",
+              order.createdAt
+                ? new Date(order.createdAt).toLocaleDateString("id-ID", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                  })
+                : "",
               order.orderNumber,
               formatCurrency(order.totalAmount),
               formatCurrency(order.cost),

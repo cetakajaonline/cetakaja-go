@@ -98,6 +98,17 @@ export async function PUT(event: RequestEvent) {
       ...data,
       // Only update createdById if provided in the request (for admin use)
       ...(data.createdById !== undefined && { createdById: data.createdById }),
+      // Transform orderItems if they were provided to include options instead of variantId
+      ...(data.orderItems && {
+        orderItems: data.orderItems.map((item) => ({
+          productId: item.productId,
+          qty: item.qty,
+          price: item.price,
+          subtotal: item.subtotal,
+          notes: item.notes,
+          options: item.options || [],
+        })),
+      }),
     });
 
     // Process payment proof if provided and payment method is transfer or qris

@@ -207,8 +207,16 @@
                     <div class="w-3/5 text-right">{item.product.name}</div>
                   </div>
                   <div class="flex">
-                    <div class="w-2/5 font-medium">Varian:</div>
-                    <div class="w-3/5 text-right">{item.variant?.variantName || '-'}</div>
+                    <div class="w-2/5 font-medium">Opsi:</div>
+                    <div class="w-3/5 text-right">
+                      {#if item.options && item.options.length > 0}
+                        {#each item.options as option}
+                          <div>{option.option?.variant?.variantName}: {option.optionName}</div>
+                        {/each}
+                      {:else}
+                        -
+                      {/if}
+                    </div>
                   </div>
                   <div class="flex">
                     <div class="w-2/5 font-medium">Link Desain:</div>
@@ -249,7 +257,7 @@
               <thead>
                 <tr>
                   <th>Produk</th>
-                  <th>Varian</th>
+                  <th>Opsi</th>
                   <th>Link Desain</th>
                   <th class="text-right">Qty</th>
                   <th class="text-right">Harga</th>
@@ -260,7 +268,15 @@
                 {#each order.orderItems as item}
                   <tr>
                     <td>{item.product.name}</td>
-                    <td>{item.variant?.variantName || '-'}</td>
+                    <td>
+                      {#if item.options && item.options.length > 0}
+                        {#each item.options as option}
+                          <div>{option.option?.variant?.variantName}: {option.optionName}</div>
+                        {/each}
+                      {:else}
+                        -
+                      {/if}
+                    </td>
                     <td>
                       {#if item.notes}
                         <a href="{item.notes}" target="_blank" class="text-blue-600 hover:underline break-all">

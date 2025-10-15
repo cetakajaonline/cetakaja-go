@@ -136,7 +136,14 @@ export const POST: RequestHandler = async (event) => {
       paymentMethod: data.paymentMethod,
       totalAmount: data.totalAmount,
       notes: data.notes || undefined,
-      orderItems: data.orderItems || [],
+      orderItems: (data.orderItems || []).map((item) => ({
+        productId: item.productId,
+        qty: item.qty,
+        price: item.price,
+        subtotal: item.subtotal,
+        notes: item.notes,
+        options: item.options || [],
+      })),
     });
 
     return json(newOrder);

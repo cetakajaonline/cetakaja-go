@@ -3,7 +3,7 @@
   import Modal from '$lib/components/ui/Modal.svelte';
   import Button from '$lib/components/ui/Button.svelte';
   import SearchSelect from '$lib/components/ui/SearchSelect.svelte';
-  import type { User, Product, ProductVariant, OrderItem } from '$lib/types';
+  import type { User, Product, ProductVariant, ProductVariantOption, OrderItem, OrderItemOption } from '$lib/types';
   import { formatCurrency } from '$lib/utils/formatters';
 
   let { 
@@ -33,30 +33,38 @@
   // State for managing new order items
   let newOrderItem = $state({
     productId: 0,
-    variantId: undefined as number | undefined,
     qty: 1,
     price: 0,
     subtotal: 0,
-    notes: ''
+    notes: '',
+    selectedOptions: {} as Record<number, number> // variantId -> optionId mapping
   });
 
-  // State for product variants - computed based on selected product
+  // State for product variants and options - computed based on selected product
   let productVariants = $state<ProductVariant[]>([]);
 
   // Update product variants when selected product changes using reactive effect
   $effect(() => {
     const product = products.find(p => p.id === newOrderItem.productId);
     productVariants = product ? (product.variants || []) : [];
+    // Reset selected options when product changes
+    newOrderItem.selectedOptions = {};
   });
 
-  // Update price when variant changes using derived state
+  // Update price when options change using derived state
   $effect(() => {
-    if (newOrderItem.variantId) {
-      const variant = productVariants.find((v: ProductVariant) => v.id === newOrderItem.variantId);
-      if (variant) {
-        newOrderItem.price = variant.price;
+    // Recalculate price based on selected options
+    let totalPrice = 0;
+    for (const variant of productVariants) {
+      const selectedOptionId = newOrderItem.selectedOptions[variant.id];
+      if (selectedOptionId) {
+        const option = variant.options ? variant.options.find((opt: ProductVariantOption) => opt.id === selectedOptionId) : undefined;
+        if (option) {
+          totalPrice += option.price;
+        }
       }
     }
+    newOrderItem.price = totalPrice;
   });
 
   // Update subtotal when qty or price changes using derived state
@@ -139,21 +147,48 @@
       return;
     }
     
-    // Check if product has variants and if so, a variant must be selected
-    if (product.variants && product.variants.length > 0 && !newOrderItem.variantId) {
-      alert("Silakan pilih varian produk");
-      return;
+    // Check if product has variants and if so, all required options must be selected
+    const requiredVariants = product.variants ? product.variants.filter(v => v.options && v.options.length > 0) : [];
+    for (const variant of requiredVariants) {
+      if (!newOrderItem.selectedOptions[variant.id]) {
+        alert(`Silakan pilih opsi untuk ${variant.variantName}`);
+        return;
+      }
     }
 
-    // If the product has no variants but the user selected a variant, clear the variant selection
-    if ((!product.variants || product.variants.length === 0) && newOrderItem.variantId) {
-      newOrderItem.variantId = undefined;
+    // Create order item options array
+    const orderItemOptions: OrderItemOption[] = [];
+    for (const [variantId, optionId] of Object.entries(newOrderItem.selectedOptions)) {
+      const variantIdNum = Number(variantId);
+      const optionIdNum = Number(optionId);
+      
+      const variant = product.variants.find((v: ProductVariant) => v.id === variantIdNum);
+      const option = variant?.options.find((opt: ProductVariantOption) => opt.id === optionIdNum);
+      
+      if (variant && option) {
+        orderItemOptions.push({
+          id: Date.now() + Math.random(), // temporary ID
+          orderItemId: 0, // temporary, will be set by server
+          optionId: optionIdNum,
+          optionName: option.optionName,
+          price: option.price,
+          createdAt: new Date(),
+          option: {
+            id: option.id,
+            optionName: option.optionName,
+            price: option.price,
+            variant: {
+              id: variant.id,
+              variantName: variant.variantName,
+            }
+          }
+        });
+      }
     }
 
     const item: OrderItem = {
       id: Date.now(), // temporary ID, will be replaced by server
       productId: newOrderItem.productId,
-      variantId: newOrderItem.variantId || null,
       qty: newOrderItem.qty,
       price: newOrderItem.price,
       subtotal: newOrderItem.subtotal,
@@ -162,9 +197,7 @@
         id: product.id,
         name: product.name
       },
-      variant: newOrderItem.variantId ? 
-        (product.variants.find(v => v.id === newOrderItem.variantId) || null) : 
-        null
+      options: orderItemOptions
     };
 
     orderItems = [...orderItems, item];
@@ -173,11 +206,11 @@
     // Reset form
     newOrderItem = {
       productId: 0,
-      variantId: undefined,
       qty: 1,
       price: 0,
       subtotal: 0,
-      notes: ''
+      notes: '',
+      selectedOptions: {}
     };
   }
 
@@ -375,26 +408,26 @@
             />
           </div>
           
-          <div class="form-control w-full">
-            <label class="label" for="newItemVariant">
-              <span class="label-text">Varian</span>
-            </label>
-            <select
-              id="newItemVariant"
-              class="select select-bordered w-full text-sm"
-              bind:value={newOrderItem.variantId}
-              disabled={!newOrderItem.productId || productVariants.length === 0}
-            >
-              {#if productVariants.length > 0}
-                <option value="">Pilih Varian</option>
-                {#each productVariants as variant}
-                  <option value={variant.id}>{variant.variantName} - {formatCurrency(variant.price)}</option>
-                {/each}
-              {:else}
-                <option value="">-- Pilih Produk Dulu --</option>
-              {/if}
-            </select>
-          </div>
+          <!-- Dynamic option selectors based on product variants -->
+          {#if productVariants.length > 0}
+            {#each productVariants as variant, i}
+              <div class="form-control w-full">
+                <label class="label" for={"newItemOption-" + variant.id}>
+                  <span class="label-text">{variant.variantName}</span>
+                </label>
+                <select
+                  id={"newItemOption-" + variant.id}
+                  class="select select-bordered w-full text-sm"
+                  bind:value={newOrderItem.selectedOptions[variant.id]}
+                >
+                  <option value="">Pilih {variant.variantName}</option>
+                  {#each variant.options || [] as option}
+                    <option value={option.id}>{option.optionName} - {formatCurrency(option.price)}</option>
+                  {/each}
+                </select>
+              </div>
+            {/each}
+          {/if}
           
           <div class="form-control w-full">
             <label class="label" for="newItemQty">
@@ -419,7 +452,7 @@
               min="0"
               class="input input-bordered w-full text-sm"
               bind:value={newOrderItem.price}
-              readonly={!newOrderItem.variantId}
+              readonly
             />
           </div>
           
@@ -455,7 +488,7 @@
               type="button"
               onclick={addOrderItem}
               class="btn btn-primary btn-sm w-full"
-              disabled={!newOrderItem.productId || newOrderItem.qty <= 0 || (productVariants.length > 0 && !newOrderItem.variantId)}
+              disabled={!newOrderItem.productId || newOrderItem.qty <= 0}
             >
               Tambah
             </button>
@@ -480,10 +513,21 @@
             </div>
             
             <div class="space-y-2">
-              <div class="flex">
-                <div class="w-2/5 font-semibold">Varian:</div>
-                <div class="w-3/5 text-right">{item.variant?.variantName || '-'}</div>
-              </div>
+              {#if item.options && item.options.length > 0}
+                <div class="flex flex-col">
+                  <div class="w-2/5 font-semibold">Opsi:</div>
+                  <div class="w-3/5 text-right">
+                    {#each item.options as option}
+                      <div>{option.option?.variant?.variantName}: {option.optionName}</div>
+                    {/each}
+                  </div>
+                </div>
+              {:else}
+                <div class="flex">
+                  <div class="w-2/5 font-semibold">Opsi:</div>
+                  <div class="w-3/5 text-right">-</div>
+                </div>
+              {/if}
               
               <div class="flex">
                 <div class="w-2/5 font-semibold">Jumlah:</div>
@@ -540,7 +584,15 @@
             {#each orderItems as item, index}
               <tr>
                 <td>{products.find(p => p.id === item.productId)?.name}</td>
-                <td>{item.variant?.variantName || '-'}</td>
+                {#if item.options && item.options.length > 0}
+                  <td>
+                    {#each item.options as option}
+                      <div>{option.option?.variant?.variantName}: {option.optionName}</div>
+                    {/each}
+                  </td>
+                {:else}
+                  <td>-</td>
+                {/if}
                 <td>{item.qty}</td>
                 <td>{formatCurrency(item.price)}</td>
                 <td>{formatCurrency(item.subtotal)}</td>

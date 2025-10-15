@@ -196,7 +196,29 @@ export const load: PageServerLoad = async ({ locals }) => {
         orderItems: {
           include: {
             product: { select: { id: true, name: true } },
-            variant: { select: { id: true, variantName: true } },
+            options: {
+              select: {
+                id: true,
+                orderItemId: true,
+                optionId: true,
+                optionName: true,
+                price: true,
+                createdAt: true,
+                option: {
+                  select: {
+                    id: true,
+                    optionName: true,
+                    price: true,
+                    variant: {
+                      select: {
+                        id: true,
+                        variantName: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
           },
         },
         payments: {

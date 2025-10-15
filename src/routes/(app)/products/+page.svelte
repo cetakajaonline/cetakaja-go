@@ -64,7 +64,7 @@
     baseCode: "",
     photo: "",
     categoryId: 0,
-    variants: [{ variantName: '', price: 0 }] as { id?: number; variantName: string; price: number; delete?: boolean; createdAt?: Date }[],
+    variants: [] as { id?: number; variantName: string; options: { id?: number; optionName: string; price: number; delete?: boolean }[]; delete?: boolean }[],
   };
 
   let validationMessages: string[] = [];
@@ -79,7 +79,7 @@
       baseCode: "", 
       photo: "",
       categoryId: 0,
-      variants: [{ variantName: '', price: 0 }] 
+      variants: [] 
     };
     showProductModal = true;
   }
@@ -96,7 +96,13 @@
       variants: product.variants.map(v => ({
         id: v.id,
         variantName: v.variantName,
-        price: v.price
+        options: v.options ? v.options.map(opt => ({
+          id: opt.id,
+          optionName: opt.optionName,
+          price: opt.price,
+          delete: false
+        })) : [],
+        delete: false
       }))
     };
     showProductModal = true;
@@ -127,7 +133,11 @@
           variants: validated.variants?.map(v => ({
             id: v.id || 0,
             variantName: v.variantName,
-            price: v.price,
+            options: v.options ? v.options.map(opt => ({
+              id: opt.id || 0,
+              optionName: opt.optionName,
+              price: opt.price
+            })) : []
             // Don't include createdAt or updatedAt here as they should be managed by the server
           }))
         };
@@ -148,7 +158,10 @@
           variants: (validated.variants ?? []).map(v => ({
             // Only include the fields that are actually needed for creating variants
             variantName: v.variantName,
-            price: v.price
+            options: v.options ? v.options.map(opt => ({
+              optionName: opt.optionName,
+              price: opt.price
+            })) : []
             // Don't include id (will be assigned by DB), createdAt, or updatedAt
           }))
         };

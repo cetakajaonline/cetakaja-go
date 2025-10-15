@@ -4,7 +4,7 @@
 export interface Expense {
   id: number;
   nominal: number; // Amount of the expense
-  category: string; // Category of the expense (operasional, marketing, gaji, lainnya)
+  category: "operasional" | "marketing" | "gaji" | "lainnya"; // Category of the expense
   date: Date; // Date of the expense
   description: string | null; // Optional description of the expense
   proofFile: string | null; // Optional path to proof file
@@ -48,7 +48,6 @@ export interface Order {
 export interface OrderItem {
   id: number;
   productId: number;
-  variantId: number | null;
   qty: number;
   price: number;
   subtotal: number;
@@ -60,10 +59,7 @@ export interface OrderItem {
     id: number;
     name: string;
   };
-  variant: {
-    id: number | null;
-    variantName: string | null;
-  } | null;
+  options: OrderItemOption[];
 }
 
 // ✅ Payment
@@ -118,9 +114,38 @@ export interface ProductVariant {
   id: number;
   productId: number;
   variantName: string;
+  createdAt: Date;
+  updatedAt: Date;
+  options: ProductVariantOption[];
+}
+
+// ✅ Product Variant Option
+export interface ProductVariantOption {
+  id: number;
+  variantId: number;
+  optionName: string;
   price: number;
   createdAt: Date;
   updatedAt: Date;
+}
+
+// ✅ Order Item Option
+export interface OrderItemOption {
+  id: number;
+  orderItemId: number;
+  optionId: number;
+  optionName: string;
+  price: number;
+  createdAt: Date;
+  option: {
+    id: number;
+    optionName: string;
+    price: number;
+    variant: {
+      id: number;
+      variantName: string;
+    };
+  } | null;
 }
 
 // ✅ Setting

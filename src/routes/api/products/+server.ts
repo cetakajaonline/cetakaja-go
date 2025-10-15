@@ -51,7 +51,11 @@ export const POST: RequestHandler = async (event) => {
       baseCode: data.baseCode,
       photo: data.photo || undefined, // ubah "" menjadi undefined jika null/empty
       categoryId: data.categoryId,
-      variants: data.variants,
+      variants:
+        data.variants?.map((v) => ({
+          variantName: v.variantName,
+          options: v.options || [],
+        })) || [],
     });
     return json(newProduct);
   } catch (err) {

@@ -3,7 +3,7 @@
   import Button from '$lib/components/ui/Button.svelte';
   import FormInput from '$lib/components/ui/FormInput.svelte';
   import Modal from '$lib/components/ui/Modal.svelte';
-  import type { Product, ProductVariant } from '$lib/types';
+  import type { Product, ProductVariant, ProductVariantOption } from '$lib/types';
   import { getAllCategories } from '$lib/services/categoryClient';
   import { formatCurrency, parseCurrency } from '$lib/utils/formatters';
 
@@ -17,7 +17,12 @@
     baseCode: '',
     photo: '',
     categoryId: 0,
-    variants: [] as { id?: number; variantName: string; price: number; delete?: boolean }[]
+    variants: [] as { 
+      id?: number; 
+      variantName: string; 
+      options: { id?: number; optionName: string; price: number; delete?: boolean }[]; 
+      delete?: boolean 
+    }[]
   };
 
   const dispatch = createEventDispatcher();
@@ -28,7 +33,12 @@
   let photo: string | File | null = null;
   let photoPreview: string | null = null;
   let categoryId = 0;
-  let variants = [] as { id?: number; variantName: string; price: number; delete?: boolean }[];
+  let variants = [] as { 
+    id?: number; 
+    variantName: string; 
+    options: { id?: number; optionName: string; price: number; delete?: boolean }[]; 
+    delete?: boolean 
+  }[];
 
   // Initialize photoPreview with initial photo when modal opens
   $: if (show && !isLoadingCategories && initial.photo) {
@@ -44,22 +54,33 @@
       categories = await getAllCategories();
       isLoadingCategories = false;
     } catch (err) {
-
       isLoadingCategories = false;
     }
   }
 
-  // Reset saat modal dibuka
+  // Initialize form when modal opens
   $: if (show && !isLoadingCategories) {
-    name = initial.name;
+    name = initial.name || '';
     description = initial.description || '';
-    baseCode = initial.baseCode;
+    baseCode = initial.baseCode || '';
     photo = initial.photo || null;
     photoPreview = typeof initial.photo === 'string' && initial.photo ? initial.photo : null;
     categoryId = initial.categoryId || 0;
-    variants = initial.variants && initial.variants.length > 0 
-      ? [...initial.variants] 
-      : [{ variantName: '', price: 0 }];
+    
+    // For new products: start with empty variants array
+    // For edit products: load existing variants (only non-deleted ones)
+    if (initial.variants && initial.variants.length > 0) {
+      // Load existing variants for editing
+      variants = initial.variants
+        .filter(v => !v.delete)  // Only non-deleted variants
+        .map(v => ({
+          ...v,
+          options: (v.options || []).filter(opt => !opt.delete)  // Only non-deleted options
+        }));
+    } else {
+      // For new products, start with empty variants array
+      variants = [];
+    }
   }
 
   // Initialize categories when modal opens
@@ -68,59 +89,108 @@
   }
 
   function addVariant() {
-    variants = [...variants, { variantName: '', price: 0 }];
+    const newVariant = {
+      variantName: '',
+      options: [{ optionName: '', price: 0, delete: false }],
+      delete: false
+    };
+    variants = [...variants, newVariant];
   }
 
   function removeVariant(index: number) {
+    const variant = variants[index];
     if (variants.length > 1) {
-      const variant = variants[index];
       if (variant.id) {
-        // Mark for deletion instead of removing immediately
+        // For existing variants, mark as deleted
         variants = variants.map((v, i) => 
           i === index ? { ...v, delete: true } : v
         );
       } else {
-        // Remove new variant that hasn't been saved yet
+        // For new variants, remove completely
         variants = variants.filter((_, i) => i !== index);
       }
     }
   }
 
-  function updateVariant(
-    index: number,
-    field: 'variantName' | 'price',
+  function addOption(variantIndex: number) {
+    const newVariants = [...variants];
+    const variant = { ...newVariants[variantIndex] };
+    if (!variant.options) {
+      variant.options = [];
+    }
+    variant.options = [...variant.options, { optionName: '', price: 0, delete: false }];
+    newVariants[variantIndex] = variant;
+    variants = newVariants;
+  }
+
+  function removeOption(variantIndex: number, optionIndex: number) {
+    const newVariants = [...variants];
+    const variant = { ...newVariants[variantIndex] };
+    if (variant.options && variant.options.length > 1) {
+      const option = variant.options[optionIndex];
+      if (option.id) {
+        // For existing options, mark as deleted
+        variant.options = variant.options.map((opt, i) => 
+          i === optionIndex ? { ...opt, delete: true } : opt
+        );
+      } else {
+        // For new options, remove completely
+        variant.options = variant.options.filter((_, i) => i !== optionIndex);
+      }
+      newVariants[variantIndex] = variant;
+      variants = newVariants;
+    }
+  }
+
+  function updateOption(
+    variantIndex: number,
+    optionIndex: number,
+    field: 'optionName' | 'price',
     value: string | number
   ) {
-    // Create a copy of the array to ensure reactivity
     const newVariants = [...variants];
-    const variant = { ...newVariants[index] };
-    if (field === 'price') {
-      variant.price = Number(value);
-    } else {
-      variant.variantName = String(value);
+    const variant = { ...newVariants[variantIndex] };
+    if (!variant.options) {
+      variant.options = [];
     }
-    newVariants[index] = variant;
+    const newOptions = [...variant.options];
+    const option = { ...newOptions[optionIndex] };
+    
+    if (field === 'price') {
+      option.price = Number(value);
+    } else {
+      option.optionName = String(value);
+    }
+    
+    newOptions[optionIndex] = option;
+    variant.options = newOptions;
+    newVariants[variantIndex] = variant;
     variants = newVariants;
   }
 
   async function handleSubmit() {
-    // Filter out empty variants before submitting
-    const validVariants = variants.filter(v => 
-      v.variantName.trim() && v.price > 0
-    );
-    
-    // Check if we have at least one valid variant
+    // Validate that we have at least one valid variant
+    const validVariants = variants.filter(v => {
+      if (v.delete) return false;
+      if (!v.variantName.trim()) return false;
+      
+      // Check options
+      const validOptions = v.options?.filter(opt => 
+        !opt.delete && opt.optionName.trim() && opt.price >= 0
+      ) || [];
+      
+      return validOptions.length > 0;
+    });
+
     if (validVariants.length === 0) {
-      // Show an error to the user
-      alert("Produk harus memiliki setidaknya satu varian yang valid dengan nama dan harga");
+      alert("Produk harus memiliki setidaknya satu varian yang valid dengan opsi");
       return;
     }
     
-    // If photo is a File, we need to upload it first and get the path
+    // Handle photo upload if it's a File
     let processedPhoto: string | null = null;
     
     if (photo instanceof File) {
-      // Upload the file first
       const formData = new FormData();
       formData.append('photo', photo);
       
@@ -138,7 +208,6 @@
       const uploadResult = await uploadResponse.json();
       processedPhoto = uploadResult.photoPath;
     } else {
-      // If photo is already a string path, use it as is, or null if empty
       processedPhoto = typeof photo === 'string' && photo ? photo : null;
     }
     
@@ -151,8 +220,6 @@
       variants: validVariants,
     });
   }
-  
-  
 </script>
 
 <Modal {show} size="xl" on:close={() => dispatch('close')}>
@@ -213,9 +280,8 @@
               const target = e.target as HTMLInputElement;
               if (target.files && target.files[0]) {
                 const selectedFile = target.files[0];
-                photo = selectedFile; // Simpan file object
+                photo = selectedFile;
                 
-                // Buat preview menggunakan FileReader seperti di settings
                 const reader = new FileReader();
                 reader.onload = () => {
                   photoPreview = reader.result as string;
@@ -228,59 +294,115 @@
       </div>
     </div>
 
-    <div class="divider my-2">Varian Produk</div>
+    <div class="divider my-2">Varian & Opsi Produk</div>
     
-    {#each variants as variant, i (variant.id || i)}
-      {#if !variant.delete}
-        <div class="card bg-base-200 p-4">
-          <div class="grid grid-cols-1 md:grid-cols-12 gap-2 items-end">
-            <div class="md:col-span-5">
-              <FormInput 
-                label="Nama Varian" 
-                bind:value={variants[i].variantName}
-                required
-              />
-            </div>
-            <div class="md:col-span-5">
-              <label for="price-{i}" class="label py-1">
-                <span class="label-text font-medium">Harga</span>
-              </label>
-              <input
-                id="price-{i}"
-                type="text"
-                class="input input-bordered w-full"
-                value={formatCurrency(variants[i].price)}
-                on:input={(e) => {
-                  const rawValue = (e.target as HTMLInputElement).value;
-                  const numericValue = parseCurrency(rawValue);
-                  variants[i].price = numericValue;
-                }}
-                required
-              />
-            </div>
-            <div class="md:col-span-2 flex items-center justify-center gap-1">
-              <Button 
-                type="button" 
-                className="btn-error btn-circle btn-sm" 
-                on:click={() => removeVariant(i)}
-                disabled={variants.filter(v => !v.delete).length <= 1}
-              >
-                x
-              </Button>
-              {#if i === variants.length - 1}
+    {#if variants.length === 0}
+      <!-- Only show button initially for new products -->
+      <div class="text-center py-8">
+        <p class="text-gray-500 mb-4">Belum ada varian produk. Tambahkan varian terlebih dahulu.</p>
+        <Button 
+          type="button" 
+          className="btn-primary"
+          on:click={addVariant}
+        >
+          + Tambah Varian
+        </Button>
+      </div>
+    {:else}
+      <!-- Show existing variants and options -->
+      {#each variants as variant, variantIndex (variant.id ? `variant-${variant.id}` : `new-variant-${variantIndex}`)}
+        {#if !variant.delete}
+          <div class="card bg-base-200 p-4 mb-4">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-2 items-end mb-2">
+              <div class="md:col-span-10">
+                <FormInput 
+                  label="Nama Varian" 
+                  bind:value={variant.variantName}
+                  required
+                />
+              </div>
+              <div class="md:col-span-2 flex items-center justify-center gap-1">
                 <Button 
                   type="button" 
-                  className="btn-info btn-outline btn-circle btn-sm" 
-                  on:click={addVariant}
+                  className="btn-error btn-circle btn-sm" 
+                  on:click={() => removeVariant(variantIndex)}
+                  disabled={variants.filter(v => !v.delete).length <= 1}
                 >
-                  +
+                  x
                 </Button>
+                {#if variantIndex === variants.filter(v => !v.delete).length - 1}
+                  <Button 
+                    type="button" 
+                    className="btn-info btn-outline btn-circle btn-sm" 
+                    on:click={addVariant}
+                  >
+                    +
+                  </Button>
+                {/if}
+              </div>
+            </div>
+            
+            <!-- Options for this variant -->
+            <div class="ml-4 border-l-2 border-base-300 pl-4">
+              <h4 class="font-medium mb-2">Opsi Varian</h4>
+              {#each variant.options as option, optionIndex (option.id ? `option-${option.id}` : `new-option-${optionIndex}`)}
+                {#if !option.delete}
+                  <div class="grid grid-cols-1 md:grid-cols-12 gap-2 items-end mb-2">
+                    <div class="md:col-span-5">
+                      <FormInput 
+                        label="Nama Opsi" 
+                        bind:value={option.optionName}
+                        required
+                      />
+                    </div>
+                    <div class="md:col-span-5">
+                      <label for="price-{variantIndex}-{optionIndex}" class="label py-1">
+                        <span class="label-text font-medium">Harga</span>
+                      </label>
+                      <input
+                        id="price-{variantIndex}-{optionIndex}"
+                        type="text"
+                        class="input input-bordered w-full"
+                        value={formatCurrency(option.price)}
+                        on:input={(e) => {
+                          const rawValue = (e.target as HTMLInputElement).value;
+                          const numericValue = parseCurrency(rawValue);
+                          updateOption(variantIndex, optionIndex, 'price', numericValue);
+                        }}
+                        required
+                      />
+                    </div>
+                    <div class="md:col-span-2 flex items-center justify-center gap-1">
+                      <Button 
+                        type="button" 
+                        className="btn-error btn-circle btn-sm" 
+                        on:click={() => removeOption(variantIndex, optionIndex)}
+                        disabled={variant.options.filter(opt => !opt.delete).length <= 1}
+                      >
+                        x
+                      </Button>
+                      {#if optionIndex === variant.options.filter(opt => !opt.delete).length - 1}
+                        <Button 
+                          type="button" 
+                          className="btn-info btn-outline btn-circle btn-sm" 
+                          on:click={() => addOption(variantIndex)}
+                        >
+                          +
+                        </Button>
+                      {/if}
+                    </div>
+                  </div>
+                {/if}
+              {/each}
+              
+              {#if variant.options.filter(opt => !opt.delete).length === 0}
+                <div class="text-sm text-warning">Varian ini belum memiliki opsi. Tambahkan opsi untuk melanjutkan.</div>
               {/if}
             </div>
           </div>
-        </div>
-      {/if}
-    {/each}
+        {/if}
+      {/each}
+    {/if}
 
     <div class="flex justify-center gap-4 mt-6">
       <Button type="submit" className="btn-primary" loading={loading}>

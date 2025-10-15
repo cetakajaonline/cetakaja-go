@@ -14,10 +14,20 @@ const productInclude = {
     select: {
       id: true,
       variantName: true,
-      price: true,
       createdAt: true,
       updatedAt: true,
       productId: true,
+      options: {
+        select: {
+          id: true,
+          optionName: true,
+          price: true,
+          createdAt: true,
+          updatedAt: true,
+          variantId: true,
+        },
+        orderBy: { createdAt: "asc" as const },
+      },
     },
     orderBy: { createdAt: "asc" as const },
   },
@@ -74,7 +84,10 @@ export async function createProduct({
   baseCode: string;
   photo?: string;
   categoryId: number;
-  variants: { variantName: string; price: number }[];
+  variants: {
+    variantName: string;
+    options: { optionName: string; price: number }[];
+  }[];
 }) {
   const existing = await getProductByBaseCode(baseCode, categoryId);
   if (existing) {
@@ -91,7 +104,12 @@ export async function createProduct({
       variants: {
         create: variants.map((v) => ({
           variantName: v.variantName,
-          price: v.price,
+          options: {
+            create: v.options.map((option) => ({
+              optionName: option.optionName,
+              price: option.price,
+            })),
+          },
         })),
       },
     },
@@ -117,7 +135,13 @@ export async function updateProduct(
     variants?: {
       id?: number;
       variantName: string;
-      price: number;
+      options?: {
+        id?: number;
+        optionName: string;
+        price: number;
+        delete?: boolean;
+        createdAt?: Date;
+      }[];
       delete?: boolean;
       createdAt?: Date;
     }[];
@@ -139,10 +163,32 @@ export async function updateProduct(
     variants?: {
       upsert?: {
         where: { id: number };
-        update: { variantName: string; price: number };
-        create: { variantName: string; price: number };
+        update: {
+          variantName: string;
+          options: {
+            upsert?: {
+              where: { id: number };
+              update: { optionName: string; price: number };
+              create: { optionName: string; price: number };
+            }[];
+            create?: { optionName: string; price: number }[];
+            delete?: { id: number }[];
+          };
+        };
+        create: {
+          variantName: string;
+          options: {
+            create: { optionName: string; price: number }[];
+          };
+        };
       }[];
-      create?: { variantName: string; price: number }[];
+      create?: {
+        variantName: string;
+        options: {
+          create: { optionName: string; price: number }[];
+        };
+      }[];
+      delete?: { id: number }[];
     };
   } = {};
 
@@ -171,20 +217,60 @@ export async function updateProduct(
         where: { id: v.id! },
         update: {
           variantName: v.variantName,
-          price: v.price,
+          options: {
+            upsert:
+              v.options
+                ?.filter((opt) => opt.id)
+                .map((opt) => ({
+                  where: { id: opt.id! },
+                  update: {
+                    optionName: opt.optionName,
+                    price: opt.price,
+                  },
+                  create: {
+                    optionName: opt.optionName,
+                    price: opt.price,
+                  },
+                })) || [],
+            create:
+              v.options
+                ?.filter((opt) => !opt.id)
+                .map((opt) => ({
+                  optionName: opt.optionName,
+                  price: opt.price,
+                })) || [],
+            delete:
+              v.options
+                ?.filter((opt) => opt.delete && opt.id)
+                .map((opt) => ({ id: opt.id! })) || [],
+          },
         },
         create: {
           variantName: v.variantName,
-          price: v.price,
+          options: {
+            create: v.options
+              ? v.options.map((opt) => ({
+                  optionName: opt.optionName,
+                  price: opt.price,
+                }))
+              : [],
+          },
         },
       })),
       create: createVariants.map((v) => ({
         variantName: v.variantName,
-        price: v.price,
+        options: {
+          create: v.options
+            ? v.options.map((opt) => ({
+                optionName: opt.optionName,
+                price: opt.price,
+              }))
+            : [],
+        },
       })),
     };
 
-    // Delete variants separately since Prisma's nested delete has limitations
+    // Delete variants separately if needed
     for (const variant of deleteVariants) {
       if (variant.id) {
         await prisma.productVariant.delete({

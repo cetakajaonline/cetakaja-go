@@ -39,7 +39,7 @@ const config: Config = {
         "coffee",
         "winter",
       ],
-    })
+    }),
   ],
 };
 

@@ -51,17 +51,33 @@ const orderSelect = {
       subtotal: true,
       notes: true,
       productId: true,
-      variantId: true,
       product: {
         select: {
           id: true,
           name: true,
         },
       },
-      variant: {
+      options: {
         select: {
           id: true,
-          variantName: true,
+          orderItemId: true,
+          optionId: true,
+          optionName: true,
+          price: true,
+          createdAt: true,
+          option: {
+            select: {
+              id: true,
+              optionName: true,
+              price: true,
+              variant: {
+                select: {
+                  id: true,
+                  variantName: true,
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -136,17 +152,33 @@ const orderDetailSelect = {
       subtotal: true,
       notes: true,
       productId: true,
-      variantId: true,
       product: {
         select: {
           id: true,
           name: true,
         },
       },
-      variant: {
+      options: {
         select: {
           id: true,
-          variantName: true,
+          orderItemId: true,
+          optionId: true,
+          optionName: true,
+          price: true,
+          createdAt: true,
+          option: {
+            select: {
+              id: true,
+              optionName: true,
+              price: true,
+              variant: {
+                select: {
+                  id: true,
+                  variantName: true,
+                },
+              },
+            },
+          },
         },
       },
     },
@@ -293,11 +325,15 @@ export async function createOrder({
   notes?: string;
   orderItems: {
     productId: number;
-    variantId?: number;
     qty: number;
     price: number;
     subtotal: number;
     notes?: string;
+    options?: {
+      optionId: number;
+      optionName: string;
+      price: number;
+    }[];
   }[];
 }) {
   const newOrder = await prisma.$transaction(async (tx) => {
@@ -314,11 +350,18 @@ export async function createOrder({
         orderItems: {
           create: orderItems.map((item) => ({
             productId: item.productId,
-            variantId: item.variantId,
             qty: item.qty,
             price: item.price,
             subtotal: item.subtotal,
             notes: item.notes || null,
+            options: {
+              create:
+                item.options?.map((option) => ({
+                  optionId: option.optionId,
+                  optionName: option.optionName,
+                  price: option.price,
+                })) || [],
+            },
           })),
         },
       },
@@ -376,11 +419,15 @@ export async function updateOrder(
     orderItems?: {
       id?: number;
       productId: number;
-      variantId?: number;
       qty: number;
       price: number;
       subtotal: number;
       notes?: string;
+      options?: {
+        optionId: number;
+        optionName: string;
+        price: number;
+      }[];
     }[];
   },
 ) {
@@ -426,12 +473,20 @@ export async function updateOrder(
           orderItems: {
             deleteMany: { orderId: id },
             create: orderItems.map((item) => ({
+              id: item.id,
               productId: item.productId,
-              variantId: item.variantId,
               qty: item.qty,
               price: item.price,
               subtotal: item.subtotal,
               notes: item.notes || null,
+              options: {
+                create:
+                  item.options?.map((option) => ({
+                    optionId: option.optionId,
+                    optionName: option.optionName,
+                    price: option.price,
+                  })) || [],
+              },
             })),
           },
         }),

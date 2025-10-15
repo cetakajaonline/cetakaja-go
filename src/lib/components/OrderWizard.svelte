@@ -5,7 +5,7 @@
   import { loginUser, registerPublicUser } from "$lib/services/userClient";
   import { getPublicSettings } from "$lib/services/settingClient";
   import SearchSelect from "$lib/components/ui/SearchSelect.svelte";
-  import type { User, Product, ProductVariant, OrderItem } from "$lib/types";
+  import type { User, Product, ProductVariant, ProductVariantOption, OrderItem, OrderItemOption } from "$lib/types";
   import { formatCurrency } from "$lib/utils/formatters";
 
   // Define our own public product functions
@@ -51,11 +51,11 @@
   // New item form
   let newItem = $state({
     productId: 0,
-    variantId: undefined as number | undefined,
     qty: 1,
     price: 0,
     subtotal: 0,
     notes: "",
+    selectedOptions: {} as Record<number, number> // variantId -> optionId mapping
   });
 
   // Product variants for selected product
@@ -251,65 +251,39 @@
       const product = products.find((p) => p.id === newItem.productId);
       if (product) {
         productVariants = product.variants || [];
-
-        // If there are no variants or only one variant, auto-select it
-        if (productVariants.length === 1) {
-          newItem.variantId = productVariants[0].id;
-        } else if (productVariants.length === 0) {
-          // If no variants, do not set a base product price since Product doesn't have a price property
-          // Products are expected to have variants with prices, not a direct price
-          newItem.price = 0;
-        }
+        
+        // Reset selected options when product changes
+        newItem.selectedOptions = {};
       } else {
         productVariants = [];
-        newItem.price = 0;
       }
     } else {
       productVariants = [];
-      newItem.variantId = undefined;
-      newItem.price = 0;
+      newItem.selectedOptions = {};
     }
   });
 
-  // Update price when variant changes
+  // Update price when options change
   $effect(() => {
-    if (newItem.variantId) {
-      const variant = productVariants.find((v) => v.id === newItem.variantId);
-      if (variant) {
-        newItem.price = variant.price;
-        newItem.subtotal = newItem.qty * variant.price;
-      }
-    } else if (newItem.productId) {
-      // If no variant selected but product is selected, check if variants exist
-      // If no variants exist for this product, use base price from product
-      const product = products.find((p) => p.id === newItem.productId);
-      if (product && productVariants.length === 0) {
-        // Products don't have a direct price property; they have variants
-        // If there are no variants, we cannot determine a price, so set to 0
-        newItem.price = 0;
-        newItem.subtotal = 0;
-      } else {
-        newItem.price = 0;
-        newItem.subtotal = 0;
+    // Recalculate price based on selected options
+    let totalPrice = 0;
+    for (const variant of productVariants) {
+      const selectedOptionId = newItem.selectedOptions[variant.id];
+      if (selectedOptionId) {
+        const option = variant.options ? variant.options.find((opt: ProductVariantOption) => opt.id === selectedOptionId) : undefined;
+        if (option) {
+          totalPrice += option.price;
+        }
       }
     }
+    newItem.price = totalPrice;
+    newItem.subtotal = newItem.qty * totalPrice;
   });
 
   // Update subtotal when qty changes
   $effect(() => {
     if (newItem.qty > 0 && newItem.price > 0) {
       newItem.subtotal = newItem.qty * newItem.price;
-    } else if (newItem.qty > 0 && newItem.price === 0 && newItem.productId) {
-      // If quantity is set but price is 0, try to get the product price
-      const product = products.find((p) => p.id === newItem.productId);
-      if (product && productVariants.length === 0) {
-        // Products don't have a direct price property; they have variants
-        // If there are no variants, we cannot determine a price
-        newItem.price = 0;
-        newItem.subtotal = 0;
-      } else {
-        newItem.subtotal = 0;
-      }
     } else {
       newItem.subtotal = 0;
     }
@@ -327,18 +301,69 @@
       return;
     }
 
-    // Validate if variant is required
+    // Validate if all required options are selected
     const product = products.find((p) => p.id === newItem.productId);
-    if (product && product.variants.length > 0 && !newItem.variantId) {
-      errorMessage = "Silakan pilih varian produk terlebih dahulu";
-      return;
+    if (product) {
+      const requiredVariants = product.variants ? product.variants.filter(v => v.options && v.options.length > 0) : [];
+      for (const variant of requiredVariants) {
+        if (!newItem.selectedOptions[variant.id]) {
+          errorMessage = `Silakan pilih opsi untuk ${variant.variantName} terlebih dahulu`;
+          return;
+        }
+      }
     }
 
-    // Check if the same product and variant already exists in the order
+    // Create order item options array
+    const orderItemOptions: OrderItemOption[] = [];
+    if (product) {
+      for (const [variantId, optionId] of Object.entries(newItem.selectedOptions)) {
+        const variantIdNum = Number(variantId);
+        const optionIdNum = Number(optionId);
+        
+        const variant = product.variants ? product.variants.find((v: ProductVariant) => v.id === variantIdNum) : undefined;
+        const option = variant?.options ? variant.options.find((opt: ProductVariantOption) => opt.id === optionIdNum) : undefined;
+        
+        if (variant && option) {
+          orderItemOptions.push({
+            id: Date.now() + Math.random(), // temporary ID
+            orderItemId: 0, // temporary, will be set by server
+            optionId: optionIdNum,
+            optionName: option.optionName,
+            price: option.price,
+            createdAt: new Date(),
+            option: {
+              id: option.id,
+              optionName: option.optionName,
+              price: option.price,
+              variant: {
+                id: variant.id,
+                variantName: variant.variantName,
+              }
+            }
+          });
+        }
+      }
+    }
+
+    // Check if the same product and options already exists in the order
     const existingItemIndex = orderData.orderItems.findIndex(
-      (item) =>
-        item.productId === newItem.productId &&
-        item.variantId === (newItem.variantId || null)
+      (item) => {
+        // Compare product ID
+        if (item.productId !== newItem.productId) return false;
+        
+        // Compare options
+        if (item.options.length !== orderItemOptions.length) return false;
+        
+        // Check if all options match
+        for (const newItemOpt of orderItemOptions) {
+          const matchingOption = item.options.some(
+            existingOpt => existingOpt.optionId === newItemOpt.optionId
+          );
+          if (!matchingOption) return false;
+        }
+        
+        return true;
+      }
     );
 
     if (existingItemIndex !== -1) {
@@ -366,7 +391,6 @@
       const orderItem: OrderItem = {
         id: Date.now(), // temporary ID
         productId: newItem.productId,
-        variantId: newItem.variantId || null,
         qty: newItem.qty,
         price: newItem.price,
         subtotal: newItem.subtotal,
@@ -375,9 +399,7 @@
           id: product!.id,
           name: product!.name,
         },
-        variant: newItem.variantId
-          ? product!.variants.find((v) => v.id === newItem.variantId) || null
-          : null,
+        options: orderItemOptions
       };
 
       orderData.orderItems = [...orderData.orderItems, orderItem];
@@ -386,11 +408,11 @@
     // Reset form
     newItem = {
       productId: 0,
-      variantId: undefined,
       qty: 1,
       price: 0,
       subtotal: 0,
       notes: "",
+      selectedOptions: {}
     };
 
     errorMessage = "";
@@ -447,12 +469,6 @@
         }
       }
 
-      // Create order with adjusted orderItems format (convert variantId from null to undefined)
-      const orderItemsForApi = orderData.orderItems.map((item) => ({
-        ...item,
-        variantId: item.variantId || undefined, // Convert null to undefined
-      }));
-
       // Use public order creation API by phone number - no authentication required
       const formData = new FormData();
       formData.append("phone", customer.phone); // Use customer's phone to identify them
@@ -463,7 +479,7 @@
       if (orderData.notes) {
         formData.append("notes", orderData.notes);
       }
-      formData.append("orderItems", JSON.stringify(orderItemsForApi));
+      formData.append("orderItems", JSON.stringify(orderData.orderItems));
 
       const res = await fetch("/api/public/orders", {
         method: "POST",
@@ -1058,27 +1074,26 @@
             </div>
 
             {#if newItem.productId}
-              <div class="form-control w-full mb-4">
-                <select
-                  id="newItemVariant"
-                  class="select select-bordered w-full border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200 bg-white text-black"
-                  bind:value={newItem.variantId}
-                  disabled={productVariants.length === 0}
-                >
-                  {#if productVariants.length > 0}
-                    <option value="">Pilih Varian</option>
-                    {#each productVariants as variant}
-                      <option value={variant.id}
-                        >{variant.variantName} - {formatCurrency(
-                          variant.price
-                        )}</option
-                      >
-                    {/each}
-                  {:else}
-                    <option value="">Tidak ada varian</option>
-                  {/if}
-                </select>
-              </div>
+              <!-- Dynamic option selectors based on product variants -->
+              {#if productVariants.length > 0}
+                {#each productVariants as variant, i}
+                  <div class="form-control w-full mb-4">
+                    <label class="label" for={"newItemOption-" + variant.id}>
+                      <span class="label-text text-gray-700">{variant.variantName}</span>
+                    </label>
+                    <select
+                      id={"newItemOption-" + variant.id}
+                      class="select select-bordered w-full border-gray-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-200 bg-white text-black"
+                      bind:value={newItem.selectedOptions[variant.id]}
+                    >
+                      <option value="">Pilih {variant.variantName}</option>
+                      {#each variant.options || [] as option}
+                        <option value={option.id}>{option.optionName} - {formatCurrency(option.price)}</option>
+                      {/each}
+                    </select>
+                  </div>
+                {/each}
+              {/if}
 
               <div class="form-control w-full mb-4">
                 <input
@@ -1109,13 +1124,13 @@
                 />
               </div>
 
-              {#if newItem.productId && ((productVariants.length > 0 && newItem.variantId) || productVariants.length === 0)}
+              {#if newItem.productId}
                 <div class="overflow-x-auto mb-4 block sm:table sm:overflow-x-visible">
                   <table class="table table-zebra w-full">
                     <thead class="hidden sm:table-header-group">
                       <tr class="bg-gray-100">
                         <th class="text-gray-900 font-semibold">Produk</th>
-                        <th class="text-gray-900 font-semibold">Varian</th>
+                        <th class="text-gray-900 font-semibold">Opsi</th>
                         <th class="text-gray-900 font-semibold">Link Desain</th>
                         <th class="text-gray-900 font-semibold">Jumlah</th>
                         <th class="text-gray-900 font-semibold">Harga</th>
@@ -1123,26 +1138,28 @@
                     </thead>
                     <tbody class="block sm:table-row-group">
                       <tr class="block sm:table-row hover:bg-gray-50 border-b sm:border-b-0">
-                        <td class="block sm:table-cell text-gray-800 sm:w-1/5"
-                          ><span class="font-semibold sm:hidden">Produk:</span> {products.find((p) => p.id === newItem.productId)
-                            ?.name}</td
-                        >
-                        <td class="block sm:table-cell text-gray-800 sm:w-1/5"
-                          ><span class="font-semibold sm:hidden">Varian:</span> {newItem.variantId
-                            ? productVariants.find(
-                                (v) => v.id === newItem.variantId
-                              )?.variantName || "-"
-                            : "-"}</td
-                        >
+                        <td class="block sm:table-cell text-gray-800 sm:w-1/5">
+                          <span class="font-semibold sm:hidden">Produk:</span> {products.find((p) => p.id === newItem.productId)
+                            ?.name}</td>
+                        <td class="block sm:table-cell text-gray-800 sm:w-1/5">
+                          <span class="font-semibold sm:hidden">Opsi:</span> 
+                          {#if Object.keys(newItem.selectedOptions).length > 0}
+                            {#each productVariants as variant}
+                              {#if newItem.selectedOptions[variant.id]}
+                                {variant.variantName}: {(variant.options || []).find(opt => opt.id === newItem.selectedOptions[variant.id])?.optionName || '-'}
+                              {/if}
+                            {/each}
+                          {:else}
+                            -
+                          {/if}
+                        </td>
                         <td class="block sm:table-cell text-gray-800 sm:w-1/5"
                           ><span class="font-semibold sm:hidden">Link Desain:</span> {newItem.notes || "-"}</td
                         >
-                        <td class="block sm:table-cell text-gray-800 sm:w-1/5"
-                          ><span class="font-semibold sm:hidden">Jumlah:</span> {newItem.qty}</td
-                        >
-                        <td class="block sm:table-cell text-gray-800 sm:w-1/5"
-                          ><span class="font-semibold sm:hidden">Harga:</span> {formatCurrency(newItem.price)}</td
-                        >
+                        <td class="block sm:table-cell text-gray-800 sm:w-1/5">
+                          <span class="font-semibold sm:hidden">Jumlah:</span> {newItem.qty}</td>
+                        <td class="block sm:table-cell text-gray-800 sm:w-1/5">
+                          <span class="font-semibold sm:hidden">Harga:</span> {formatCurrency(newItem.price)}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -1152,9 +1169,7 @@
               <button
                 class="btn btn-primary w-full bg-blue-700 hover:bg-blue-800 text-white font-medium py-3 rounded-lg shadow transition duration-200"
                 onclick={addItem}
-                disabled={!newItem.productId ||
-                  newItem.qty <= 0 ||
-                  (productVariants.length > 0 && !newItem.variantId)}
+                disabled={!newItem.productId || newItem.qty <= 0}
               >
                 Tambah ke Pesanan
               </button>
@@ -1178,7 +1193,7 @@
                   <thead class="hidden sm:table-header-group">
                     <tr class="bg-gray-100">
                       <th class="text-gray-900 font-semibold">Produk</th>
-                      <th class="text-gray-900 font-semibold">Varian</th>
+                      <th class="text-gray-900 font-semibold">Opsi</th>
                       <th class="text-gray-900 font-semibold">Link Desain</th>
                       <th class="text-gray-900 font-semibold">Jumlah</th>
                       <th class="text-gray-900 font-semibold">Harga</th>
@@ -1193,7 +1208,15 @@
                           ><span class="font-semibold sm:hidden">Produk:</span> {item.product.name}</td
                         >
                         <td class="block sm:table-cell text-gray-800 sm:w-1/7"
-                          ><span class="font-semibold sm:hidden">Varian:</span> {item.variant?.variantName || "-"}</td
+                          ><span class="font-semibold sm:hidden">Opsi:</span> 
+                          {#if item.options && item.options.length > 0}
+                            {#each item.options as option}
+                              <div>{option.option?.variant?.variantName}: {option.optionName}</div>
+                            {/each}
+                          {:else}
+                            -
+                          {/if}
+                        </td
                         >
                         <td class="block sm:table-cell text-gray-800 sm:w-1/7"
                           ><span class="font-semibold sm:hidden">Link Desain:</span> 

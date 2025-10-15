@@ -111,9 +111,9 @@ export async function exportDailyReportToExcel(
     const createOrderRow = (
       order: (typeof reportData.orders)[number],
     ): (string | number)[] => {
-      const dateStr: string = order.createdAt ? new Date(order.createdAt).toLocaleDateString(
-        "id-ID",
-      ) : "";
+      const dateStr: string = order.createdAt
+        ? new Date(order.createdAt).toLocaleDateString("id-ID")
+        : "";
       const orderNumberStr: string = order.orderNumber;
       const userNameStr: string = order.user.name;
       const statusStr: string = order.status;
@@ -143,9 +143,9 @@ export async function exportDailyReportToExcel(
     const createExpenseRow = (
       expense: (typeof reportData.expenses)[number],
     ): (string | number)[] => {
-      const dateStr: string = expense.date ? new Date(expense.date).toLocaleDateString(
-        "id-ID",
-      ) : "";
+      const dateStr: string = expense.date
+        ? new Date(expense.date).toLocaleDateString("id-ID")
+        : "";
       const categoryStr: string = capitalizeFirstLetter(expense.category);
       const descriptionStr: string = expense.description || "-";
       const nominalNum: number = expense.nominal;
@@ -282,9 +282,9 @@ export async function exportWeeklyReportToExcel(
     const createOrderRow = (
       order: (typeof reportData.orders)[number],
     ): (string | number)[] => {
-      const dateStr: string = order.createdAt ? new Date(order.createdAt).toLocaleDateString(
-        "id-ID",
-      ) : "";
+      const dateStr: string = order.createdAt
+        ? new Date(order.createdAt).toLocaleDateString("id-ID")
+        : "";
       const orderNumberStr: string = order.orderNumber;
       const userNameStr: string = order.user.name;
       const statusStr: string = order.status;
@@ -314,9 +314,9 @@ export async function exportWeeklyReportToExcel(
     const createExpenseRow = (
       expense: (typeof reportData.expenses)[number],
     ): (string | number)[] => {
-      const dateStr: string = expense.date ? new Date(expense.date).toLocaleDateString(
-        "id-ID",
-      ) : "";
+      const dateStr: string = expense.date
+        ? new Date(expense.date).toLocaleDateString("id-ID")
+        : "";
       const categoryStr: string = capitalizeFirstLetter(expense.category);
       const descriptionStr: string = expense.description || "-";
       const nominalNum: number = expense.nominal;
@@ -452,9 +452,9 @@ export async function exportMonthlyReportToExcel(
     const createOrderRow = (
       order: (typeof reportData.orders)[number],
     ): (string | number)[] => {
-      const dateStr: string = order.createdAt ? new Date(order.createdAt).toLocaleDateString(
-        "id-ID",
-      ) : "";
+      const dateStr: string = order.createdAt
+        ? new Date(order.createdAt).toLocaleDateString("id-ID")
+        : "";
       const orderNumberStr: string = order.orderNumber;
       const userNameStr: string = order.user.name;
       const statusStr: string = order.status;
@@ -484,9 +484,9 @@ export async function exportMonthlyReportToExcel(
     const createExpenseRow = (
       expense: (typeof reportData.expenses)[number],
     ): (string | number)[] => {
-      const dateStr: string = expense.date ? new Date(expense.date).toLocaleDateString(
-        "id-ID",
-      ) : "";
+      const dateStr: string = expense.date
+        ? new Date(expense.date).toLocaleDateString("id-ID")
+        : "";
       const categoryStr: string = capitalizeFirstLetter(expense.category);
       const descriptionStr: string = expense.description || "-";
       const nominalNum: number = expense.nominal;
@@ -607,9 +607,9 @@ export async function exportAnnualReportToExcel(
     const createOrderRow = (
       order: (typeof reportData.orders)[number],
     ): (string | number)[] => {
-      const dateStr: string = order.createdAt ? new Date(order.createdAt).toLocaleDateString(
-        "id-ID",
-      ) : "";
+      const dateStr: string = order.createdAt
+        ? new Date(order.createdAt).toLocaleDateString("id-ID")
+        : "";
       const orderNumberStr: string = order.orderNumber;
       const userNameStr: string = order.user.name;
       const statusStr: string = order.status;
@@ -639,9 +639,9 @@ export async function exportAnnualReportToExcel(
     const createExpenseRow = (
       expense: (typeof reportData.expenses)[number],
     ): (string | number)[] => {
-      const dateStr: string = expense.date ? new Date(expense.date).toLocaleDateString(
-        "id-ID",
-      ) : "";
+      const dateStr: string = expense.date
+        ? new Date(expense.date).toLocaleDateString("id-ID")
+        : "";
       const categoryStr: string = capitalizeFirstLetter(expense.category);
       const descriptionStr: string = expense.description || "-";
       const nominalNum: number = expense.nominal;
@@ -795,9 +795,9 @@ export async function exportCustomerReportToExcel(
     const createCustomerOrderRow = (
       order: (typeof reportData.customerOrders)[number],
     ): (string | number)[] => {
-      const dateStr: string = order.createdAt ? new Date(order.createdAt).toLocaleDateString(
-        "id-ID",
-      ) : "";
+      const dateStr: string = order.createdAt
+        ? new Date(order.createdAt).toLocaleDateString("id-ID")
+        : "";
       const orderNumberStr: string = order.orderNumber;
       const customerNameStr: string = order.customerName;
       const customerPhoneStr: string = order.customerPhone;
@@ -1001,22 +1001,20 @@ export async function exportRevenueReportToExcel(
   ];
 
   // Format dates for the summary row
-  const formattedStartDate = reportData.startDate ? new Date(reportData.startDate).toLocaleDateString(
-    "id-ID",
-    {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    },
-  ) : "";
-  const formattedEndDate = reportData.endDate ? new Date(reportData.endDate).toLocaleDateString(
-    "id-ID",
-    {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    },
-  ) : "";
+  const formattedStartDate = reportData.startDate
+    ? new Date(reportData.startDate).toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+    : "";
+  const formattedEndDate = reportData.endDate
+    ? new Date(reportData.endDate).toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+    : "";
 
   const summaryRow: (string | number)[] = [
     `${formattedStartDate} s.d. ${formattedEndDate}`,
@@ -1088,14 +1086,13 @@ export async function exportRevenueReportToExcel(
       const paymentMethodStr: string = order.paymentMethod;
       const totalAmountNum: number = order.totalAmount;
       const cashierNameStr: string = order.user.name;
-      const dateStr: string = order.createdAt ? new Date(order.createdAt).toLocaleDateString(
-        "id-ID",
-        {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        },
-      ) : "";
+      const dateStr: string = order.createdAt
+        ? new Date(order.createdAt).toLocaleDateString("id-ID", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          })
+        : "";
 
       return [
         indexNum,
@@ -1145,22 +1142,20 @@ export async function exportExpenseReportToExcel(
   ];
 
   // Format dates for the summary row
-  const formattedStartDate = reportData.startDate ? new Date(reportData.startDate).toLocaleDateString(
-    "id-ID",
-    {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    },
-  ) : "";
-  const formattedEndDate = reportData.endDate ? new Date(reportData.endDate).toLocaleDateString(
-    "id-ID",
-    {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    },
-  ) : "";
+  const formattedStartDate = reportData.startDate
+    ? new Date(reportData.startDate).toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+    : "";
+  const formattedEndDate = reportData.endDate
+    ? new Date(reportData.endDate).toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+    : "";
 
   const summaryRow: (string | number)[] = [
     `${formattedStartDate} s.d. ${formattedEndDate}`,
@@ -1215,14 +1210,13 @@ export async function exportExpenseReportToExcel(
               : "Lainnya";
       const nominalNum: number = expense.nominal;
       const descriptionStr: string = expense.description || "-";
-      const dateStr: string = expense.date ? new Date(expense.date).toLocaleDateString(
-        "id-ID",
-        {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        },
-      ) : "";
+      const dateStr: string = expense.date
+        ? new Date(expense.date).toLocaleDateString("id-ID", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          })
+        : "";
 
       return [indexNum, categoryStr, nominalNum, descriptionStr, dateStr];
     };
@@ -1269,22 +1263,20 @@ export async function exportMarginReportToExcel(
   ];
 
   // Format dates for the summary row
-  const formattedStartDate = reportData.startDate ? new Date(reportData.startDate).toLocaleDateString(
-    "id-ID",
-    {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    },
-  ) : "";
-  const formattedEndDate = reportData.endDate ? new Date(reportData.endDate).toLocaleDateString(
-    "id-ID",
-    {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    },
-  ) : "";
+  const formattedStartDate = reportData.startDate
+    ? new Date(reportData.startDate).toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+    : "";
+  const formattedEndDate = reportData.endDate
+    ? new Date(reportData.endDate).toLocaleDateString("id-ID", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+    : "";
 
   const summaryRow: (string | number)[] = [
     `${formattedStartDate} s.d. ${formattedEndDate}`,
@@ -1364,14 +1356,13 @@ export async function exportMarginReportToExcel(
       const costNum: number = order.cost;
       const profitNum: number = order.profit;
       const marginNum: number = order.margin;
-      const dateStr: string = order.createdAt ? new Date(order.createdAt).toLocaleDateString(
-        "id-ID",
-        {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        },
-      ) : "";
+      const dateStr: string = order.createdAt
+        ? new Date(order.createdAt).toLocaleDateString("id-ID", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          })
+        : "";
 
       return [
         indexNum,

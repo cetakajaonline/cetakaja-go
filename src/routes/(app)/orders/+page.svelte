@@ -82,10 +82,23 @@
     paymentProofFile: undefined as File | undefined,
     orderItems: [] as {
       productId: number;
-      variantId?: number;
       qty: number;
       price: number;
       subtotal: number;
+      options?: {
+        optionId: number;
+        optionName: string;
+        price: number;
+        option: {
+          id: number;
+          optionName: string;
+          price: number;
+          variant: {
+            id: number;
+            variantName: string;
+          }
+        } | null;
+      }[];
     }[],
   };
 
@@ -145,10 +158,10 @@
       paymentProofFile: undefined,
       orderItems: order.orderItems.map(item => ({
         productId: item.productId,
-        variantId: item.variantId || undefined,
         qty: item.qty,
         price: item.price,
         subtotal: item.subtotal,
+        options: item.options || [],
       })),
     };
     showOrderModal = true;

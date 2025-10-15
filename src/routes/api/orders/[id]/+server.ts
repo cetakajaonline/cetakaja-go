@@ -42,6 +42,17 @@ export async function PUT(event: RequestEvent) {
         ...(data.createdById !== undefined && {
           createdById: data.createdById,
         }),
+        // Transform orderItems to include options instead of variantId
+        ...(data.orderItems && {
+          orderItems: data.orderItems.map((item) => ({
+            productId: item.productId,
+            qty: item.qty,
+            price: item.price,
+            subtotal: item.subtotal,
+            notes: item.notes,
+            options: item.options || [],
+          })),
+        }),
       });
       return json(updated);
     } else if (user.role === "customer") {

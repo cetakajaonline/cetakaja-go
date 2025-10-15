@@ -18,13 +18,32 @@ export const orderSchema = z.object({
     .array(
       z.object({
         productId: z.number().min(1, "Produk wajib dipilih"),
-        variantId: z.number().optional(),
         qty: z.number().min(1, "Jumlah minimal 1"),
         price: z.number().min(0, "Harga harus lebih dari atau sama dengan 0"),
         subtotal: z
           .number()
           .min(0, "Subtotal harus lebih dari atau sama dengan 0"),
         notes: z.string().max(500, "Catatan maksimal 500 karakter").optional(),
+        options: z
+          .array(
+            z.object({
+              optionId: z.number(),
+              optionName: z.string(),
+              price: z.number(),
+              option: z
+                .object({
+                  id: z.number(),
+                  optionName: z.string(),
+                  price: z.number(),
+                  variant: z.object({
+                    id: z.number(),
+                    variantName: z.string(),
+                  }),
+                })
+                .nullable(),
+            }),
+          )
+          .optional(),
       }),
     )
     .optional(),

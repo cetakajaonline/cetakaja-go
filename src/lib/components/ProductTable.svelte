@@ -47,13 +47,15 @@
             </div>
             
             <div class="flex">
-              <div class="w-2/5 font-semibold">Varian & Harga:</div>
+              <div class="w-2/5 font-semibold">Opsi & Harga:</div>
               <div class="w-3/5 text-right">
                 {#each product.variants as variant}
-                  <div class="text-sm">
-                    <span class="font-medium">{variant.variantName}:</span>
-                    <span class="ml-1 text-success font-medium">{formatCurrency(variant.price)}</span>
-                  </div>
+                  {#each variant.options as option}
+                    <div class="text-sm">
+                      <span class="font-medium">{variant.variantName} - {option.optionName}:</span>
+                      <span class="ml-1 text-success font-medium">{formatCurrency(option.price)}</span>
+                    </div>
+                  {/each}
                 {/each}
               </div>
             </div>
@@ -135,7 +137,7 @@
             </div>
           </th>
 
-          <th>Varian & Harga</th>
+          <th>Opsi & Harga</th>
 
           <th class="cursor-pointer" onclick={() => onSort("createdAt")}>
             <div class="flex items-center gap-1">
@@ -180,10 +182,12 @@
 
             <td>
               {#each product.variants as variant}
-                <div class="text-sm">
-                  <span class="font-medium">{variant.variantName}:</span>
-                  <span class="ml-1 text-success font-medium">{formatCurrency(variant.price)}</span>
-                </div>
+                {#each variant.options as option}
+                  <div class="text-sm">
+                    <span class="font-medium">{variant.variantName} - {option.optionName}:</span>
+                    <span class="ml-1 text-success font-medium">{formatCurrency(option.price)}</span>
+                  </div>
+                {/each}
               {/each}
             </td>
 

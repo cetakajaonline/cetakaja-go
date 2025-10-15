@@ -1,20 +1,23 @@
 // prisma/seed.ts
-import { fakerID_ID as faker } from "@faker-js/faker";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, type ProductVariantOption } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 Seeding database for printing order management system...");
+  console.log(
+    "🌱 Seeding database for printing order management system with new schema...",
+  );
 
-  // Clear old data
+  // Clear old data including new tables
   await prisma.notification.deleteMany();
   await prisma.paymentProof.deleteMany();
   await prisma.payment.deleteMany();
+  await prisma.orderItemOption.deleteMany();
+  await prisma.productVariantOption.deleteMany();
+  await prisma.productVariant.deleteMany();
   await prisma.orderItem.deleteMany();
   await prisma.order.deleteMany();
-  await prisma.productVariant.deleteMany();
   await prisma.product.deleteMany();
   await prisma.category.deleteMany();
   await prisma.user.deleteMany();
@@ -45,10 +48,10 @@ async function main() {
     data: {
       name: "Administrator",
       username: "admin",
-      phone: `08${Math.floor(100000000 + Math.random() * 900000000)}`, // Generates 08 followed by 9 digits
+      phone: "081234567890",
       password: adminPassword,
       role: "admin",
-      address: faker.location.streetAddress(),
+      address: "Jakarta, Indonesia",
     },
   });
 
@@ -56,25 +59,25 @@ async function main() {
     data: {
       name: "Staff Operasional",
       username: "staff",
-      phone: `08${Math.floor(100000000 + Math.random() * 900000000)}`, // Generates 08 followed by 9 digits
+      phone: "081234567891",
       password: staffPassword,
       role: "staff",
-      address: faker.location.streetAddress(),
+      address: "Bandung, Indonesia",
     },
   });
 
-  // Create customers using faker
+  // Create customers
   const customers = [];
-  for (let i = 0; i < 30; i++) {
+  for (let i = 0; i < 10; i++) {
     customers.push(
       await prisma.user.create({
         data: {
-          name: faker.person.fullName(),
-          username: `${faker.person.firstName().toLowerCase()}_${i}`,
-          phone: `08${Math.floor(100000000 + Math.random() * 900000000)}`, // Generates 08 followed by 9 digits
+          name: `Customer ${i + 1}`,
+          username: `customer${i + 1}`,
+          phone: `08123456789${i + 2}`,
           password: customerPassword,
           role: "customer",
-          address: faker.location.streetAddress(),
+          address: `Bandung, Indonesia`,
         },
       }),
     );
@@ -84,165 +87,194 @@ async function main() {
     `✅ Created ${customers.length + 2} users (1 admin, 1 staff, ${customers.length} customers)`,
   );
 
-  // Create categories for printing products
-  const categories = [
-    {
-      name: "Desain Grafis",
-      code: "DSN",
-      description: "Berbagai layanan desain grafis untuk kebutuhan bisnis",
+  // Create categories
+  const printCategory = await prisma.category.create({
+    data: {
+      name: "Print",
+      code: "PRINT",
+      description: "Print products",
     },
-    {
-      name: "Cetak Offset",
-      code: "CTK",
-      description: "Cetak produksi massal dengan kualitas tinggi",
-    },
-    {
-      name: "Cetak Digital",
-      code: "DIG",
-      description: "Cetak digital dengan berbagai jenis kertas",
-    },
-    {
-      name: "Cetak Large Format",
-      code: "LFG",
-      description: "Print besar seperti banner, x-banner, dll",
-    },
-    {
-      name: "Binding & Finishing",
-      code: "BND",
-      description: "Layanan penjilidan dan finishing",
-    },
-  ];
+  });
 
-  const createdCategories = [];
-  for (const category of categories) {
-    createdCategories.push(
-      await prisma.category.create({
-        data: category,
-      }),
-    );
-  }
-
-  console.log(`✅ Created ${createdCategories.length} categories`);
-
-  // Create printing products with variants
-  const printingProducts = [
-    {
-      name: "Kartu Nama",
-      baseCode: "KTN",
-      description: "Kartu nama premium dengan berbagai finishing",
-      categoryId: createdCategories.find((c) => c.name === "Cetak Offset")!.id,
-      photo: "/uploads/products/logo.png",
-    },
-    {
-      name: "Flyer",
-      baseCode: "FLY",
-      description: "Flyer promosi dengan berbagai ukuran dan finishing",
-      categoryId: createdCategories.find((c) => c.name === "Cetak Offset")!.id,
-      photo: "/uploads/products/logo.png",
-    },
-    {
-      name: "Brosur",
-      baseCode: "BRS",
-      description: "Brosur dengan berbagai jumlah halaman",
-      categoryId: createdCategories.find((c) => c.name === "Cetak Offset")!.id,
-      photo: "/uploads/products/logo.png",
-    },
-    {
-      name: "Katalog Produk",
-      baseCode: "KTG",
-      description: "Katalog produk dengan kualitas cetak tinggi",
-      categoryId: createdCategories.find((c) => c.name === "Cetak Offset")!.id,
-      photo: "/uploads/products/logo.png",
-    },
-    {
-      name: "Spanduk",
-      baseCode: "SPD",
-      description: "Spanduk untuk promosi outdoor dan indoor",
-      categoryId: createdCategories.find(
-        (c) => c.name === "Cetak Large Format",
-      )!.id,
-      photo: "/uploads/products/logo.png",
-    },
-    {
+  const bannerCategory = await prisma.category.create({
+    data: {
       name: "Banner",
-      baseCode: "BNR",
-      description: "Banner untuk berbagai keperluan promosi",
-      categoryId: createdCategories.find(
-        (c) => c.name === "Cetak Large Format",
-      )!.id,
-      photo: "/uploads/products/logo.png",
+      code: "BANNER",
+      description: "Banner products",
     },
-    {
-      name: "X-Banner",
-      baseCode: "XBN",
-      description: "X-banner portable untuk pameran dan promosi",
-      categoryId: createdCategories.find(
-        (c) => c.name === "Cetak Large Format",
-      )!.id,
+  });
+
+  // Create the Print Art Carton A3+ product
+  const printArtCartonA3Plus = await prisma.product.create({
+    data: {
+      name: "Print Art Carton A3+",
+      description: "Print Art Carton with high quality finish",
+      baseCode: "ARTCARTA3P",
       photo: "/uploads/products/logo.png",
+      categoryId: printCategory.id,
     },
-    {
-      name: "Stiker",
-      baseCode: "STK",
-      description: "Stiker berbagai ukuran dan finishing",
-      categoryId: createdCategories.find((c) => c.name === "Cetak Digital")!.id,
+  });
+
+  // Create variant types for Print Art Carton A3+
+  const bahanVariant = await prisma.productVariant.create({
+    data: {
+      productId: printArtCartonA3Plus.id,
+      variantName: "Bahan",
+    },
+  });
+
+  const cetakVariant = await prisma.productVariant.create({
+    data: {
+      productId: printArtCartonA3Plus.id,
+      variantName: "Cetak",
+    },
+  });
+
+  const laminasiVariant = await prisma.productVariant.create({
+    data: {
+      productId: printArtCartonA3Plus.id,
+      variantName: "Laminasi",
+    },
+  });
+
+  // Create options for "Bahan" variant type
+  await prisma.productVariantOption.create({
+    data: {
+      variantId: bahanVariant.id,
+      optionName: "210",
+      price: 3000,
+    },
+  });
+
+  await prisma.productVariantOption.create({
+    data: {
+      variantId: bahanVariant.id,
+      optionName: "230",
+      price: 3500,
+    },
+  });
+
+  await prisma.productVariantOption.create({
+    data: {
+      variantId: bahanVariant.id,
+      optionName: "260",
+      price: 4000,
+    },
+  });
+
+  // Create options for "Cetak" variant type
+  await prisma.productVariantOption.create({
+    data: {
+      variantId: cetakVariant.id,
+      optionName: "1 Sisi",
+      price: 0, // Free
+    },
+  });
+
+  await prisma.productVariantOption.create({
+    data: {
+      variantId: cetakVariant.id,
+      optionName: "2 Sisi",
+      price: 1000, // Additional cost
+    },
+  });
+
+  // Create options for "Laminasi" variant type
+  await prisma.productVariantOption.create({
+    data: {
+      variantId: laminasiVariant.id,
+      optionName: "Tanpa Laminasi",
+      price: 0, // Free
+    },
+  });
+
+  await prisma.productVariantOption.create({
+    data: {
+      variantId: laminasiVariant.id,
+      optionName: "Doff",
+      price: 1000,
+    },
+  });
+
+  await prisma.productVariantOption.create({
+    data: {
+      variantId: laminasiVariant.id,
+      optionName: "Glossy",
+      price: 1500,
+    },
+  });
+
+  // Create another example product: Spanduk
+  const spandukProduct = await prisma.product.create({
+    data: {
+      name: "Spanduk",
+      description: "Spanduk with high quality print",
+      baseCode: "SPANDUK",
       photo: "/uploads/products/logo.png",
+      categoryId: bannerCategory.id,
     },
-    {
-      name: "Kalender",
-      baseCode: "KLM",
-      description: "Kalender meja dan dinding untuk tahun baru",
-      categoryId: createdCategories.find((c) => c.name === "Cetak Offset")!.id,
-      photo: "/uploads/products/logo.png",
+  });
+
+  // Create variant types for Spanduk
+  const ukuranVariant = await prisma.productVariant.create({
+    data: {
+      productId: spandukProduct.id,
+      variantName: "Ukuran",
     },
-    {
-      name: "Buku",
-      baseCode: "BKK",
-      description: "Jasa cetak dan penjilidan buku",
-      categoryId: createdCategories.find(
-        (c) => c.name === "Binding & Finishing",
-      )!.id,
-      photo: "/uploads/products/logo.png",
+  });
+
+  const finishingVariant = await prisma.productVariant.create({
+    data: {
+      productId: spandukProduct.id,
+      variantName: "Finishing",
     },
-  ];
+  });
 
-  const createdProducts = [];
-  for (const product of printingProducts) {
-    const variants = [
-      {
-        variantName: "A4",
-        price: 50000,
-      },
-      {
-        variantName: "A3",
-        price: 75000,
-      },
-      {
-        variantName: "A2",
-        price: 120000,
-      },
-      {
-        variantName: "Custom",
-        price: 150000,
-      },
-    ];
+  // Create options for "Ukuran" variant type
+  await prisma.productVariantOption.create({
+    data: {
+      variantId: ukuranVariant.id,
+      optionName: "3x1 m",
+      price: 85000,
+    },
+  });
 
-    const createdProduct = await prisma.product.create({
-      data: {
-        ...product,
-        variants: {
-          create: variants,
-        },
-      },
-      include: { variants: true },
-    });
+  await prisma.productVariantOption.create({
+    data: {
+      variantId: ukuranVariant.id,
+      optionName: "4x1 m",
+      price: 100000,
+    },
+  });
 
-    createdProducts.push(createdProduct);
-  }
+  await prisma.productVariantOption.create({
+    data: {
+      variantId: ukuranVariant.id,
+      optionName: "5x1 m",
+      price: 120000,
+    },
+  });
 
-  console.log(`✅ Created ${createdProducts.length} products with variants`);
+  // Create options for "Finishing" variant type
+  await prisma.productVariantOption.create({
+    data: {
+      variantId: finishingVariant.id,
+      optionName: "Tanpa Gromet",
+      price: 0,
+    },
+  });
 
-  // Create sample orders with all status combinations
+  await prisma.productVariantOption.create({
+    data: {
+      variantId: finishingVariant.id,
+      optionName: "Gromet + Tali",
+      price: 15000,
+    },
+  });
+
+  console.log(`✅ Created products with variant types and options`);
+
+  // Create sample orders
   const orderStatuses: Array<
     "pending" | "processing" | "finished" | "canceled"
   > = ["pending", "processing", "finished", "canceled"];
@@ -259,22 +291,66 @@ async function main() {
 
   const shippingMethods: Array<"pickup" | "delivery"> = ["pickup", "delivery"];
 
-  for (let i = 0; i < 50; i++) {
-    const customer = faker.helpers.arrayElement(customers);
-    const product = faker.helpers.arrayElement(createdProducts);
-    const variant: { id: number; variantName: string; price: number } =
-      faker.helpers.arrayElement(product.variants);
+  for (let i = 0; i < 10; i++) {
+    const customer = customers[i % customers.length];
+    const product = i % 2 === 0 ? printArtCartonA3Plus : spandukProduct;
 
     // Create order item
-    const qty = faker.number.int({ min: 1, max: 10 });
-    const price = variant.price;
+    const qty = Math.floor(Math.random() * 5) + 1; // 1-5 items
+
+    // Calculate total price by selecting random options for each variant type
+    // For Print Art Carton A3+ (product with id matching printArtCartonA3Plus.id)
+    let bahanOptions: ProductVariantOption[] = [];
+    let cetakOptions: ProductVariantOption[] = [];
+    let laminasiOptions: ProductVariantOption[] = [];
+
+    if (product.id === printArtCartonA3Plus.id) {
+      bahanOptions = await prisma.productVariantOption.findMany({
+        where: { variantId: bahanVariant.id },
+      });
+      cetakOptions = await prisma.productVariantOption.findMany({
+        where: { variantId: cetakVariant.id },
+      });
+      laminasiOptions = await prisma.productVariantOption.findMany({
+        where: { variantId: laminasiVariant.id },
+      });
+    }
+    // For Spanduk (product with id matching spandukProduct.id)
+    else {
+      bahanOptions = await prisma.productVariantOption.findMany({
+        where: { variantId: ukuranVariant.id },
+      });
+      cetakOptions = await prisma.productVariantOption.findMany({
+        where: { variantId: finishingVariant.id },
+      });
+    }
+
+    const selectedBahanOption =
+      bahanOptions[Math.floor(Math.random() * bahanOptions.length)];
+    const selectedCetakOption =
+      cetakOptions[Math.floor(Math.random() * cetakOptions.length)];
+    let selectedLaminasiOption = null;
+    if (laminasiOptions.length > 0) {
+      selectedLaminasiOption =
+        laminasiOptions[Math.floor(Math.random() * laminasiOptions.length)];
+    }
+
+    const totalOptionPrice =
+      selectedBahanOption.price +
+      selectedCetakOption.price +
+      (selectedLaminasiOption ? selectedLaminasiOption.price : 0);
+    const price = totalOptionPrice;
     const subtotal = price * qty;
 
     // Generate random order data
-    const orderStatus = faker.helpers.arrayElement(orderStatuses);
-    const paymentMethod = faker.helpers.arrayElement(paymentMethods);
-    const paymentStatus = faker.helpers.arrayElement(paymentStatuses);
-    const shippingMethod = faker.helpers.arrayElement(shippingMethods);
+    const orderStatus =
+      orderStatuses[Math.floor(Math.random() * orderStatuses.length)];
+    const paymentMethod =
+      paymentMethods[Math.floor(Math.random() * paymentMethods.length)];
+    const paymentStatus =
+      paymentStatuses[Math.floor(Math.random() * paymentStatuses.length)];
+    const shippingMethod =
+      shippingMethods[Math.floor(Math.random() * shippingMethods.length)];
 
     // Randomly assign order creation between admin and staff for variety
     const createdByUser = i % 2 === 0 ? staff : admin;
@@ -286,10 +362,7 @@ async function main() {
     const totalAmount = subtotal;
 
     // Determine paidAt based on payment status
-    const paidAt =
-      paymentStatus === "confirmed"
-        ? new Date(faker.date.recent({ days: 30 }))
-        : null;
+    const paidAt = paymentStatus === "confirmed" ? new Date() : null;
 
     const order = await prisma.order.create({
       data: {
@@ -301,15 +374,37 @@ async function main() {
         paymentMethod,
         paymentStatus,
         totalAmount,
-        notes: faker.lorem.sentence(),
+        notes: `Order for ${customer.name}`,
         orderItems: {
           create: [
             {
               productId: product.id,
-              variantId: variant.id,
               qty,
               price,
               subtotal,
+              options: {
+                create: [
+                  {
+                    optionId: selectedBahanOption.id,
+                    optionName: selectedBahanOption.optionName,
+                    price: selectedBahanOption.price,
+                  },
+                  {
+                    optionId: selectedCetakOption.id,
+                    optionName: selectedCetakOption.optionName,
+                    price: selectedCetakOption.price,
+                  },
+                  ...(selectedLaminasiOption
+                    ? [
+                        {
+                          optionId: selectedLaminasiOption.id,
+                          optionName: selectedLaminasiOption.optionName,
+                          price: selectedLaminasiOption.price,
+                        },
+                      ]
+                    : []),
+                ],
+              },
             },
           ],
         },
@@ -327,13 +422,6 @@ async function main() {
         status: paymentStatus,
         transactionRef: `TXN-${String(i + 1).padStart(6, "0")}`,
         paidAt,
-        proofs: {
-          create: {
-            fileName: "payment_proof.jpg",
-            filePath: "/uploads/payments/logo.png",
-            fileType: "image/png",
-          },
-        },
       },
     });
 
@@ -354,20 +442,23 @@ async function main() {
     "operasional" | "marketing" | "gaji" | "lainnya"
   > = ["operasional", "marketing", "gaji", "lainnya"];
 
-  for (let i = 0; i < 20; i++) {
+  for (let i = 0; i < 10; i++) {
     await prisma.expense.create({
       data: {
-        nominal: faker.number.int({ min: 50000, max: 5000000 }),
-        category: faker.helpers.arrayElement(expenseCategories),
-        date: new Date(faker.date.recent({ days: 60 })),
-        description: faker.lorem.sentence(),
+        nominal: Math.floor(Math.random() * 4950000) + 50000, // 50,000 - 5,000,000
+        category:
+          expenseCategories[
+            Math.floor(Math.random() * expenseCategories.length)
+          ],
+        date: new Date(),
+        description: `Expense #${i + 1}`,
         proofFile: "/uploads/expenses/logo.png", // Use existing logo.png file in expenses directory
       },
     });
   }
 
-  console.log("✅ Created 50 sample orders with all statuses");
-  console.log("✅ Created 20 sample expenses with proof files");
+  console.log("✅ Created sample orders with all statuses");
+  console.log("✅ Created sample expenses with proof files");
   console.log("✅ Seeding completed successfully!");
 }
 

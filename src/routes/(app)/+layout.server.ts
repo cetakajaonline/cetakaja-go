@@ -70,7 +70,6 @@ export const load: LayoutServerLoad = async ({ locals }) => {
         orderItems: {
           include: {
             product: { select: { id: true, name: true } },
-            variant: { select: { id: true, variantName: true } },
           },
         },
         payments: {

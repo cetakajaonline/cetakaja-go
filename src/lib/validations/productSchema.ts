@@ -1,9 +1,16 @@
 import { z } from "zod";
 
+export const productVariantOptionSchema = z.object({
+  id: z.number().optional(),
+  optionName: z.string().min(1, "Nama opsi wajib diisi"),
+  price: z.number().min(0, "Harga harus lebih besar atau sama dengan 0"),
+  delete: z.boolean().optional(),
+});
+
 export const productVariantSchema = z.object({
   id: z.number().optional(),
   variantName: z.string().min(1, "Nama varian wajib diisi"),
-  price: z.number().min(1, "Harga harus lebih besar dari 0"),
+  options: z.array(productVariantOptionSchema).optional(),
   delete: z.boolean().optional(),
 });
 
@@ -56,3 +63,6 @@ export const productUpdateSchema = z.object({
 export type ProductFormSchema = z.infer<typeof productSchema>;
 export type ProductUpdateSchema = z.infer<typeof productUpdateSchema>;
 export type ProductVariantFormSchema = z.infer<typeof productVariantSchema>;
+export type ProductVariantOptionFormSchema = z.infer<
+  typeof productVariantOptionSchema
+>;
