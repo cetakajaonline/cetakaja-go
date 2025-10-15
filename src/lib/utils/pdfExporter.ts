@@ -6,6 +6,9 @@ import type {
   AnnualReportData,
   CustomerReportData,
   ProductReportData,
+  RevenueReportData,
+  ExpenseReportData,
+  MarginReportData,
 } from "$lib/types";
 
 import { formatCurrency, capitalizeFirstLetter } from "./formatters";
@@ -44,7 +47,6 @@ export async function exportDailyReportToPDF(
 
     // Add summary information section with better layout
     doc.setFontSize(12);
-    const summaryStartX = 20;
     const summaryY = 35; // Starting Y position for summary section
 
     // Add a header for Ringkasan Laporan
@@ -477,7 +479,6 @@ export async function exportWeeklyReportToPDF(
 
     // Add summary information section with better layout
     doc.setFontSize(12);
-    const summaryStartX = 20;
     const summaryY = 35; // Starting Y position for summary section
 
     // Add a header for Ringkasan Laporan
@@ -912,7 +913,6 @@ export async function exportMonthlyReportToPDF(
 
     // Add summary information section with better layout
     doc.setFontSize(12);
-    const summaryStartX = 20;
     const summaryY = 35; // Starting Y position for summary section
 
     // Add a header for Ringkasan Laporan
@@ -1288,7 +1288,6 @@ export async function exportAnnualReportToPDF(
 
     // Add summary information section with better layout
     doc.setFontSize(12);
-    const summaryStartX = 20;
     const summaryY = 35; // Starting Y position for summary section
 
     // Add a header for Ringkasan Laporan
@@ -1719,7 +1718,6 @@ export async function exportCustomerReportToPDF(
 
     // Add summary information section with better layout
     doc.setFontSize(12);
-    const summaryStartX = 20;
     const summaryY = 35; // Starting Y position for summary section
 
     // Add a header for Ringkasan Laporan
@@ -2063,7 +2061,6 @@ export async function exportProductReportToPDF(
 
     // Add summary information section with better layout
     doc.setFontSize(12);
-    const summaryStartX = 20;
     const summaryY = 35; // Starting Y position for summary section
 
     // Add a header for Ringkasan Laporan
@@ -2425,7 +2422,7 @@ export async function exportRevenueReportToPDF(
     // Table for top revenue products
     autoTable(doc, {
       head: [["#", "Nama Produk", "Terjual", "Total Pendapatan"]],
-      body: reportData.topRevenueProducts.map((item, index) => [
+      body: reportData.topRevenueProducts.map((item: { name: string; totalSold: number; totalRevenue: number }, index: number) => [
         index + 1,
         item.name,
         item.totalSold,
@@ -2482,10 +2479,10 @@ export async function exportRevenueReportToPDF(
         summaryY + 42 + 20;
       
       // Calculate total revenue from orders
-      const totalOrdersRevenue = reportData.orders.reduce((sum, order) => sum + order.totalAmount, 0);
+      const totalOrdersRevenue = reportData.orders.reduce((sum: number, order: { totalAmount: number }) => sum + order.totalAmount, 0);
       
       // Prepare data for the orders table
-      const ordersData: string[][] = reportData.orders.map((order, index) => [
+      const ordersData: string[][] = reportData.orders.map((order: { orderNumber: string; user: { name: string }; status: string; paymentMethod: string; totalAmount: number; createdAt: Date }, index: number) => [
         index + 1,
         new Date(order.createdAt).toLocaleDateString("id-ID", {
           day: "2-digit",
@@ -2724,10 +2721,10 @@ export async function exportExpenseReportToPDF(
       const expensesStartY = (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 20 : categoriesStartY + 5 + 30;
       
       // Calculate total expenses
-      const totalExpenses = reportData.expenses.reduce((sum, expense) => sum + expense.nominal, 0);
+      const totalExpenses = reportData.expenses.reduce((sum: number, expense: { nominal: number }) => sum + expense.nominal, 0);
       
       // Prepare data for the expenses table with Nominal moved to the end
-      const expensesData: string[][] = reportData.expenses.map((expense, index) => [
+      const expensesData: string[][] = reportData.expenses.map((expense: { date: Date; category: string; description: string; nominal: number }, index: number) => [
         index + 1,
         new Date(expense.date).toLocaleDateString("id-ID", {
           day: "2-digit",
@@ -2916,15 +2913,15 @@ export async function exportMarginReportToPDF(
       doc.setTextColor(0, 0, 0); // Reset text color
 
       // Calculate totals for product margins
-      const totalCost = reportData.productMargins.reduce((sum, product) => sum + product.cost, 0);
-      const totalRevenue = reportData.productMargins.reduce((sum, product) => sum + product.revenue, 0);
-      const totalProfit = reportData.productMargins.reduce((sum, product) => sum + product.profit, 0);
+      const totalCost = reportData.productMargins.reduce((sum: number, product: { cost: number }) => sum + product.cost, 0);
+      const totalRevenue = reportData.productMargins.reduce((sum: number, product: { revenue: number }) => sum + product.revenue, 0);
+      const totalProfit = reportData.productMargins.reduce((sum: number, product: { profit: number }) => sum + product.profit, 0);
       
       // Table for product margins
       autoTable(doc, {
         head: [["#", "Nama Produk", "Biaya", "Pendapatan", "Laba", "Margin"]],
         body: [
-          ...reportData.productMargins.map((product, index) => [
+          ...reportData.productMargins.map((product: { name: string; cost: number; revenue: number; profit: number; margin: number }, index: number) => [
             index + 1,
             product.name,
             formatCurrency(product.cost),
@@ -2996,9 +2993,9 @@ export async function exportMarginReportToPDF(
         summaryY + 65 + 20;
       
       // Calculate totals for orders
-      const totalOrderAmount = reportData.orders.reduce((sum, order) => sum + order.totalAmount, 0);
-      const totalOrderCost = reportData.orders.reduce((sum, order) => sum + order.cost, 0);
-      const totalOrderProfit = reportData.orders.reduce((sum, order) => sum + order.profit, 0);
+      const totalOrderAmount = reportData.orders.reduce((sum: number, order: { totalAmount: number }) => sum + order.totalAmount, 0);
+      const totalOrderCost = reportData.orders.reduce((sum: number, order: { cost: number }) => sum + order.cost, 0);
+      const totalOrderProfit = reportData.orders.reduce((sum: number, order: { profit: number }) => sum + order.profit, 0);
       
       // Table for orders
       autoTable(doc, {
@@ -3006,7 +3003,7 @@ export async function exportMarginReportToPDF(
           ["#", "Tanggal", "No. Order", "Total", "Biaya", "Laba", "Margin"],
         ],
         body: [
-          ...reportData.orders.map((order, index) => [
+          ...reportData.orders.map((order: { createdAt: Date; orderNumber: string; totalAmount: number; cost: number; profit: number; margin: number }, index: number) => [
             index + 1,
             new Date(order.createdAt).toLocaleDateString("id-ID", {
               day: "2-digit",
