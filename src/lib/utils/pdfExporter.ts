@@ -8,7 +8,7 @@ import type {
   ProductReportData,
 } from "$lib/types";
 
-import { formatCurrency } from "./formatters";
+import { formatCurrency, capitalizeFirstLetter } from "./formatters";
 
 /**
  * Exports daily report data to PDF format
@@ -58,29 +58,40 @@ export async function exportDailyReportToPDF(
     doc.setTextColor(0, 0, 0); // Reset text color
     doc.setFont("helvetica", "normal");
 
-    doc.text(
-      `Total Orders: ${reportData.totalOrders}`,
-      summaryStartX,
-      summaryY + 10,
-    );
-    doc.text(
-      `Total Pendapatan: ${formatCurrency(reportData.totalRevenue)}`,
-      summaryStartX,
-      summaryY + 20,
-    );
-    doc.text(
-      `Total Pengeluaran: ${formatCurrency(reportData.totalExpenses)}`,
-      summaryStartX + 95,
-      summaryY + 10,
-    );
-    doc.text(
-      `Keuntungan: ${formatCurrency(reportData.totalProfit)}`,
-      summaryStartX + 95,
-      summaryY + 20,
-    );
+    // Create a summary table for daily report
+    autoTable(doc, {
+      head: [["Indikator", "Jumlah"]],
+      body: [
+        ["Total Orders", reportData.totalOrders.toString()],
+        ["Total Pendapatan", formatCurrency(reportData.totalRevenue)],
+        ["Total Pengeluaran", formatCurrency(reportData.totalExpenses)],
+        ["Keuntungan", formatCurrency(reportData.totalProfit)],
+      ],
+      startY: summaryY + 10, // Start below the header
+      theme: "grid",
+      headStyles: {
+        fillColor: [66, 133, 244], // Google Blue
+        textColor: [255, 255, 255],
+        fontSize: 11,
+        fontStyle: "bold",
+        halign: 'center' // Center align header
+      },
+      bodyStyles: {
+        fontSize: 10,
+        cellPadding: 5,
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245],
+      },
+      tableWidth: 'auto',
+      columnStyles: {
+        0: { cellWidth: 'auto', halign: 'left' }, // Indicator column
+        1: { cellWidth: 'auto', halign: 'right' }, // Amount column - right aligned
+      },
+    });
 
     // Add order status summary - positioned below summary section with adequate spacing
-    const statusY = summaryY + 45; // Space below summary section
+    const statusY = (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 10 : summaryY + 45; // Space below summary section
 
     // Add a header for Status Order
     doc.setFont("helvetica", "bold");
@@ -92,55 +103,41 @@ export async function exportDailyReportToPDF(
     doc.setFont("helvetica", "normal");
     doc.setTextColor(0, 0, 0); // Reset text color
 
-    // Organize status in a grid layout with colored indicators
-    const statusItems = [
-      {
-        label: "Pending",
-        value: reportData.ordersByStatus.pending,
-        color: [255, 165, 0],
-      }, // Orange
-      {
-        label: "Processing",
-        value: reportData.ordersByStatus.processing,
-        color: [65, 105, 225],
-      }, // Royal Blue
-      {
-        label: "Selesai",
-        value: reportData.ordersByStatus.finished,
-        color: [34, 139, 34],
-      }, // Forest Green
-      {
-        label: "Dibatalkan",
-        value: reportData.ordersByStatus.canceled,
-        color: [220, 20, 60],
-      }, // Crimson
-    ];
-
-    const itemWidth = 45; // Width for each status item (180/4)
-    const statusStartX = 20; // Starting X position for status items
-
-    for (let i = 0; i < statusItems.length; i++) {
-      const item = statusItems[i];
-      const itemX = statusStartX + i * itemWidth;
-
-      // Draw colored indicator
-      doc.setFillColor(item.color[0], item.color[1], item.color[2]);
-      doc.rect(itemX, statusY + 8, 6, 6, "F");
-
-      // Draw status text with colored label
-      doc.setTextColor(item.color[0], item.color[1], item.color[2]);
-      doc.setFont("helvetica", "bold");
-      doc.text(item.label, itemX + 8, statusY + 10);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(0, 0, 0); // Reset to black
-
-      // Draw the value
-      doc.text(item.value.toString(), itemX + 8, statusY + 20);
-    }
+    // Create a table for order status summary
+    autoTable(doc, {
+      head: [["Status", "Jumlah"]],
+      body: [
+        ["Pending", reportData.ordersByStatus.pending.toString()],
+        ["Processing", reportData.ordersByStatus.processing.toString()],
+        ["Selesai", reportData.ordersByStatus.finished.toString()],
+        ["Dibatalkan", reportData.ordersByStatus.canceled.toString()],
+      ],
+      startY: statusY + 12, // Start below the header
+      theme: "grid",
+      headStyles: {
+        fillColor: [66, 133, 244], // Google Blue
+        textColor: [255, 255, 255],
+        fontSize: 11,
+        fontStyle: "bold",
+        halign: 'center' // Center align header
+      },
+      bodyStyles: {
+        fontSize: 10,
+        cellPadding: 5,
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245],
+      },
+      tableWidth: 'auto',
+      columnStyles: {
+        0: { cellWidth: 'auto', halign: 'left' }, // Status column
+        1: { cellWidth: 'auto', halign: 'center' }, // Count column - center aligned
+      },
+    });
 
     // Add top selling products table
     if (reportData.topSellingProducts.length > 0) {
-      const topProductsStartY = statusY + 42; // Space below status section
+      const topProductsStartY = (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 10 : statusY + 42; // Space below status section
 
       // Check if there's enough space for the header and table before adding it
       const pageHeight = doc.internal.pageSize.height;
@@ -174,8 +171,9 @@ export async function exportDailyReportToPDF(
 
       // Prepare data for the table
       const topProductsData: string[][] = reportData.topSellingProducts.map(
-        (product) => {
+        (product, index) => {
           const row: string[] = [
+            (index + 1).toString(), // Add index column
             product.name,
             product.totalSold.toString(),
             formatCurrency(product.totalRevenue),
@@ -186,7 +184,7 @@ export async function exportDailyReportToPDF(
 
       // Add table for top products with improved styling
       autoTable(doc, {
-        head: [["Nama Produk", "Terjual", "Total Pendapatan"]],
+        head: [["#", "Nama Produk", "Terjual", "Total Pendapatan"]],
         body: topProductsData,
         startY: topProductsCurrentY + 12, // Start below the header using current Y position
         theme: "grid",
@@ -195,19 +193,21 @@ export async function exportDailyReportToPDF(
           textColor: [255, 255, 255],
           fontSize: 11,
           fontStyle: "bold",
+          halign: 'center' // Center align header
         },
         bodyStyles: {
           fontSize: 10,
-          cellPadding: 5,
+          cellPadding: 3,
         },
         alternateRowStyles: {
           fillColor: [245, 245, 245],
         },
         tableWidth: "wrap",
         columnStyles: {
-          0: { cellWidth: "auto" }, // Product name column - auto adjust
-          1: { cellWidth: "auto", halign: "center" }, // Quantity column - auto adjust
-          2: { cellWidth: "auto", halign: "right" }, // Amount column - auto adjust
+          0: { cellWidth: 10, halign: "center" }, // Index column - fixed width, center aligned
+          1: { cellWidth: 120 }, // Product name column - auto adjust
+          2: { cellWidth: "auto", halign: "center" }, // Quantity column - auto adjust
+          3: { cellWidth: "auto", halign: "right" }, // Amount column - auto adjust
         },
       });
     }
@@ -254,22 +254,32 @@ export async function exportDailyReportToPDF(
       doc.setFont("helvetica", "normal");
       doc.setTextColor(0, 0, 0); // Reset text color
 
+      // Calculate total revenue from orders
+      const totalOrdersRevenue = reportData.orders.reduce((sum, order) => sum + order.totalAmount, 0);
+      
       // Prepare data for the table
-      const ordersData: string[][] = reportData.orders.map((order) => {
+      const ordersData: string[][] = reportData.orders.map((order, index) => {
         const row: string[] = [
+          (index + 1).toString(), // Add index column
           new Date(order.createdAt).toLocaleDateString("id-ID"),
           order.orderNumber,
           order.user?.name || "N/A",
-          order.status,
+          capitalizeFirstLetter(order.status),
           formatCurrency(order.totalAmount),
         ];
         return row;
       });
 
+      // Add total row to the orders table
+      const finalOrdersData = [
+        ...ordersData,
+        ["", "", "", "", "Total", formatCurrency(totalOrdersRevenue)] // Total row with merged cells where appropriate
+      ];
+
       // Add table for orders with improved styling
       autoTable(doc, {
-        head: [["Waktu", "No. Order", "Pelanggan", "Status", "Total"]],
-        body: ordersData,
+        head: [["#", "Tanggal", "No. Order", "Pelanggan", "Status", "Total"]],
+        body: finalOrdersData,
         startY: ordersCurrentY + 12, // Start below the header using current Y position
         theme: "grid",
         headStyles: {
@@ -277,21 +287,23 @@ export async function exportDailyReportToPDF(
           textColor: [255, 255, 255],
           fontSize: 11,
           fontStyle: "bold",
+          halign: 'center' // Center align header
         },
         bodyStyles: {
           fontSize: 10,
-          cellPadding: 5,
+          cellPadding: 3,
         },
         alternateRowStyles: {
           fillColor: [245, 245, 245],
         },
         tableWidth: "wrap",
         columnStyles: {
-          0: { cellWidth: "auto" }, // Date column - auto adjust
-          1: { cellWidth: "auto" }, // Order number column - auto adjust
-          2: { cellWidth: "auto" }, // Customer name column - auto adjust
-          3: { cellWidth: "auto", halign: "center" }, // Status column - auto adjust
-          4: { cellWidth: "auto", halign: "right" }, // Amount column - auto adjust
+          0: { cellWidth: "auto", halign: "center" }, // Index column - fixed width, center aligned
+          1: { cellWidth: "auto" }, // Date column - auto adjust
+          2: { cellWidth: "auto" }, // Order number column - auto adjust
+          3: { cellWidth: "auto", overflow: "linebreak" }, // Customer name column - auto adjust with line break
+          4: { cellWidth: "auto", halign: "center" }, // Status column - auto adjust
+          5: { cellWidth: 38, halign: "right" }, // Amount column - auto adjust
         },
       });
     }
@@ -349,9 +361,13 @@ export async function exportDailyReportToPDF(
       doc.setFont("helvetica", "normal");
       doc.setTextColor(0, 0, 0); // Reset text color
 
+      // Calculate total expenses
+      const totalExpenses = reportData.expenses.reduce((sum, expense) => sum + expense.nominal, 0);
+      
       // Prepare data for the table
-      const expensesData: string[][] = reportData.expenses.map((expense) => {
+      const expensesData: string[][] = reportData.expenses.map((expense, index) => {
         const row: string[] = [
+          (index + 1).toString(), // Add index column
           new Date(expense.date).toLocaleDateString("id-ID"),
           expense.category
             ? expense.category.charAt(0).toUpperCase() +
@@ -363,10 +379,16 @@ export async function exportDailyReportToPDF(
         return row;
       });
 
+      // Add total row to the expenses table
+      const finalExpensesData = [
+        ...expensesData,
+        ["", "", "", "Total", formatCurrency(totalExpenses)] // Total row with merged cells where appropriate
+      ];
+
       // Add table for expenses with improved styling
       autoTable(doc, {
-        head: [["Waktu", "Kategori", "Deskripsi", "Nominal"]],
-        body: expensesData,
+        head: [["#", "Tanggal", "Kategori", "Deskripsi", "Nominal"]],
+        body: finalExpensesData,
         startY: expensesCurrentY + 12, // Start below the header using current Y position
         theme: "grid",
         headStyles: {
@@ -374,20 +396,22 @@ export async function exportDailyReportToPDF(
           textColor: [255, 255, 255],
           fontSize: 11,
           fontStyle: "bold",
+          halign: 'center' // Center align header
         },
         bodyStyles: {
           fontSize: 10,
-          cellPadding: 5,
+          cellPadding: 3,
         },
         alternateRowStyles: {
           fillColor: [245, 245, 245],
         },
         tableWidth: "wrap",
         columnStyles: {
-          0: { cellWidth: "auto" }, // Date column - auto adjust
-          1: { cellWidth: "auto" }, // Category column - auto adjust
-          2: { cellWidth: 95, overflow: "linebreak" }, // Description column - limited width with line break
-          3: { cellWidth: "auto", halign: "right" }, // Amount column - auto adjust
+          0: { cellWidth: 10, halign: "center" }, // Index column - fixed width, center aligned
+          1: { cellWidth: "auto" }, // Date column - auto adjust
+          2: { cellWidth: "auto" }, // Category column - auto adjust
+          3: { cellWidth: 95, overflow: "linebreak" }, // Description column - limited width with line break
+          4: { cellWidth: 30, halign: "right" }, // Amount column - auto adjust
         },
       });
     }
@@ -467,29 +491,40 @@ export async function exportWeeklyReportToPDF(
     doc.setTextColor(0, 0, 0); // Reset text color
     doc.setFont("helvetica", "normal");
 
-    doc.text(
-      `Total Orders: ${reportData.totalOrders}`,
-      summaryStartX,
-      summaryY + 10,
-    );
-    doc.text(
-      `Total Pendapatan: ${formatCurrency(reportData.totalRevenue)}`,
-      summaryStartX,
-      summaryY + 20,
-    );
-    doc.text(
-      `Total Pengeluaran: ${formatCurrency(reportData.totalExpenses)}`,
-      summaryStartX + 95,
-      summaryY + 10,
-    );
-    doc.text(
-      `Keuntungan: ${formatCurrency(reportData.totalProfit)}`,
-      summaryStartX + 95,
-      summaryY + 20,
-    );
+    // Create a summary table for weekly report
+    autoTable(doc, {
+      head: [["Indikator", "Jumlah"]],
+      body: [
+        ["Total Orders", reportData.totalOrders.toString()],
+        ["Total Pendapatan", formatCurrency(reportData.totalRevenue)],
+        ["Total Pengeluaran", formatCurrency(reportData.totalExpenses)],
+        ["Keuntungan", formatCurrency(reportData.totalProfit)],
+      ],
+      startY: summaryY + 10, // Start below the header
+      theme: "grid",
+      headStyles: {
+        fillColor: [66, 133, 244], // Google Blue
+        textColor: [255, 255, 255],
+        fontSize: 11,
+        fontStyle: "bold",
+        halign: 'center' // Center align header
+      },
+      bodyStyles: {
+        fontSize: 10,
+        cellPadding: 5,
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245],
+      },
+      tableWidth: 'auto',
+      columnStyles: {
+        0: { cellWidth: 'auto', halign: 'left' }, // Indicator column
+        1: { cellWidth: 'auto', halign: 'right' }, // Amount column - right aligned
+      },
+    });
 
     // Add order status summary - positioned below summary section with adequate spacing
-    const statusY = summaryY + 45; // Space below summary section
+    const statusY = (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 10 : summaryY + 45; // Space below summary section
 
     // Add a header for Status Order
     doc.setFont("helvetica", "bold");
@@ -501,55 +536,41 @@ export async function exportWeeklyReportToPDF(
     doc.setFont("helvetica", "normal");
     doc.setTextColor(0, 0, 0); // Reset text color
 
-    // Organize status in a grid layout with colored indicators
-    const statusItems = [
-      {
-        label: "Pending",
-        value: reportData.ordersByStatus.pending,
-        color: [255, 165, 0],
-      }, // Orange
-      {
-        label: "Processing",
-        value: reportData.ordersByStatus.processing,
-        color: [65, 105, 225],
-      }, // Royal Blue
-      {
-        label: "Selesai",
-        value: reportData.ordersByStatus.finished,
-        color: [34, 139, 34],
-      }, // Forest Green
-      {
-        label: "Dibatalkan",
-        value: reportData.ordersByStatus.canceled,
-        color: [220, 20, 60],
-      }, // Crimson
-    ];
-
-    const itemWidth = 45; // Width for each status item (180/4)
-    const statusStartX = 20; // Starting X position for status items
-
-    for (let i = 0; i < statusItems.length; i++) {
-      const item = statusItems[i];
-      const itemX = statusStartX + i * itemWidth;
-
-      // Draw colored indicator
-      doc.setFillColor(item.color[0], item.color[1], item.color[2]);
-      doc.rect(itemX, statusY + 8, 6, 6, "F");
-
-      // Draw status text with colored label
-      doc.setTextColor(item.color[0], item.color[1], item.color[2]);
-      doc.setFont("helvetica", "bold");
-      doc.text(item.label, itemX + 8, statusY + 10);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(0, 0, 0); // Reset to black
-
-      // Draw the value
-      doc.text(item.value.toString(), itemX + 8, statusY + 20);
-    }
+    // Create a table for order status summary
+    autoTable(doc, {
+      head: [["Status", "Jumlah"]],
+      body: [
+        ["Pending", reportData.ordersByStatus.pending.toString()],
+        ["Processing", reportData.ordersByStatus.processing.toString()],
+        ["Selesai", reportData.ordersByStatus.finished.toString()],
+        ["Dibatalkan", reportData.ordersByStatus.canceled.toString()],
+      ],
+      startY: statusY + 12, // Start below the header
+      theme: "grid",
+      headStyles: {
+        fillColor: [66, 133, 244], // Google Blue
+        textColor: [255, 255, 255],
+        fontSize: 11,
+        fontStyle: "bold",
+        halign: 'center' // Center align header
+      },
+      bodyStyles: {
+        fontSize: 10,
+        cellPadding: 5,
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245],
+      },
+      tableWidth: 'auto',
+      columnStyles: {
+        0: { cellWidth: 'auto', halign: 'left' }, // Status column
+        1: { cellWidth: 'auto', halign: 'center' }, // Count column - center aligned
+      },
+    });
 
     // Add top selling products table
     if (reportData.topSellingProducts.length > 0) {
-      const topProductsStartY = statusY + 42; // Space below status section
+      const topProductsStartY = (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 10 : statusY + 42; // Space below status section
 
       // Check if there's enough space for the header and table before adding it
       const pageHeight = doc.internal.pageSize.height;
@@ -583,8 +604,9 @@ export async function exportWeeklyReportToPDF(
 
       // Prepare data for the table
       const topProductsData: string[][] = reportData.topSellingProducts.map(
-        (product) => {
+        (product, index) => {
           const row: string[] = [
+            (index + 1).toString(), // Add index column
             product.name,
             product.totalSold.toString(),
             formatCurrency(product.totalRevenue),
@@ -595,7 +617,7 @@ export async function exportWeeklyReportToPDF(
 
       // Add table for top products with improved styling
       autoTable(doc, {
-        head: [["Nama Produk", "Terjual", "Total Pendapatan"]],
+        head: [["#", "Nama Produk", "Terjual", "Total Pendapatan"]],
         body: topProductsData,
         startY: topProductsCurrentY + 12, // Start below the header using current Y position
         theme: "grid",
@@ -604,19 +626,21 @@ export async function exportWeeklyReportToPDF(
           textColor: [255, 255, 255],
           fontSize: 11,
           fontStyle: "bold",
+          halign: 'center' // Center align header
         },
         bodyStyles: {
           fontSize: 10,
-          cellPadding: 5,
+          cellPadding: 3,
         },
         alternateRowStyles: {
           fillColor: [245, 245, 245],
         },
         tableWidth: "wrap",
         columnStyles: {
-          0: { cellWidth: "auto" }, // Product name column - auto adjust
-          1: { cellWidth: "auto", halign: "center" }, // Quantity column - auto adjust
-          2: { cellWidth: "auto", halign: "right" }, // Amount column - auto adjust
+          0: { cellWidth: 10, halign: "center" }, // Index column - fixed width, center aligned
+          1: { cellWidth: 120 }, // Product name column - auto adjust
+          2: { cellWidth: "auto", halign: "center" }, // Quantity column - auto adjust
+          3: { cellWidth: 38, halign: "right" }, // Amount column - auto adjust
         },
       });
     }
@@ -663,22 +687,32 @@ export async function exportWeeklyReportToPDF(
       doc.setFont("helvetica", "normal");
       doc.setTextColor(0, 0, 0); // Reset text color
 
+      // Calculate total revenue from orders
+      const totalOrdersRevenue = reportData.orders.reduce((sum, order) => sum + order.totalAmount, 0);
+      
       // Prepare data for the table
-      const ordersData: string[][] = reportData.orders.map((order) => {
+      const ordersData: string[][] = reportData.orders.map((order, index) => {
         const row: string[] = [
+          (index + 1).toString(), // Add index column
           new Date(order.createdAt).toLocaleDateString("id-ID"),
           order.orderNumber,
           order.user?.name || "N/A",
-          order.status,
+          capitalizeFirstLetter(order.status),
           formatCurrency(order.totalAmount),
         ];
         return row;
       });
 
+      // Add total row to the orders table
+      const finalOrdersData = [
+        ...ordersData,
+        ["", "", "", "", "Total", formatCurrency(totalOrdersRevenue)] // Total row with merged cells where appropriate
+      ];
+
       // Add table for orders with improved styling
       autoTable(doc, {
-        head: [["Waktu", "No. Order", "Pelanggan", "Status", "Total"]],
-        body: ordersData,
+        head: [["#", "Tanggal", "No. Order", "Pelanggan", "Status", "Total"]],
+        body: finalOrdersData,
         startY: ordersCurrentY + 12, // Start below the header using current Y position
         theme: "grid",
         headStyles: {
@@ -686,21 +720,23 @@ export async function exportWeeklyReportToPDF(
           textColor: [255, 255, 255],
           fontSize: 11,
           fontStyle: "bold",
+          halign: 'center' // Center align header
         },
         bodyStyles: {
           fontSize: 10,
-          cellPadding: 5,
+          cellPadding: 3,
         },
         alternateRowStyles: {
           fillColor: [245, 245, 245],
         },
         tableWidth: "wrap",
         columnStyles: {
-          0: { cellWidth: "auto" }, // Date column - auto adjust
-          1: { cellWidth: "auto" }, // Order number column - auto adjust
-          2: { cellWidth: "auto", overflow: "linebreak" }, // Customer name column - auto adjust with line break
-          3: { cellWidth: "auto", halign: "center" }, // Status column - auto adjust
-          4: { cellWidth: "auto", halign: "right" }, // Amount column - auto adjust
+          0: { cellWidth: 10, halign: "center" }, // Index column - fixed width, center aligned
+          1: { cellWidth: "auto" }, // Date column - auto adjust
+          2: { cellWidth: "auto" }, // Order number column - auto adjust
+          3: { cellWidth: "auto", overflow: "linebreak" }, // Customer name column - auto adjust with line break
+          4: { cellWidth: "auto", halign: "center" }, // Status column - auto adjust
+          5: { cellWidth: 40, halign: "right" }, // Amount column - auto adjust
         },
       });
     }
@@ -758,9 +794,13 @@ export async function exportWeeklyReportToPDF(
       doc.setFont("helvetica", "normal");
       doc.setTextColor(0, 0, 0); // Reset text color
 
+      // Calculate total expenses
+      const totalExpenses = reportData.expenses.reduce((sum, expense) => sum + expense.nominal, 0);
+      
       // Prepare data for the table
-      const expensesData: string[][] = reportData.expenses.map((expense) => {
+      const expensesData: string[][] = reportData.expenses.map((expense, index) => {
         const row: string[] = [
+          (index + 1).toString(), // Add index column
           new Date(expense.date).toLocaleDateString("id-ID"),
           expense.category
             ? expense.category.charAt(0).toUpperCase() +
@@ -772,10 +812,16 @@ export async function exportWeeklyReportToPDF(
         return row;
       });
 
+      // Add total row to the expenses table
+      const finalExpensesData = [
+        ...expensesData,
+        ["", "", "", "Total", formatCurrency(totalExpenses)] // Total row with merged cells where appropriate
+      ];
+
       // Add table for expenses with improved styling
       autoTable(doc, {
-        head: [["Waktu", "Kategori", "Deskripsi", "Nominal"]],
-        body: expensesData,
+        head: [["#", "Tanggal", "Kategori", "Deskripsi", "Nominal"]],
+        body: finalExpensesData,
         startY: expensesCurrentY + 12, // Start below the header using current Y position
         theme: "grid",
         headStyles: {
@@ -783,20 +829,22 @@ export async function exportWeeklyReportToPDF(
           textColor: [255, 255, 255],
           fontSize: 11,
           fontStyle: "bold",
+          halign: 'center' // Center align header
         },
         bodyStyles: {
           fontSize: 10,
-          cellPadding: 5,
+          cellPadding: 3,
         },
         alternateRowStyles: {
           fillColor: [245, 245, 245],
         },
         tableWidth: "wrap",
         columnStyles: {
-          0: { cellWidth: "auto" }, // Date column - auto adjust
-          1: { cellWidth: "auto" }, // Category column - auto adjust
-          2: { cellWidth: 95, overflow: "linebreak" }, // Description column - limited width with line break
-          3: { cellWidth: "auto", halign: "right" }, // Amount column - auto adjust
+          0: { cellWidth: 10, halign: "center" }, // Index column - fixed width, center aligned
+          1: { cellWidth: "auto" }, // Date column - auto adjust
+          2: { cellWidth: "auto" }, // Category column - auto adjust
+          3: { cellWidth: 91, overflow: "linebreak" }, // Description column - limited width with line break
+          4: { cellWidth: 35, halign: "right" }, // Amount column - auto adjust
         },
       });
     }
@@ -878,29 +926,40 @@ export async function exportMonthlyReportToPDF(
     doc.setTextColor(0, 0, 0); // Reset text color
     doc.setFont("helvetica", "normal");
 
-    doc.text(
-      `Total Orders: ${reportData.totalOrders}`,
-      summaryStartX,
-      summaryY + 10,
-    );
-    doc.text(
-      `Total Pendapatan: ${formatCurrency(reportData.totalRevenue)}`,
-      summaryStartX,
-      summaryY + 20,
-    );
-    doc.text(
-      `Total Pengeluaran: ${formatCurrency(reportData.totalExpenses)}`,
-      summaryStartX + 95,
-      summaryY + 10,
-    );
-    doc.text(
-      `Keuntungan: ${formatCurrency(reportData.totalProfit)}`,
-      summaryStartX + 95,
-      summaryY + 20,
-    );
+    // Create a summary table for monthly report
+    autoTable(doc, {
+      head: [["Indikator", "Jumlah"]],
+      body: [
+        ["Total Orders", reportData.totalOrders.toString()],
+        ["Total Pendapatan", formatCurrency(reportData.totalRevenue)],
+        ["Total Pengeluaran", formatCurrency(reportData.totalExpenses)],
+        ["Keuntungan", formatCurrency(reportData.totalProfit)],
+      ],
+      startY: summaryY + 10, // Start below the header
+      theme: "grid",
+      headStyles: {
+        fillColor: [66, 133, 244], // Google Blue
+        textColor: [255, 255, 255],
+        fontSize: 11,
+        fontStyle: "bold",
+        halign: 'center' // Center align header
+      },
+      bodyStyles: {
+        fontSize: 10,
+        cellPadding: 5,
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245],
+      },
+      tableWidth: 'auto',
+      columnStyles: {
+        0: { cellWidth: 'auto', halign: 'left' }, // Indicator column
+        1: { cellWidth: 'auto', halign: 'right' }, // Amount column - right aligned
+      },
+    });
 
     // Add order status summary - positioned below summary section with adequate spacing
-    const statusY = summaryY + 45; // Space below summary section
+    const statusY = (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 10 : summaryY + 45; // Space below summary section
 
     // Add a header for Status Order
     doc.setFont("helvetica", "bold");
@@ -912,60 +971,46 @@ export async function exportMonthlyReportToPDF(
     doc.setFont("helvetica", "normal");
     doc.setTextColor(0, 0, 0); // Reset text color
 
-    // Organize status in a grid layout with colored indicators
-    const statusItems = [
-      {
-        label: "Pending",
-        value: reportData.ordersByStatus.pending,
-        color: [255, 165, 0],
-      }, // Orange
-      {
-        label: "Processing",
-        value: reportData.ordersByStatus.processing,
-        color: [65, 105, 225],
-      }, // Royal Blue
-      {
-        label: "Selesai",
-        value: reportData.ordersByStatus.finished,
-        color: [34, 139, 34],
-      }, // Forest Green
-      {
-        label: "Dibatalkan",
-        value: reportData.ordersByStatus.canceled,
-        color: [220, 20, 60],
-      }, // Crimson
-    ];
-
-    const itemWidth = 45; // Width for each status item (180/4)
-    const statusStartX = 20; // Starting X position for status items
-
-    for (let i = 0; i < statusItems.length; i++) {
-      const item = statusItems[i];
-      const itemX = statusStartX + i * itemWidth;
-
-      // Draw colored indicator
-      doc.setFillColor(item.color[0], item.color[1], item.color[2]);
-      doc.rect(itemX, statusY + 8, 6, 6, "F");
-
-      // Draw status text with colored label
-      doc.setTextColor(item.color[0], item.color[1], item.color[2]);
-      doc.setFont("helvetica", "bold");
-      doc.text(item.label, itemX + 8, statusY + 10);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(0, 0, 0); // Reset to black
-
-      // Draw the value
-      doc.text(item.value.toString(), itemX + 8, statusY + 20);
-    }
+    // Create a table for order status summary
+    autoTable(doc, {
+      head: [["Status", "Jumlah"]],
+      body: [
+        ["Pending", reportData.ordersByStatus.pending.toString()],
+        ["Processing", reportData.ordersByStatus.processing.toString()],
+        ["Selesai", reportData.ordersByStatus.finished.toString()],
+        ["Dibatalkan", reportData.ordersByStatus.canceled.toString()],
+      ],
+      startY: statusY + 12, // Start below the header
+      theme: "grid",
+      headStyles: {
+        fillColor: [66, 133, 244], // Google Blue
+        textColor: [255, 255, 255],
+        fontSize: 11,
+        fontStyle: "bold",
+        halign: 'center' // Center align header
+      },
+      bodyStyles: {
+        fontSize: 10,
+        cellPadding: 5,
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245],
+      },
+      tableWidth: 'auto',
+      columnStyles: {
+        0: { cellWidth: 'auto', halign: 'left' }, // Status column
+        1: { cellWidth: 'auto', halign: 'center' }, // Count column - center aligned
+      },
+    });
 
     // Add top selling products table
     if (reportData.topSellingProducts.length > 0) {
-      const topProductsStartY = statusY + 42; // Space below status section
+      const topProductsStartY = (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 10 : statusY + 42; // Space below status section
 
       // Add header for top products with centered text
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
-      const topProductsHeader = "Produk Terlaris Bulan Ini:";
+      const topProductsHeader = "Produk Terlaris Bulan Ini";
       doc.setTextColor(0, 0, 0);
       doc.text(
         topProductsHeader,
@@ -978,8 +1023,9 @@ export async function exportMonthlyReportToPDF(
 
       // Prepare data for the table
       const topProductsData: string[][] = reportData.topSellingProducts.map(
-        (product) => {
+        (product, index) => {
           const row: string[] = [
+            (index + 1).toString(), // Add index column
             product.name,
             product.totalSold.toString(),
             formatCurrency(product.totalRevenue),
@@ -990,7 +1036,7 @@ export async function exportMonthlyReportToPDF(
 
       // Add table for top products with improved styling
       autoTable(doc, {
-        head: [["Nama Produk", "Jumlah Terjual", "Total Pendapatan"]],
+        head: [["#", "Nama Produk", "Terjual", "Total Pendapatan"]],
         body: topProductsData,
         startY: topProductsStartY + 12, // Start below the header
         theme: "grid",
@@ -999,19 +1045,21 @@ export async function exportMonthlyReportToPDF(
           textColor: [255, 255, 255],
           fontSize: 11,
           fontStyle: "bold",
+          halign: 'center' // Center align header
         },
         bodyStyles: {
           fontSize: 10,
-          cellPadding: 5,
+          cellPadding: 3,
         },
         alternateRowStyles: {
           fillColor: [245, 245, 245],
         },
         tableWidth: "wrap",
         columnStyles: {
-          0: { cellWidth: "auto", overflow: "linebreak" }, // Product name column - auto adjust with line break
-          1: { cellWidth: "auto", halign: "center" }, // Quantity column - auto adjust
-          2: { cellWidth: "auto", halign: "right" }, // Amount column - auto adjust
+          0: { cellWidth: 10, halign: "center" }, // Index column - fixed width, center aligned
+          1: { cellWidth: 120, overflow: "linebreak" }, // Product name column - auto adjust with line break
+          2: { cellWidth: "auto", halign: "center" }, // Quantity column - auto adjust
+          3: { cellWidth: "auto", halign: "right" }, // Amount column - auto adjust
         },
       });
     }
@@ -1035,7 +1083,7 @@ export async function exportMonthlyReportToPDF(
       // Add header for orders with centered text
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
-      const ordersHeader = "Rincian Pendapatan Bulan Ini:";
+      const ordersHeader = "Rincian Pendapatan Bulan Ini";
       doc.setTextColor(0, 0, 0);
       doc.text(ordersHeader, doc.internal.pageSize.width / 2, ordersStartY, {
         align: "center",
@@ -1043,22 +1091,32 @@ export async function exportMonthlyReportToPDF(
       doc.setFont("helvetica", "normal");
       doc.setTextColor(0, 0, 0); // Reset text color
 
+      // Calculate total revenue from orders
+      const totalOrdersRevenue = reportData.orders.reduce((sum, order) => sum + order.totalAmount, 0);
+      
       // Prepare data for the table
-      const ordersData: string[][] = reportData.orders.map((order) => {
+      const ordersData: string[][] = reportData.orders.map((order, index) => {
         const row: string[] = [
+          (index + 1).toString(), // Add index column
           new Date(order.createdAt).toLocaleDateString("id-ID"),
           order.orderNumber,
           order.user?.name || "N/A",
-          order.status,
+          capitalizeFirstLetter(order.status),
           formatCurrency(order.totalAmount),
         ];
         return row;
       });
 
+      // Add total row to the orders table
+      const finalOrdersData = [
+        ...ordersData,
+        ["", "", "", "", "Total", formatCurrency(totalOrdersRevenue)] // Total row with merged cells where appropriate
+      ];
+
       // Add table for orders with improved styling
       autoTable(doc, {
-        head: [["Waktu", "No. Order", "Pelanggan", "Status", "Total"]],
-        body: ordersData,
+        head: [["#", "Tanggal", "No. Order", "Pelanggan", "Status", "Total"]],
+        body: finalOrdersData,
         startY: ordersStartY + 12, // Start below the header
         theme: "grid",
         headStyles: {
@@ -1066,21 +1124,23 @@ export async function exportMonthlyReportToPDF(
           textColor: [255, 255, 255],
           fontSize: 11,
           fontStyle: "bold",
+          halign: 'center' // Center align header
         },
         bodyStyles: {
           fontSize: 10,
-          cellPadding: 5,
+          cellPadding: 3,
         },
         alternateRowStyles: {
           fillColor: [245, 245, 245],
         },
         tableWidth: "wrap",
         columnStyles: {
-          0: { cellWidth: "auto" }, // Date column - auto adjust
-          1: { cellWidth: "auto" }, // Order number column - auto adjust
-          2: { cellWidth: "auto", overflow: "linebreak" }, // Customer name column - auto adjust with line break
-          3: { cellWidth: "auto", halign: "center" }, // Status column - auto adjust
-          4: { cellWidth: "auto", halign: "right" }, // Amount column - auto adjust
+          0: { cellWidth: 10, halign: "center" }, // Index column - fixed width, center aligned
+          1: { cellWidth: "auto" }, // Date column - auto adjust
+          2: { cellWidth: "auto" }, // Order number column - auto adjust
+          3: { cellWidth: "auto", overflow: "linebreak" }, // Customer name column - auto adjust with line break
+          4: { cellWidth: "auto", halign: "center" }, // Status column - auto adjust
+          5: { cellWidth: 38, halign: "right" }, // Amount column - auto adjust
         },
       });
     }
@@ -1111,7 +1171,7 @@ export async function exportMonthlyReportToPDF(
       // Add header for expenses with centered text
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
-      const expensesHeader = "Rincian Pengeluaran Bulan Ini:";
+      const expensesHeader = "Rincian Pengeluaran Bulan Ini";
       doc.setTextColor(0, 0, 0);
       doc.text(
         expensesHeader,
@@ -1122,9 +1182,13 @@ export async function exportMonthlyReportToPDF(
       doc.setFont("helvetica", "normal");
       doc.setTextColor(0, 0, 0); // Reset text color
 
+      // Calculate total expenses
+      const totalExpenses = reportData.expenses.reduce((sum, expense) => sum + expense.nominal, 0);
+      
       // Prepare data for the table
-      const expensesData: string[][] = reportData.expenses.map((expense) => {
+      const expensesData: string[][] = reportData.expenses.map((expense, index) => {
         const row: string[] = [
+          (index + 1).toString(), // Add index column
           new Date(expense.date).toLocaleDateString("id-ID"),
           expense.category
             ? expense.category.charAt(0).toUpperCase() +
@@ -1136,10 +1200,16 @@ export async function exportMonthlyReportToPDF(
         return row;
       });
 
+      // Add total row to the expenses table
+      const finalExpensesData = [
+        ...expensesData,
+        ["", "", "", "Total", formatCurrency(totalExpenses)] // Total row with merged cells where appropriate
+      ];
+
       // Add table for expenses with improved styling
       autoTable(doc, {
-        head: [["Waktu", "Kategori", "Deskripsi", "Nominal"]],
-        body: expensesData,
+        head: [["#", "Tanggal", "Kategori", "Deskripsi", "Nominal"]],
+        body: finalExpensesData,
         startY: expensesStartY + 12, // Start below the header
         theme: "grid",
         headStyles: {
@@ -1147,20 +1217,22 @@ export async function exportMonthlyReportToPDF(
           textColor: [255, 255, 255],
           fontSize: 11,
           fontStyle: "bold",
+          halign: 'center' // Center align header
         },
         bodyStyles: {
           fontSize: 10,
-          cellPadding: 5,
+          cellPadding: 3,
         },
         alternateRowStyles: {
           fillColor: [245, 245, 245],
         },
         tableWidth: "wrap",
         columnStyles: {
-          0: { cellWidth: "auto" }, // Date column - auto adjust
-          1: { cellWidth: "auto" }, // Category column - auto adjust
-          2: { cellWidth: 50, overflow: "linebreak" }, // Description column - limited width with line break
-          3: { cellWidth: "auto", halign: "right" }, // Amount column - auto adjust
+          0: { cellWidth: 10, halign: "center" }, // Index column - fixed width, center aligned
+          1: { cellWidth: "auto" }, // Date column - auto adjust
+          2: { cellWidth: "auto" }, // Category column - auto adjust
+          3: { cellWidth: 95, overflow: "linebreak" }, // Description column - limited width with line break
+          4: { cellWidth: "auto", halign: "right" }, // Amount column - auto adjust
         },
       });
     }
@@ -1230,29 +1302,40 @@ export async function exportAnnualReportToPDF(
     doc.setFont("helvetica", "normal");
     doc.setTextColor(0, 0, 0); // Reset text color
 
-    doc.text(
-      `Total Orders: ${reportData.totalOrders}`,
-      summaryStartX,
-      summaryY + 10,
-    );
-    doc.text(
-      `Total Pendapatan: ${formatCurrency(reportData.totalRevenue)}`,
-      summaryStartX,
-      summaryY + 20,
-    );
-    doc.text(
-      `Total Pengeluaran: ${formatCurrency(reportData.totalExpenses)}`,
-      summaryStartX + 95,
-      summaryY + 10,
-    );
-    doc.text(
-      `Keuntungan: ${formatCurrency(reportData.totalProfit)}`,
-      summaryStartX + 95,
-      summaryY + 20,
-    );
+    // Create a summary table for annual report
+    autoTable(doc, {
+      head: [["Indikator", "Jumlah"]],
+      body: [
+        ["Total Orders", reportData.totalOrders.toString()],
+        ["Total Pendapatan", formatCurrency(reportData.totalRevenue)],
+        ["Total Pengeluaran", formatCurrency(reportData.totalExpenses)],
+        ["Keuntungan", formatCurrency(reportData.totalProfit)],
+      ],
+      startY: summaryY + 10, // Start below the header
+      theme: "grid",
+      headStyles: {
+        fillColor: [66, 133, 244], // Google Blue
+        textColor: [255, 255, 255],
+        fontSize: 11,
+        fontStyle: "bold",
+        halign: 'center' // Center align header
+      },
+      bodyStyles: {
+        fontSize: 10,
+        cellPadding: 5,
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245],
+      },
+      tableWidth: 'auto',
+      columnStyles: {
+        0: { cellWidth: 'auto', halign: 'left' }, // Indicator column
+        1: { cellWidth: 'auto', halign: 'right' }, // Amount column - right aligned
+      },
+    });
 
     // Add order status summary - positioned below summary section with adequate spacing
-    const statusY = summaryY + 45; // Space below summary section
+    const statusY = (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 10 : summaryY + 45; // Space below summary section
 
     // Add a header for Status Order
     doc.setFont("helvetica", "bold");
@@ -1264,65 +1347,66 @@ export async function exportAnnualReportToPDF(
     doc.setFont("helvetica", "normal");
     doc.setTextColor(0, 0, 0); // Reset text color
 
-    // Organize status in a grid layout with colored indicators
-    const statusItems = [
-      {
-        label: "Pending",
-        value: reportData.ordersByStatus.pending,
-        color: [255, 165, 0],
-      }, // Orange
-      {
-        label: "Processing",
-        value: reportData.ordersByStatus.processing,
-        color: [65, 105, 225],
-      }, // Royal Blue
-      {
-        label: "Selesai",
-        value: reportData.ordersByStatus.finished,
-        color: [34, 139, 34],
-      }, // Forest Green
-      {
-        label: "Dibatalkan",
-        value: reportData.ordersByStatus.canceled,
-        color: [220, 20, 60],
-      }, // Crimson
-    ];
-
-    const itemWidth = 45; // Width for each status item (180/4)
-    const statusStartX = 20; // Starting X position for status items
-
-    for (let i = 0; i < statusItems.length; i++) {
-      const item = statusItems[i];
-      const itemX = statusStartX + i * itemWidth;
-
-      // Draw colored indicator
-      doc.setFillColor(item.color[0], item.color[1], item.color[2]);
-      doc.rect(itemX, statusY + 8, 6, 6, "F");
-
-      // Draw status text with colored label
-      doc.setTextColor(item.color[0], item.color[1], item.color[2]);
-      doc.setFont("helvetica", "bold");
-      doc.text(item.label, itemX + 8, statusY + 10);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(0, 0, 0); // Reset to black
-
-      // Draw the value
-      doc.text(item.value.toString(), itemX + 8, statusY + 20);
-    }
+    // Create a table for order status summary
+    autoTable(doc, {
+      head: [["Status", "Jumlah"]],
+      body: [
+        ["Pending", reportData.ordersByStatus.pending.toString()],
+        ["Processing", reportData.ordersByStatus.processing.toString()],
+        ["Selesai", reportData.ordersByStatus.finished.toString()],
+        ["Dibatalkan", reportData.ordersByStatus.canceled.toString()],
+      ],
+      startY: statusY + 12, // Start below the header
+      theme: "grid",
+      headStyles: {
+        fillColor: [66, 133, 244], // Google Blue
+        textColor: [255, 255, 255],
+        fontSize: 11,
+        fontStyle: "bold",
+        halign: 'center' // Center align header
+      },
+      bodyStyles: {
+        fontSize: 10,
+        cellPadding: 5,
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245],
+      },
+      tableWidth: 'auto',
+      columnStyles: {
+        0: { cellWidth: 'auto', halign: 'left' }, // Status column
+        1: { cellWidth: 'auto', halign: 'center' }, // Count column - center aligned
+      },
+    });
 
     // Add top selling products table
     if (reportData.topSellingProducts.length > 0) {
-      const topProductsStartY = statusY + 42; // Space below status section
+      const topProductsStartY = (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 10 : statusY + 42; // Space below status section
+
+      // Check if there's enough space for the header and table before adding it
+      const pageHeight = doc.internal.pageSize.height;
+      const footerMargin = 30; // Space needed for footer and bottom margin
+      const estimatedTopProductsTableHeight = (reportData.topSellingProducts.length + 3) * 10; // +3 for header row and spacing
+      let topProductsCurrentY = topProductsStartY;
+
+      // Check if header position + estimated table height would exceed available space
+      if (
+        topProductsCurrentY + estimatedTopProductsTableHeight > 
+        pageHeight - footerMargin
+      ) {
+        doc.addPage();
+        topProductsCurrentY = 20; // Start from top of new page
+      }
 
       // Add header for top products with centered text
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
-      const topProductsHeader = "Produk Terlaris Tahun Ini:";
+      const topProductsHeader = "Produk Terlaris Tahun Ini";
       doc.setTextColor(0, 0, 0);
       doc.text(
         topProductsHeader,
         doc.internal.pageSize.width / 2,
-        topProductsStartY,
+        topProductsCurrentY,
         { align: "center" },
       ); // Center text
       doc.setFont("helvetica", "normal");
@@ -1330,8 +1414,9 @@ export async function exportAnnualReportToPDF(
 
       // Prepare data for the table
       const topProductsData: string[][] = reportData.topSellingProducts.map(
-        (product) => {
+        (product, index) => {
           const row: string[] = [
+            (index + 1).toString(), // Add index column
             product.name,
             product.totalSold.toString(),
             formatCurrency(product.totalRevenue),
@@ -1342,28 +1427,30 @@ export async function exportAnnualReportToPDF(
 
       // Add table for top products with improved styling
       autoTable(doc, {
-        head: [["Nama Produk", "Jumlah Terjual", "Total Pendapatan"]],
+        head: [["#", "Nama Produk", "Terjual", "Total Pendapatan"]],
         body: topProductsData,
-        startY: topProductsStartY + 12, // Start below the header
+        startY: topProductsCurrentY + 12, // Start below the header
         theme: "grid",
         headStyles: {
           fillColor: [66, 133, 244], // Google Blue
           textColor: [255, 255, 255],
           fontSize: 11,
           fontStyle: "bold",
+          halign: 'center' // Center align header
         },
         bodyStyles: {
           fontSize: 10,
-          cellPadding: 5,
+          cellPadding: 3,
         },
         alternateRowStyles: {
           fillColor: [245, 245, 245],
         },
         tableWidth: "wrap",
         columnStyles: {
-          0: { cellWidth: "auto", overflow: "linebreak" }, // Product name column - auto adjust with line break
-          1: { cellWidth: "auto", halign: "center" }, // Quantity column - auto adjust
-          2: { cellWidth: "auto", halign: "right" }, // Amount column - auto adjust
+          0: { cellWidth: 13, halign: "center" }, // Index column - fixed width, center aligned
+          1: { cellWidth: 120, overflow: "linebreak" }, // Product name column - auto adjust with line break
+          2: { cellWidth: "auto", halign: "center" }, // Quantity column - auto adjust
+          3: { cellWidth: "auto", halign: "right" }, // Amount column - auto adjust
         },
       });
     }
@@ -1384,55 +1471,82 @@ export async function exportAnnualReportToPDF(
         ordersStartY = statusY + 42 + 15; // Space below status section
       }
 
+      // Check if there's enough space for the header and table before adding it
+      const pageHeight = doc.internal.pageSize.height;
+      const footerMargin = 30; // Space needed for footer and bottom margin
+      const estimatedOrdersTableHeight = (reportData.orders.length + 3) * 10; // +3 for header row and spacing
+      let ordersCurrentY = ordersStartY;
+
+      // Check if header position + estimated table height would exceed available space
+      if (
+        ordersCurrentY + estimatedOrdersTableHeight > 
+        pageHeight - footerMargin
+      ) {
+        doc.addPage();
+        ordersCurrentY = 20; // Start from top of new page
+      }
+
       // Add header for orders with centered text
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
-      const ordersHeader = "Rincian Pendapatan Tahun Ini:";
+      const ordersHeader = "Rincian Pendapatan Tahun Ini";
       doc.setTextColor(0, 0, 0);
-      doc.text(ordersHeader, doc.internal.pageSize.width / 2, ordersStartY, {
+      doc.text(ordersHeader, doc.internal.pageSize.width / 2, ordersCurrentY, {
         align: "center",
       }); // Center text
       doc.setFont("helvetica", "normal");
       doc.setTextColor(0, 0, 0); // Reset text color
 
+      // Calculate total revenue from orders
+      const totalOrdersRevenue = reportData.orders.reduce((sum, order) => sum + order.totalAmount, 0);
+      
       // Prepare data for the table
-      const ordersData: string[][] = reportData.orders.map((order) => {
+      const ordersData: string[][] = reportData.orders.map((order, index) => {
         const row: string[] = [
+          (index + 1).toString(), // Add index column
           new Date(order.createdAt).toLocaleDateString("id-ID"),
           order.orderNumber,
           order.user?.name || "N/A",
-          order.status,
+          capitalizeFirstLetter(order.status),
           formatCurrency(order.totalAmount),
         ];
         return row;
       });
 
+      // Add total row to the orders table
+      const finalOrdersData = [
+        ...ordersData,
+        ["", "", "", "", "Total", formatCurrency(totalOrdersRevenue)] // Total row with merged cells where appropriate
+      ];
+
       // Add table for orders with improved styling
       autoTable(doc, {
-        head: [["Waktu", "No. Order", "Pelanggan", "Status", "Total"]],
-        body: ordersData,
-        startY: ordersStartY + 12, // Start below the header
+        head: [["#", "Tanggal", "No. Order", "Pelanggan", "Status", "Total"]],
+        body: finalOrdersData,
+        startY: ordersCurrentY + 12, // Start below the header
         theme: "grid",
         headStyles: {
           fillColor: [66, 133, 244], // Google Blue
           textColor: [255, 255, 255],
           fontSize: 11,
           fontStyle: "bold",
+          halign: 'center' // Center align header
         },
         bodyStyles: {
           fontSize: 10,
-          cellPadding: 5,
+          cellPadding: 3,
         },
         alternateRowStyles: {
           fillColor: [245, 245, 245],
         },
         tableWidth: "wrap",
         columnStyles: {
-          0: { cellWidth: "auto" }, // Date column - auto adjust
-          1: { cellWidth: "auto" }, // Order number column - auto adjust
-          2: { cellWidth: "auto", overflow: "linebreak" }, // Customer name column - auto adjust with line break
-          3: { cellWidth: "auto", halign: "center" }, // Status column - auto adjust
-          4: { cellWidth: "auto", halign: "right" }, // Amount column - auto adjust
+          0: { cellWidth: 10, halign: "center" }, // Index column - fixed width, center aligned
+          1: { cellWidth: "auto" }, // Date column - auto adjust
+          2: { cellWidth: "auto" }, // Order number column - auto adjust
+          3: { cellWidth: "auto", overflow: "linebreak" }, // Customer name column - auto adjust with line break
+          4: { cellWidth: "auto", halign: "center" }, // Status column - auto adjust
+          5: { cellWidth: 40, halign: "right" }, // Amount column - auto adjust
         },
       });
     }
@@ -1460,23 +1574,42 @@ export async function exportAnnualReportToPDF(
         expensesStartY = statusY + 42 + 15; // Space below status section
       }
 
+      // Check if there's enough space for the header and table before adding it
+      const pageHeight = doc.internal.pageSize.height;
+      const footerMargin = 30; // Space needed for footer and bottom margin
+      const estimatedExpensesTableHeight = (reportData.expenses.length + 3) * 10; // +3 for header row and spacing
+      let expensesCurrentY = expensesStartY;
+
+      // Check if header position + estimated table height would exceed available space
+      if (
+        expensesCurrentY + estimatedExpensesTableHeight > 
+        pageHeight - footerMargin
+      ) {
+        doc.addPage();
+        expensesCurrentY = 20; // Start from top of new page
+      }
+
       // Add header for expenses with centered text
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
-      const expensesHeader = "Rincian Pengeluaran Tahun Ini:";
+      const expensesHeader = "Rincian Pengeluaran Tahun Ini";
       doc.setTextColor(0, 0, 0);
       doc.text(
         expensesHeader,
         doc.internal.pageSize.width / 2,
-        expensesStartY,
+        expensesCurrentY,
         { align: "center" },
       ); // Center text
       doc.setFont("helvetica", "normal");
       doc.setTextColor(0, 0, 0); // Reset text color
 
+      // Calculate total expenses
+      const totalExpenses = reportData.expenses.reduce((sum, expense) => sum + expense.nominal, 0);
+      
       // Prepare data for the table
-      const expensesData: string[][] = reportData.expenses.map((expense) => {
+      const expensesData: string[][] = reportData.expenses.map((expense, index) => {
         const row: string[] = [
+          (index + 1).toString(), // Add index column
           new Date(expense.date).toLocaleDateString("id-ID"),
           expense.category
             ? expense.category.charAt(0).toUpperCase() +
@@ -1488,31 +1621,39 @@ export async function exportAnnualReportToPDF(
         return row;
       });
 
+      // Add total row to the expenses table
+      const finalExpensesData = [
+        ...expensesData,
+        ["", "", "", "Total", formatCurrency(totalExpenses)] // Total row with merged cells where appropriate
+      ];
+
       // Add table for expenses with improved styling
       autoTable(doc, {
-        head: [["Waktu", "Kategori", "Deskripsi", "Nominal"]],
-        body: expensesData,
-        startY: expensesStartY + 12, // Start below the header
+        head: [["#", "Tanggal", "Kategori", "Deskripsi", "Nominal"]],
+        body: finalExpensesData,
+        startY: expensesCurrentY + 12, // Start below the header
         theme: "grid",
         headStyles: {
           fillColor: [219, 68, 55], // Google Red
           textColor: [255, 255, 255],
           fontSize: 11,
           fontStyle: "bold",
+          halign: 'center' // Center align header
         },
         bodyStyles: {
           fontSize: 10,
-          cellPadding: 5,
+          cellPadding: 3,
         },
         alternateRowStyles: {
           fillColor: [245, 245, 245],
         },
         tableWidth: "wrap",
         columnStyles: {
-          0: { cellWidth: "auto" }, // Date column - auto adjust
-          1: { cellWidth: "auto" }, // Category column - auto adjust
-          2: { cellWidth: 50, overflow: "linebreak" }, // Description column - limited width with line break
-          3: { cellWidth: "auto", halign: "right" }, // Amount column - auto adjust
+          0: { cellWidth: 10, halign: "center" }, // Index column - fixed width, center aligned
+          1: { cellWidth: "auto" }, // Date column - auto adjust
+          2: { cellWidth: "auto" }, // Category column - auto adjust
+          3: { cellWidth: 95, overflow: "linebreak" }, // Description column - limited width with line break
+          4: { cellWidth: "auto", halign: "right" }, // Amount column - auto adjust
         },
       });
     }
@@ -1592,29 +1733,40 @@ export async function exportCustomerReportToPDF(
     doc.setFont("helvetica", "normal");
     doc.setTextColor(0, 0, 0); // Reset text color
 
-    doc.text(
-      `Total Pelanggan: ${reportData.totalCustomers}`,
-      summaryStartX,
-      summaryY + 10,
-    );
-    doc.text(
-      `Total Orders: ${reportData.totalOrders}`,
-      summaryStartX,
-      summaryY + 20,
-    );
-    doc.text(
-      `Total Pendapatan: ${formatCurrency(reportData.totalRevenue)}`,
-      summaryStartX + 95,
-      summaryY + 10,
-    );
-    doc.text(
-      `Rata-rata Nilai Pesanan: ${formatCurrency(reportData.averageOrderValue)}`,
-      summaryStartX + 95,
-      summaryY + 20,
-    );
+    // Create a summary table for customer report
+    autoTable(doc, {
+      head: [["Indikator", "Jumlah"]],
+      body: [
+        ["Total Pelanggan", reportData.totalCustomers.toString()],
+        ["Total Orders", reportData.totalOrders.toString()],
+        ["Total Pendapatan", formatCurrency(reportData.totalRevenue)],
+        ["Rata-rata Nilai Pesanan", formatCurrency(reportData.averageOrderValue)],
+      ],
+      startY: summaryY + 10, // Start below the header
+      theme: "grid",
+      headStyles: {
+        fillColor: [66, 133, 244], // Google Blue
+        textColor: [255, 255, 255],
+        fontSize: 11,
+        fontStyle: "bold",
+        halign: 'center' // Center align header
+      },
+      bodyStyles: {
+        fontSize: 10,
+        cellPadding: 5,
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245],
+      },
+      tableWidth: 'auto',
+      columnStyles: {
+        0: { cellWidth: 'auto', halign: 'left' }, // Indicator column
+        1: { cellWidth: 'auto', halign: 'right' }, // Amount column - right aligned
+      },
+    });
 
     // Add order status summary - positioned below summary section with adequate spacing
-    const statusY = summaryY + 45; // Space below summary section
+    const statusY = (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 10 : summaryY + 45; // Space below summary section
 
     // Add a header for Status Order
     doc.setFontSize(12);
@@ -1634,61 +1786,47 @@ export async function exportCustomerReportToPDF(
       finished: reportData.customerOrders.filter(order => order.status === 'finished').length,
       canceled: reportData.customerOrders.filter(order => order.status === 'canceled').length,
     };
-    
-    // Organize status in a grid layout with colored indicators
-    const statusItems = [
-      {
-        label: "Pending",
-        value: ordersByStatus.pending,
-        color: [255, 165, 0],
-      }, // Orange
-      {
-        label: "Processing",
-        value: ordersByStatus.processing,
-        color: [65, 105, 225],
-      }, // Royal Blue
-      {
-        label: "Selesai",
-        value: ordersByStatus.finished,
-        color: [34, 139, 34],
-      }, // Forest Green
-      {
-        label: "Dibatalkan",
-        value: ordersByStatus.canceled,
-        color: [220, 20, 60],
-      }, // Crimson
-    ];
 
-    const itemWidth = 45; // Width for each status item (180/4)
-    const statusStartX = 20; // Starting X position for status items
-
-    for (let i = 0; i < statusItems.length; i++) {
-      const item = statusItems[i];
-      const itemX = statusStartX + i * itemWidth;
-
-      // Draw colored indicator
-      doc.setFillColor(item.color[0], item.color[1], item.color[2]);
-      doc.rect(itemX, statusY + 8, 6, 6, "F");
-
-      // Draw status text with colored label
-      doc.setTextColor(item.color[0], item.color[1], item.color[2]);
-      doc.setFont("helvetica", "bold");
-      doc.text(item.label, itemX + 8, statusY + 10);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(0, 0, 0); // Reset to black
-
-      // Draw the value
-      doc.text(item.value.toString(), itemX + 8, statusY + 20);
-    }
+    // Create a table for order status summary
+    autoTable(doc, {
+      head: [["Status", "Jumlah"]],
+      body: [
+        [capitalizeFirstLetter("pending"), ordersByStatus.pending.toString()],
+        [capitalizeFirstLetter("processing"), ordersByStatus.processing.toString()],
+        [capitalizeFirstLetter("finished"), ordersByStatus.finished.toString()],
+        [capitalizeFirstLetter("canceled"), ordersByStatus.canceled.toString()],
+      ],
+      startY: statusY + 12, // Start below the header
+      theme: "grid",
+      headStyles: {
+        fillColor: [66, 133, 244], // Google Blue
+        textColor: [255, 255, 255],
+        fontSize: 11,
+        fontStyle: "bold",
+        halign: 'center' // Center align header
+      },
+      bodyStyles: {
+        fontSize: 10,
+        cellPadding: 5,
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245],
+      },
+      tableWidth: 'auto',
+      columnStyles: {
+        0: { cellWidth: 'auto', halign: 'left' }, // Status column
+        1: { cellWidth: 'auto', halign: 'center' }, // Count column - center aligned
+      },
+    });
 
     // Add top customers table
     if (reportData.topCustomers.length > 0) {
-      const topCustomersStartY = statusY + 42; // Space below status section
+      const topCustomersStartY = (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 10 : statusY + 42; // Space below status section
 
       // Add header for top customers with centered text
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
-      const topCustomersHeader = "Pelanggan Terbaik:";
+      const topCustomersHeader = "Pelanggan Terbaik";
       doc.setTextColor(0, 0, 0);
       doc.text(
         topCustomersHeader,
@@ -1750,6 +1888,7 @@ export async function exportCustomerReportToPDF(
           fontSize: 10, // Smaller header font
           fontStyle: "bold",
           cellPadding: 3,
+          halign: 'center' // Center align header
         },
         bodyStyles: {
           fontSize: 9, // Smaller body font
@@ -1780,7 +1919,7 @@ export async function exportCustomerReportToPDF(
       // Add header for customer orders with centered text
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
-      const customerOrdersHeader = "Rincian Pesanan Pelanggan:";
+      const customerOrdersHeader = "Rincian Pesanan Pelanggan";
       doc.setTextColor(0, 0, 0);
       doc.text(
         customerOrdersHeader,
@@ -1801,19 +1940,28 @@ export async function exportCustomerReportToPDF(
             order.orderNumber,
             order.customerName,
             order.customerPhone,
-            order.status,
+            capitalizeFirstLetter(order.status),
             formatCurrency(order.totalAmount),
           ];
           return row;
         },
       );
+      
+      // Calculate total revenue from customer orders
+      const totalCustomerOrdersRevenue = reportData.customerOrders.reduce((sum, order) => sum + order.totalAmount, 0);
+
+      // Add total row to the customer orders table
+      const finalCustomerOrdersData = [
+        ...customerOrdersData,
+        ["", "", "", "", "Total", formatCurrency(totalCustomerOrdersRevenue)] // Total row with merged cells where appropriate
+      ];
 
       // Add table for customer orders with improved styling
       autoTable(doc, {
         head: [
-          ["Waktu", "No. Order", "Pelanggan", "No. Telepon", "Status", "Total"],
+          ["Tanggal", "No. Order", "Pelanggan", "No. Telepon", "Status", "Total"],
         ],
-        body: customerOrdersData,
+        body: finalCustomerOrdersData,
         startY: customerOrdersStartY + 10, // Start below the header (reduced spacing)
         theme: "grid",
         alternateRowStyles: {
@@ -1840,6 +1988,7 @@ export async function exportCustomerReportToPDF(
           fontSize: 10, // Smaller header font
           fontStyle: "bold",
           cellPadding: 3,
+          halign: 'center' // Center align header
         },
         bodyStyles: {
           fontSize: 9, // Smaller body font
@@ -1928,39 +2077,50 @@ export async function exportProductReportToPDF(
     doc.setFont("helvetica", "normal");
     doc.setTextColor(0, 0, 0); // Reset text color
 
-    doc.text(
-      `Total Produk: ${reportData.totalProducts}`,
-      summaryStartX,
-      summaryY + 10,
-    );
-    doc.text(
-      `Total Terjual: ${reportData.totalSold}`,
-      summaryStartX,
-      summaryY + 20,
-    );
-    doc.text(
-      `Total Pendapatan: ${formatCurrency(reportData.totalRevenue)}`,
-      summaryStartX + 95,
-      summaryY + 10,
-    );
-    doc.text(
-      `Harga Rata-rata: ${formatCurrency(
-        reportData.totalSold > 0
-          ? reportData.totalRevenue / reportData.totalSold
-          : 0,
-      )}`,
-      summaryStartX + 95,
-      summaryY + 20,
-    );
+    // Create a summary table for product report
+    autoTable(doc, {
+      head: [["Indikator", "Jumlah"]],
+      body: [
+        ["Total Produk", reportData.totalProducts.toString()],
+        ["Total Terjual", reportData.totalSold.toString()],
+        ["Total Pendapatan", formatCurrency(reportData.totalRevenue)],
+        ["Harga Rata-rata", formatCurrency(
+          reportData.totalSold > 0
+            ? reportData.totalRevenue / reportData.totalSold
+            : 0,
+        )],
+      ],
+      startY: summaryY + 10, // Start below the header
+      theme: "grid",
+      headStyles: {
+        fillColor: [66, 133, 244], // Google Blue
+        textColor: [255, 255, 255],
+        fontSize: 11,
+        fontStyle: "bold",
+        halign: 'center' // Center align header
+      },
+      bodyStyles: {
+        fontSize: 10,
+        cellPadding: 5,
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245],
+      },
+      tableWidth: 'auto',
+      columnStyles: {
+        0: { cellWidth: 'auto', halign: 'left' }, // Indicator column
+        1: { cellWidth: 'auto', halign: 'right' }, // Amount column - right aligned
+      },
+    });
 
     // Add top selling products table
     if (reportData.topSellingProducts.length > 0) {
-      const topProductsStartY = summaryY + 42; // Space below summary section
+      const topProductsStartY = (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 10 : summaryY + 42; // Space below summary section
 
       // Add header for top products with centered text
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
-      const topProductsHeader = "Produk Terlaris:";
+      const topProductsHeader = "Produk Terlaris";
       doc.setTextColor(0, 0, 0);
       doc.text(
         topProductsHeader,
@@ -1995,9 +2155,9 @@ export async function exportProductReportToPDF(
         head: [
           [
             "Nama Produk",
-            "Kode Dasar",
+            "Kode",
             "Kategori",
-            "Jumlah Terjual",
+            "Terjual",
             "Total Pendapatan",
             "Harga Rata-rata",
           ],
@@ -2029,6 +2189,7 @@ export async function exportProductReportToPDF(
           fontSize: 10, // Smaller header font
           fontStyle: "bold",
           cellPadding: 3,
+          halign: 'center' // Center align header
         },
         bodyStyles: {
           fontSize: 9, // Smaller body font
@@ -2059,7 +2220,7 @@ export async function exportProductReportToPDF(
       // Add header for product sales with centered text
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
-      const productSalesHeader = "Rincian Penjualan Produk:";
+      const productSalesHeader = "Rincian Penjualan Produk";
       doc.setTextColor(0, 0, 0);
       doc.text(
         productSalesHeader,
@@ -2091,9 +2252,9 @@ export async function exportProductReportToPDF(
         head: [
           [
             "Nama Produk",
-            "Kode Dasar",
+            "Kode",
             "Kategori",
-            "Jumlah Terjual",
+            "Terjual",
             "Total Pendapatan",
           ],
         ],
@@ -2123,6 +2284,7 @@ export async function exportProductReportToPDF(
           fontSize: 10, // Smaller header font
           fontStyle: "bold",
           cellPadding: 3,
+          halign: 'center' // Center align header
         },
         bodyStyles: {
           fontSize: 9, // Smaller body font
@@ -2211,79 +2373,93 @@ export async function exportRevenueReportToPDF(
     doc.setFont("helvetica", "normal");
     doc.setTextColor(0, 0, 0); // Reset text color
 
-    doc.text(
-      `Total Pendapatan: ${formatCurrency(reportData.totalRevenue)}`,
-      summaryStartX,
-      summaryY + 10,
-    );
-    doc.text(
-      `Total Pengeluaran: ${formatCurrency(reportData.totalExpenses)}`,
-      summaryStartX,
-      summaryY + 20,
-    );
-    doc.text(
-      `Pendapatan Bersih: ${formatCurrency(reportData.netRevenue)}`,
-      summaryStartX + 95,
-      summaryY + 10,
-    );
-    doc.text(
-      `Total Order: ${reportData.totalOrders}`,
-      summaryStartX + 95,
-      summaryY + 20,
-    );
+    // Create a summary table for revenue report
+    autoTable(doc, {
+      head: [["Indikator", "Jumlah"]],
+      body: [
+        ["Total Pendapatan", formatCurrency(reportData.totalRevenue)],
+        ["Total Pengeluaran", formatCurrency(reportData.totalExpenses)],
+        ["Pendapatan Bersih", formatCurrency(reportData.netRevenue)],
+        ["Total Order", reportData.totalOrders.toString()],
+      ],
+      startY: summaryY + 10, // Start below the header
+      theme: "grid",
+      headStyles: {
+        fillColor: [66, 133, 244], // Google Blue
+        textColor: [255, 255, 255],
+        fontSize: 11,
+        fontStyle: "bold",
+        halign: 'center' // Center align header
+      },
+      bodyStyles: {
+        fontSize: 10,
+        cellPadding: 5,
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245],
+      },
+      tableWidth: 'auto',
+      columnStyles: {
+        0: { cellWidth: 'auto', halign: 'left' }, // Indicator column
+        1: { cellWidth: 'auto', halign: 'right' }, // Amount column - right aligned
+      },
+    });
 
-    // Add top revenue products table
-    if (reportData.topRevenueProducts.length > 0) {
-      const topProductsStartY = summaryY + 42; // Space below summary section
+    // Calculate starting Y position for the top revenue products table based on the summary table
+    const topProductsStartY = (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 10 : summaryY + 42; // Space below summary section
 
-      // Add header for top products with centered text
-      doc.setFontSize(12);
-      doc.setFont("helvetica", "bold");
-      const topProductsHeader = "Produk Pendapatan Tertinggi:";
-      doc.setTextColor(0, 0, 0);
-      doc.text(
-        topProductsHeader,
-        doc.internal.pageSize.width / 2,
-        topProductsStartY,
-        { align: "center" },
-      ); // Center text
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(0, 0, 0); // Reset text color
+    // Add header for top products with centered text
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    const topProductsHeader = "Produk Pendapatan Tertinggi";
+    doc.setTextColor(0, 0, 0);
+    doc.text(
+      topProductsHeader,
+      doc.internal.pageSize.width / 2,
+      topProductsStartY,
+      { align: "center" },
+    ); // Center text
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(0, 0, 0); // Reset text color
 
-      // Table for top revenue products
-      autoTable(doc, {
-        head: [["#", "Nama Produk", "Jumlah Terjual", "Total Pendapatan"]],
-        body: reportData.topRevenueProducts.map((item, index) => [
-          index + 1,
-          item.name,
-          item.totalSold,
-          formatCurrency(item.totalRevenue),
-        ]),
-        startY: topProductsStartY + 5, // Position after the header text
-        styles: {
-          cellPadding: 3,
-          fontSize: 9, // Smaller font size for better fit
-        },
-        headStyles: {
-          fillColor: [66, 133, 244], // Google Blue
-          textColor: [255, 255, 255],
-          fontSize: 10, // Smaller header font
-          fontStyle: "bold",
-          cellPadding: 3,
-        },
-        bodyStyles: {
-          fontSize: 9, // Smaller body font
-          cellPadding: 3,
-        },
-        // Better page break handling
-        pageBreak: 'auto',
-        rowPageBreak: 'avoid',
-      });
-    }
+    // Table for top revenue products
+    autoTable(doc, {
+      head: [["#", "Nama Produk", "Terjual", "Total Pendapatan"]],
+      body: reportData.topRevenueProducts.map((item, index) => [
+        index + 1,
+        item.name,
+        item.totalSold,
+        formatCurrency(item.totalRevenue),
+      ]),
+      startY: topProductsStartY + 5, // Position after the header text
+      styles: {
+        cellPadding: 3,
+        fontSize: 9, // Smaller font size for better fit
+      },
+      headStyles: {
+        fillColor: [66, 133, 244], // Google Blue
+        textColor: [255, 255, 255],
+        fontSize: 10, // Smaller header font
+        fontStyle: "bold",
+        cellPadding: 3,
+        halign: 'center' // Center align header
+      },
+      bodyStyles: {
+        fontSize: 9, // Smaller body font
+        cellPadding: 3,
+      },
+      columnStyles: {
+        2: { halign: 'center' }, // Center align the "Terjual" column (index 2)
+        3: { halign: 'right' }, // Right align the "Total Pendapatan" column (index 3)
+      },
+      // Better page break handling
+      pageBreak: 'auto',
+      rowPageBreak: 'avoid',
+    });
 
     // Add orders table if there are any orders
     if (reportData.orders.length > 0) {
-      const ordersHeader = "Daftar Order:";
+      const ordersHeader = "Daftar Order";
       
       // Add header text for orders
       doc.setFontSize(12);
@@ -2305,24 +2481,36 @@ export async function exportRevenueReportToPDF(
         summaryY + 42 + 25 + 20 :
         summaryY + 42 + 20;
       
+      // Calculate total revenue from orders
+      const totalOrdersRevenue = reportData.orders.reduce((sum, order) => sum + order.totalAmount, 0);
+      
+      // Prepare data for the orders table
+      const ordersData: string[][] = reportData.orders.map((order, index) => [
+        index + 1,
+        new Date(order.createdAt).toLocaleDateString("id-ID", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        }),
+        order.orderNumber,
+        order.user.name,
+        capitalizeFirstLetter(order.status),
+        capitalizeFirstLetter(order.paymentMethod),
+        formatCurrency(order.totalAmount),
+      ]);
+      
+      // Add total row to the orders table
+      const finalOrdersData = [
+        ...ordersData,
+        ["", "", "", "", "", "Total", formatCurrency(totalOrdersRevenue)] // Total row with merged cells where appropriate
+      ];
+
       // Table for orders
       autoTable(doc, {
         head: [
-          ["#", "No. Order", "Status", "Metode Pembayaran", "Jumlah", "Nama Kasir", "Tanggal"],
+          ["#", "Tanggal", "No. Order", "Nama Kasir", "Status", "Pembayaran", "Jumlah"],
         ],
-        body: reportData.orders.map((order, index) => [
-          index + 1,
-          order.orderNumber,
-          order.status,
-          order.paymentMethod,
-          formatCurrency(order.totalAmount),
-          order.user.name,
-          new Date(order.createdAt).toLocaleDateString("id-ID", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-          }),
-        ]),
+        body: finalOrdersData,
         startY: ordersStartY,
         styles: {
           cellPadding: 3,
@@ -2334,6 +2522,7 @@ export async function exportRevenueReportToPDF(
           fontSize: 9, // Smaller header font
           fontStyle: "bold",
           cellPadding: 3,
+          halign: 'center' // Center align header
         },
         bodyStyles: {
           fontSize: 8, // Smaller body font
@@ -2342,15 +2531,15 @@ export async function exportRevenueReportToPDF(
         // Better page break handling
         pageBreak: 'auto',
         rowPageBreak: 'avoid',
-        // Column widths
+        // Column widths and alignments
         columnStyles: {
           0: { cellWidth: 10 }, // Index column
-          1: { cellWidth: 30 }, // Order number column
-          2: { cellWidth: 25 }, // Status column
-          3: { cellWidth: 35 }, // Payment method column
-          4: { cellWidth: 30 }, // Amount column - fixed width
-          5: { cellWidth: 30 }, // Cashier column - fixed width
-          6: { cellWidth: 30 }, // Date column - fixed width
+          1: { cellWidth: 30 }, // Date column - fixed width
+          2: { cellWidth: 30 }, // Order number column
+          3: { cellWidth: 30 }, // Cashier column - fixed width
+          4: { cellWidth: 25 }, // Status column
+          5: { cellWidth: 35 }, // Payment method column
+          6: { cellWidth: 30, halign: 'right' }, // Amount column - fixed width, right aligned
         },
       });
     }
@@ -2432,29 +2621,45 @@ export async function exportExpenseReportToPDF(
     doc.setFont("helvetica", "normal");
     doc.setTextColor(0, 0, 0); // Reset text color
 
-    doc.text(
-      `Total Pengeluaran: ${formatCurrency(reportData.totalExpenses)}`,
-      summaryStartX,
-      summaryY + 10,
-    );
-    doc.text(
-      `Total Pendapatan: ${formatCurrency(reportData.totalRevenue)}`,
-      summaryStartX,
-      summaryY + 20,
-    );
-    doc.text(
-      `Total Pesanan: ${reportData.totalOrders}`,
-      summaryStartX + 95,
-      summaryY + 10,
-    );
+    // Create a summary table for expense report
+    autoTable(doc, {
+      head: [["Indikator", "Jumlah"]],
+      body: [
+        ["Total Pengeluaran", formatCurrency(reportData.totalExpenses)],
+        ["Total Pendapatan", formatCurrency(reportData.totalRevenue)],
+        ["Total Pesanan", reportData.totalOrders.toString()],
+        ["Keuntungan Bersih", formatCurrency(reportData.totalRevenue - reportData.totalExpenses)],
+      ],
+      startY: summaryY + 10, // Start below the header
+      theme: "grid",
+      headStyles: {
+        fillColor: [66, 133, 244], // Google Blue
+        textColor: [255, 255, 255],
+        fontSize: 11,
+        fontStyle: "bold",
+        halign: 'center' // Center align header
+      },
+      bodyStyles: {
+        fontSize: 10,
+        cellPadding: 5,
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245],
+      },
+      tableWidth: 'auto',
+      columnStyles: {
+        0: { cellWidth: 'auto', halign: 'left' }, // Indicator column
+        1: { cellWidth: 'auto', halign: 'right' }, // Amount column - right aligned
+      },
+    });
 
-    // Add expense categories table
-    const categoriesStartY = summaryY + 42; // Space below summary section
+    // Calculate starting Y position for the expense categories table based on the summary table
+    const categoriesStartY = (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 10 : summaryY + 42; // Space below summary section
 
     // Add header for expense categories with centered text
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
-    const categoriesHeader = "Kategori Pengeluaran:";
+    const categoriesHeader = "Kategori Pengeluaran";
     doc.setTextColor(0, 0, 0);
     doc.text(
       categoriesHeader,
@@ -2485,6 +2690,7 @@ export async function exportExpenseReportToPDF(
         fontSize: 10, // Smaller header font
         fontStyle: "bold",
         cellPadding: 3,
+        halign: 'center' // Center align header
       },
       bodyStyles: {
         fontSize: 9, // Smaller body font
@@ -2493,11 +2699,15 @@ export async function exportExpenseReportToPDF(
       // Better page break handling
       pageBreak: 'auto',
       rowPageBreak: 'avoid',
+      // Column styles for right alignment on amount column
+      columnStyles: {
+        2: { halign: 'right' }, // Amount column - right aligned
+      },
     });
 
     // Add expenses table if there are any expenses
     if (reportData.expenses.length > 0) {
-      const expensesHeader = "Daftar Pengeluaran:";
+      const expensesHeader = "Daftar Pengeluaran";
       
       // Add header text for expenses
       doc.setFontSize(12);
@@ -2513,25 +2723,38 @@ export async function exportExpenseReportToPDF(
       // Calculate starting Y position for the table
       const expensesStartY = (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 20 : categoriesStartY + 5 + 30;
       
+      // Calculate total expenses
+      const totalExpenses = reportData.expenses.reduce((sum, expense) => sum + expense.nominal, 0);
+      
+      // Prepare data for the expenses table with Nominal moved to the end
+      const expensesData: string[][] = reportData.expenses.map((expense, index) => [
+        index + 1,
+        new Date(expense.date).toLocaleDateString("id-ID", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        }),
+        expense.category === 'operasional' ? 'Operasional' : 
+        expense.category === 'marketing' ? 'Marketing' : 
+        expense.category === 'gaji' ? 'Gaji' : 'Lainnya',
+        expense.description || '-',
+        formatCurrency(expense.nominal),
+      ]);
+      
+      // Add total row to the expenses table
+      const finalExpensesData = [
+        ...expensesData,
+        ["", "", "", "Total", formatCurrency(totalExpenses)] // Total row with merged cells where appropriate
+      ];
+
       // Table for expenses
       autoTable(doc, {
         head: [
-          ["#", "Kategori", "Nominal", "Deskripsi", "Tanggal"],
+          ["#", "Tanggal", "Kategori", "Deskripsi", "Nominal"],
         ],
-        body: reportData.expenses.map((expense, index) => [
-          index + 1,
-          expense.category === 'operasional' ? 'Operasional' : 
-          expense.category === 'marketing' ? 'Marketing' : 
-          expense.category === 'gaji' ? 'Gaji' : 'Lainnya',
-          formatCurrency(expense.nominal),
-          expense.description || '-',
-          new Date(expense.date).toLocaleDateString("id-ID", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-          }),
-        ]),
+        body: finalExpensesData,
         startY: expensesStartY,
+        tableWidth: 'auto', // Make table width auto
         styles: {
           cellPadding: 3,
           fontSize: 8, // Smaller font size for better fit
@@ -2542,6 +2765,7 @@ export async function exportExpenseReportToPDF(
           fontSize: 9, // Smaller header font
           fontStyle: "bold",
           cellPadding: 3,
+          halign: 'center' // Center align header
         },
         bodyStyles: {
           fontSize: 8, // Smaller body font
@@ -2550,13 +2774,13 @@ export async function exportExpenseReportToPDF(
         // Better page break handling
         pageBreak: 'auto',
         rowPageBreak: 'avoid',
-        // Column widths
+        // Column widths and alignments
         columnStyles: {
           0: { cellWidth: 8 }, // Index column
-          1: { cellWidth: 30 }, // Category column
-          2: { cellWidth: 30 }, // Amount column
-          3: { cellWidth: 45 }, // Description column
-          4: { cellWidth: 25 }, // Date column
+          1: { cellWidth: 25 }, // Date column
+          2: { cellWidth: 30 }, // Category column
+          3: { cellWidth: "auto" }, // Description column
+          4: { cellWidth: 30, halign: 'right' }, // Amount column - right aligned (now in position 4)
         },
       });
     }
@@ -2638,40 +2862,49 @@ export async function exportMarginReportToPDF(
     doc.setFont("helvetica", "normal");
     doc.setTextColor(0, 0, 0); // Reset text color
 
-    doc.text(
-      `Total Pendapatan: ${formatCurrency(reportData.totalRevenue)}`,
-      summaryStartX,
-      summaryY + 10,
-    );
-    doc.text(
-      `Total Biaya: ${formatCurrency(reportData.totalCost)}`,
-      summaryStartX,
-      summaryY + 20,
-    );
-    doc.text(
-      `Total Pendapatan: ${formatCurrency(reportData.totalProfit)}`,
-      summaryStartX + 95,
-      summaryY + 10,
-    );
-    doc.text(
-      `Gross Margin: ${reportData.grossMargin?.toFixed(2) || 0}%`,
-      summaryStartX + 95,
-      summaryY + 20,
-    );
-    doc.text(
-      `Net Margin: ${reportData.netMargin?.toFixed(2) || 0}%`,
-      summaryStartX + 95,
-      summaryY + 30,
-    );
+    // Create a summary table for margin report
+    autoTable(doc, {
+      head: [["Indikator", "Jumlah"]],
+      body: [
+        ["Total Pendapatan", formatCurrency(reportData.totalRevenue)],
+        ["Total Biaya", formatCurrency(reportData.totalCost)],
+        ["Keuntungan Kotor", formatCurrency(reportData.totalRevenue - reportData.totalCost)],
+        ["Keuntungan Bersih", formatCurrency(reportData.totalProfit)],
+        ["Gross Margin", `${reportData.grossMargin?.toFixed(2) || 0}%`],
+        ["Net Margin", `${reportData.netMargin?.toFixed(2) || 0}%`],
+      ],
+      startY: summaryY + 10, // Start below the header
+      theme: "grid",
+      headStyles: {
+        fillColor: [66, 133, 244], // Google Blue
+        textColor: [255, 255, 255],
+        fontSize: 11,
+        fontStyle: "bold",
+        halign: 'center' // Center align header
+      },
+      bodyStyles: {
+        fontSize: 10,
+        cellPadding: 5,
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245],
+      },
+      tableWidth: 'auto',
+      columnStyles: {
+        0: { cellWidth: 'auto', halign: 'left' }, // Indicator column
+        1: { cellWidth: 'auto', halign: 'right' }, // Amount column - right aligned
+      },
+    });
 
     // Add product margins table
     if (reportData.productMargins.length > 0) {
-      const productMarginsStartY = summaryY + 65; // Space below summary section
+      // Calculate starting Y position based on the finalY of the summary table
+      const productMarginsStartY = (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 15 : summaryY + 65; // Space below summary section
 
       // Add header for product margins with centered text
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
-      const productMarginsHeader = "Margin Produk Teratas:";
+      const productMarginsHeader = "Margin Produk Teratas";
       doc.setTextColor(0, 0, 0);
       doc.text(
         productMarginsHeader,
@@ -2682,18 +2915,34 @@ export async function exportMarginReportToPDF(
       doc.setFont("helvetica", "normal");
       doc.setTextColor(0, 0, 0); // Reset text color
 
+      // Calculate totals for product margins
+      const totalCost = reportData.productMargins.reduce((sum, product) => sum + product.cost, 0);
+      const totalRevenue = reportData.productMargins.reduce((sum, product) => sum + product.revenue, 0);
+      const totalProfit = reportData.productMargins.reduce((sum, product) => sum + product.profit, 0);
+      
       // Table for product margins
       autoTable(doc, {
         head: [["#", "Nama Produk", "Biaya", "Pendapatan", "Laba", "Margin"]],
-        body: reportData.productMargins.map((product, index) => [
-          index + 1,
-          product.name,
-          formatCurrency(product.cost),
-          formatCurrency(product.revenue),
-          formatCurrency(product.profit),
-          `${product.margin.toFixed(2)}%`,
-        ]),
-        startY: productMarginsStartY + 5, // Position after the header text
+        body: [
+          ...reportData.productMargins.map((product, index) => [
+            index + 1,
+            product.name,
+            formatCurrency(product.cost),
+            formatCurrency(product.revenue),
+            formatCurrency(product.profit),
+            `${product.margin.toFixed(2)}%`,
+          ]),
+          // Add total row
+          [
+            "", // Index column
+            "Total", // Product name column
+            formatCurrency(totalCost), // Cost column
+            formatCurrency(totalRevenue), // Revenue column
+            formatCurrency(totalProfit), // Profit column
+            "" // Margin column
+          ]
+        ],
+        startY: productMarginsStartY + 12, // Position after the header text (increased from 5 to 12 to account for the header)
         styles: {
           cellPadding: 3,
           fontSize: 9, // Smaller font size for better fit
@@ -2704,6 +2953,7 @@ export async function exportMarginReportToPDF(
           fontSize: 10, // Smaller header font
           fontStyle: "bold",
           cellPadding: 3,
+          halign: 'center' // Center align header
         },
         bodyStyles: {
           fontSize: 9, // Smaller body font
@@ -2712,12 +2962,18 @@ export async function exportMarginReportToPDF(
         // Better page break handling
         pageBreak: 'auto',
         rowPageBreak: 'avoid',
+        // Column styles for right alignment on monetary columns
+        columnStyles: {
+          2: { halign: 'right' }, // Cost column - right aligned
+          3: { halign: 'right' }, // Revenue column - right aligned
+          4: { halign: 'right' }, // Profit column - right aligned
+        },
       });
     }
 
     // Add orders table if there are any orders
     if (reportData.orders.length > 0) {
-      const ordersHeader = "Daftar Pesanan dengan Margin:";
+      const ordersHeader = "Daftar Pesanan dengan Margin";
       
       // Add header text for orders
       doc.setFontSize(12);
@@ -2739,28 +2995,45 @@ export async function exportMarginReportToPDF(
         summaryY + 65 + 25 + 20 :
         summaryY + 65 + 20;
       
+      // Calculate totals for orders
+      const totalOrderAmount = reportData.orders.reduce((sum, order) => sum + order.totalAmount, 0);
+      const totalOrderCost = reportData.orders.reduce((sum, order) => sum + order.cost, 0);
+      const totalOrderProfit = reportData.orders.reduce((sum, order) => sum + order.profit, 0);
+      
       // Table for orders
       autoTable(doc, {
         head: [
-          ["#", "No. Order", "Total", "Biaya", "Laba", "Margin", "Tanggal"],
+          ["#", "Tanggal", "No. Order", "Total", "Biaya", "Laba", "Margin"],
         ],
-        body: reportData.orders.map((order, index) => [
-          index + 1,
-          order.orderNumber,
-          formatCurrency(order.totalAmount),
-          formatCurrency(order.cost),
-          formatCurrency(order.profit),
-          `${order.margin.toFixed(2)}%`,
-          new Date(order.createdAt).toLocaleDateString("id-ID", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-          }),
-        ]),
+        body: [
+          ...reportData.orders.map((order, index) => [
+            index + 1,
+            new Date(order.createdAt).toLocaleDateString("id-ID", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            }),
+            order.orderNumber,
+            formatCurrency(order.totalAmount),
+            formatCurrency(order.cost),
+            formatCurrency(order.profit),
+            `${order.margin.toFixed(2)}%`,
+          ]),
+          // Add total row
+          [
+            "", // Index column
+            "Total", // Date column
+            "", // Order number column
+            formatCurrency(totalOrderAmount), // Total column
+            formatCurrency(totalOrderCost), // Cost column
+            formatCurrency(totalOrderProfit), // Profit column
+            "" // Margin column
+          ]
+        ],
         startY: ordersStartY,
         styles: {
           cellPadding: 3,
-          fontSize: 8, // Smaller font size for better fit
+          fontSize: 9, // Smaller font size for better fit
         },
         headStyles: {
           fillColor: [52, 199, 89], // Green
@@ -2768,23 +3041,24 @@ export async function exportMarginReportToPDF(
           fontSize: 9, // Smaller header font
           fontStyle: "bold",
           cellPadding: 3,
+          halign: 'center' // Center align header
         },
         bodyStyles: {
-          fontSize: 8, // Smaller body font
+          fontSize: 9, // Smaller body font
           cellPadding: 3,
         },
         // Better page break handling
         pageBreak: 'auto',
         rowPageBreak: 'avoid',
-        // Column widths
+        // Column widths and alignments
         columnStyles: {
-          0: { cellWidth: 8 }, // Index column
-          1: { cellWidth: 30 }, // Order number column
-          2: { cellWidth: 25 }, // Total column
-          3: { cellWidth: 25 }, // Cost column
-          4: { cellWidth: 25 }, // Profit column
-          5: { cellWidth: 20 }, // Margin column
-          6: { cellWidth: 25 }, // Date column
+          0: { cellWidth: 10 }, // Index column
+          1: { cellWidth: "auto" }, // Date column
+          2: { cellWidth: "auto" }, // Order number column
+          3: { cellWidth: "auto", halign: 'right' }, // Total column - right aligned
+          4: { cellWidth: "auto", halign: 'right' }, // Cost column - right aligned
+          5: { cellWidth: "auto", halign: 'right' }, // Profit column - right aligned
+          6: { cellWidth: 20 }, // Margin column
         },
       });
     }
