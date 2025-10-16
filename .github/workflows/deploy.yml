@@ -1,0 +1,53 @@
+name: Deploy to Local Docker
+
+on:
+  workflow_run:
+    workflows: ["Release"]
+    types:
+      - completed
+
+jobs:
+  deploy-local:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Deploy to local Docker via SSH
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.LOCAL_HOST }}
+          username: ${{ secrets.LOCAL_USER }}
+          key: ${{ secrets.LOCAL_SSH_KEY }}
+          port: 22
+          script: |
+            echo "Pull latest Docker image"
+            docker pull ghcr.io/${{ github.repository }}:latest
+
+            echo "Create docker-compose override for production"
+            cat > docker-compose.external-db.yml << EOF
+            version: '3.8'
+            services:
+              app:
+                image: ghcr.io/${{ github.repository }}:latest
+                ports:
+                  - "3000:3000"
+                environment:
+                  - DATABASE_URL=${{ secrets.DATABASE_URL }}
+                  - JWT_SECRET=${{ secrets.JWT_SECRET }}
+                  - NODE_ENV=production
+                restart: unless-stopped
+                networks:
+                  - bits-network
+            networks:
+              bits-network:
+                external: true
+            EOF
+
+            echo "Deploy using Docker Compose"
+            docker compose -f docker-compose.yml -f docker-compose.external-db.yml up -d --remove-orphans
+      - name: Notify Telegram
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          message: "🚀 Deployment ke Docker lokal selesai untuk branch ${{ github.ref_name }}"

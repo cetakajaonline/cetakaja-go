@@ -1,0 +1,84 @@
+name: CI & Security
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+  schedule:
+    - cron: '0 0 * * 1'
+  workflow_dispatch:
+
+jobs:
+  quality-security-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'pnpm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: Restore pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Run linter
+        run: pnpm lint
+
+      - name: Run type checking
+        run: pnpm check
+
+      - name: Generate Prisma client
+        run: pnpm prisma generate
+
+      - name: Run Prisma schema validation
+        run: pnpm prisma validate
+
+      - name: Build application
+        run: pnpm build
+
+      - name: Run dependency review
+        uses: actions/dependency-review-action@v3
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: javascript
+
+      - name: Run CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
+
+      - name: Run secret scanning
+        uses: trufflesecurity/truffleHog@v3
+
+      - name: Run npm/pnpm audit
+        run: pnpm audit --audit-level=high || true
+
+      - name: Notify Telegram
+        if: always()
+        run: |
+          STATUS=${{ job.status }}
+          if [ "$STATUS" == "success" ]; then
+            MESSAGE="✅ CI & Security workflow BERHASIL\nRepo: *${{ github.repository }}*\nBranch: *${{ github.ref_name }}*\nCommit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})"
+          else
+            MESSAGE="🚨 CI & Security workflow GAGAL\nRepo: *${{ github.repository }}*\nBranch: *${{ github.ref_name }}*\nCommit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})\nLihat detail: [GitHub Actions Logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          fi
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d parse_mode=Markdown \
+            -d text="$MESSAGE"
