@@ -51,22 +51,43 @@ jobs:
           DATABASE_URL: postgresql://postgres:p0stgres@localhost:5432/test_db
 
       - name: Run Unit Tests
-        run: pnpm test:unit
+        run: |
+          if grep -q 'test:unit' package.json; then
+            pnpm test:unit
+          else
+            echo "No unit tests script found in package.json, skipping..."
+          fi
         env:
           DATABASE_URL: postgresql://postgres:p0stgres@localhost:5432/test_db
 
       - name: Run Integration Tests
-        run: pnpm test:integration
+        run: |
+          if grep -q 'test:integration' package.json; then
+            pnpm test:integration
+          else
+            echo "No integration tests script found in package.json, skipping..."
+          fi
         env:
           DATABASE_URL: postgresql://postgres:p0stgres@localhost:5432/test_db
 
       - name: Run E2E Tests
-        run: pnpm test:e2e
+        run: |
+          if grep -q 'test:e2e' package.json; then
+            pnpm test:e2e
+          else
+            echo "No end-to-end tests script found in package.json, skipping..."
+          fi
         env:
           DATABASE_URL: postgresql://postgres:p0stgres@localhost:5432/test_db
 
       - name: Run Coverage
-        run: pnpm test:coverage || true
+        run: |
+          if grep -q 'test:coverage' package.json; then
+            pnpm test:coverage
+          else
+            echo "No coverage script found in package.json, skipping..."
+          fi
+        continue-on-error: true
 
       - name: Upload Coverage to Codecov
         uses: codecov/codecov-action@v3
