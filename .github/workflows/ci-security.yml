@@ -21,33 +21,39 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20.x
-          cache: 'npm'
+          cache: 'pnpm'
 
-      - name: Restore npm cache
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4.0.0
+        with:
+          version: latest
+
+      - name: Verify pnpm
+        run: pnpm -v
+
+      - name: Restore pnpm cache
         uses: actions/cache@v4
         with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
 
       - name: Install dependencies
-        run: npm install
+        run: pnpm install
 
       - name: Run linter
-        run: npm run lint
+        run: pnpm lint
 
       - name: Run type checking
-        run: npm run check
+        run: pnpm check
 
       - name: Generate Prisma client
-        run: npx prisma generate
+        run: pnpm prisma generate
 
       - name: Run Prisma schema validation
-        run: npx prisma validate
+        run: pnpm prisma validate
 
       - name: Build application
-        run: npm run build
+        run: pnpm build
 
       - name: Run dependency review
         uses: actions/dependency-review-action@v3
@@ -66,16 +72,15 @@ jobs:
           repository: .
           extra_args: --only-verified
 
-      - name: Run npm audit
-        run: npm audit --audit-level=high || true
+      - name: Run npm/pnpm audit
+        run: pnpm audit --audit-level=high || true
 
       - name: Notify Telegram
         if: always()
         run: |
           STATUS=${{ job.status }}
-          if [ "$STATUS" == "success" ]; then
-            MESSAGE="✅ CI & Security workflow BERHASIL - Repo: (${{ github.repository }}), Branch: (${{ github.ref_name }}), Commit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})"
-          else
+          MESSAGE="✅ CI & Security workflow BERHASIL - Repo: (${{ github.repository }}), Branch: (${{ github.ref_name }}), Commit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})" 
+          if [ "$STATUS" != "success" ]; then
             MESSAGE="🚨 CI & Security workflow GAGAL - Repo: (${{ github.repository }}), Branch: (${{ github.ref_name }}), Commit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }}), Lihat detail: [GitHub Actions Logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
           fi
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
