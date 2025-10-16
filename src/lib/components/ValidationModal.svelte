@@ -66,8 +66,10 @@
         <button 
           class="btn flex-1 {getButtonClass()}" 
           onclick={onClose}
+          title="Tutup"
+          aria-label="Tutup"
         >
-          Tutup
+          ✕
         </button>
       </div>
     </div>

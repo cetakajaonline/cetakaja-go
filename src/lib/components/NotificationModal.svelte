@@ -100,14 +100,16 @@
           <button 
             class="btn flex-1 {getButtonClass()}" 
             onclick={onClose}
+            title="Tutup"
+            aria-label="Tutup"
           >
             {#if autoClose}
               <span class="flex items-center justify-center">
-                <span>Tutup</span>
+                <span>✕</span>
                 <span class="ml-2 text-xs">({Math.ceil(autoCloseTime / 1000)}s)</span>
               </span>
             {:else}
-              Tutup
+              ✕
             {/if}
           </button>
         </div>

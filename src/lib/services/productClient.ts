@@ -60,6 +60,11 @@ export async function deleteProduct(id: number): Promise<boolean> {
     method: "DELETE",
   });
 
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.message || "Failed to delete product");
+  }
+
   return res.ok;
 }
 

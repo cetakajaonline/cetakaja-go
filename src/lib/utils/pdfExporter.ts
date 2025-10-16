@@ -10,9 +10,11 @@ import type {
   RevenueReportData,
   ExpenseReportData,
   MarginReportData,
+  Order,
+  Setting,
 } from "$lib/types";
 
-import { formatCurrency, capitalizeFirstLetter } from "./formatters";
+import { formatCurrency, formatNumber, capitalizeFirstLetter } from "./formatters";
 
 /**
  * Exports daily report data to PDF format
@@ -3299,4 +3301,249 @@ export async function exportMarginReportToPDF(
   }
 }
 
-/* eslint-enable @typescript-eslint/no-explicit-any */
+/**
+ * Exports order receipt data to PDF format (POS 58mm width)
+ * @param order The order data to export as receipt
+ * @param settings The store settings for business information
+ */
+export async function exportOrderReceiptToPDF(
+  order: Order,
+  settings: Setting,
+): Promise<void> {
+  try {
+    // Dynamically import jsPDF
+    const jsPDFModule = await import("jspdf");
+    const { jsPDF } = jsPDFModule;
+    
+    // Create a new PDF document with POS 58mm width
+    const doc = new jsPDF('p', 'mm', [58, 250]); // 58mm width, height can be dynamic
+
+    // Set default font
+    doc.setFont("helvetica", "normal");
+    
+    // Add business header information
+    doc.setFontSize(18);
+    doc.setFont("helvetica", "bold");
+    doc.text(settings.name || "CETAK AJA ONLINE", 29, 10, { align: "center" }); // Center-align business name
+    doc.setFont("helvetica", "normal");
+    
+    // Add business contact information
+    doc.setFontSize(8);
+    doc.text("Web : https://cetakaja.online", 29, 15, { align: "center" });
+    doc.text("Email : cetakonlineyuk@gmail.com", 29, 19, { align: "center" });
+    doc.text("WhatsApp : 0851-1754-8556", 29, 23, { align: "center" });
+    doc.text("Shopee : @cetakajaonline", 29, 27, { align: "center" });
+    doc.text("Tokopedia : @cetakajaonline", 29, 31, { align: "center" });
+    doc.text("Tiktok : @cetakajaonline", 29, 35, { align: "center" });
+    
+    // Add separator line
+    doc.line(2, 38, 56, 38);
+    
+    // Add order information
+    let yPos = 42;
+    
+    yPos += 4;
+    
+    doc.text(`No. Order`, 2, yPos);
+    doc.text(order.orderNumber, 25, yPos);
+    
+    yPos += 4;
+    doc.text(`Tanggal`, 2, yPos);
+    doc.text(order.createdAt ? new Date(order.createdAt).toLocaleString("id-ID", {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }) : "", 25, yPos);
+    
+    yPos += 4;
+    doc.text(`Pelanggan`, 2, yPos);
+    doc.text(order.user.name, 25, yPos);
+    
+    // Payment method only
+    yPos += 4;
+    doc.text(`Pembayaran`, 2, yPos);
+    doc.setFont("helvetica", "normal");
+    doc.text(order.paymentMethod === 'transfer' ? 'Transfer' : order.paymentMethod === 'qris' ? 'QRIS' : 'Tunai', 25, yPos);
+    doc.setFont("helvetica", "normal");
+    
+    // Delivery method
+    yPos += 4;
+    doc.text(`Pengiriman`, 2, yPos);
+    doc.setFont("helvetica", "normal");
+    doc.text(order.shippingMethod === 'pickup' ? 'Pickup' : 'Delivery', 25, yPos);
+    doc.setFont("helvetica", "normal");
+    
+    yPos += 6;
+    // Add separator line
+    doc.line(2, yPos, 56, yPos);
+    yPos += 5;
+    
+    // Add order items header with better formatting
+    doc.setFont("helvetica", "bold");
+    doc.text("Item", 2, yPos);
+    doc.text("Qty", 30, yPos);
+    doc.text("Harga", 40, yPos);
+    yPos += 3;
+    // Add separator line
+    doc.line(2, yPos, 56, yPos);
+    yPos += 6;
+    doc.setFont("helvetica", "normal");
+    
+    // Add order items with better formatting
+    for (const item of order.orderItems) {
+      // Item name first
+      const itemName = item.product.name;
+      const nameLines = splitTextToSize(itemName, 30, doc);
+      
+      // Add product name
+      for (let i = 0; i < nameLines.length; i++) {
+        doc.text(nameLines[i], 2, yPos);
+        // Only show qty and price on the first line
+        if (i === 0) {
+          doc.text(`${item.qty}`, 30, yPos);
+          doc.text(formatNumber(item.price), 40, yPos);
+        }
+        yPos += 5;
+      }
+      
+      // Add options (variants) on separate lines
+      if (item.options && item.options.length > 0) {
+        for (const opt of item.options) {
+          const optionText = `${opt.option?.variant?.variantName}: ${opt.optionName}`;
+          const optionLines = splitTextToSize(optionText, 30, doc);
+          
+          for (const optionLine of optionLines) {
+            doc.text(optionLine, 5, yPos); // Indented to show it's a sub-item
+            yPos += 5;
+          }
+        }
+      }
+    }
+    
+    // Add separator line before total
+    doc.line(2, yPos, 56, yPos);
+    yPos += 6; // Extra space before total
+    
+    // Add total amount with proper alignment to fit within width
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("TOTAL", 2, yPos);
+    // Right-align the total amount with proper padding from the right edge
+    const totalText = formatCurrency(order.totalAmount);
+    doc.text(totalText, 56, yPos, { align: "right" });
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    
+    // Add notes if available
+    if (order.notes) {
+      yPos += 4;
+      doc.line(2, yPos, 56, yPos); // Add separator line before notes
+      yPos += 6;
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "bold");
+      doc.text("Catatan", 2, yPos);
+      doc.setFont("helvetica", "normal");
+      yPos += 6;
+      const noteLines = splitTextToSize(order.notes, 52, doc);
+      for (const line of noteLines) {
+        doc.text(line, 2, yPos);
+        yPos += 4;
+      }
+    }
+    
+    yPos += 2;
+    doc.line(2, yPos, 56, yPos);
+      
+    // Add footer message
+    yPos += 6;
+    doc.setFontSize(8);
+    const messageLine1 = "Terima kasih sudah mempercayakan kami untuk semua urusan cetakannya";
+    const messageLine2 = "Silakan simpan nota ini sebagai bukti pembelian";
+    const messageLine3 = "Barang yang sudah dibeli tidak dapat ditukar/dikembalikan";
+    
+    const lines1 = splitTextToSize(messageLine1, 52, doc);
+    for (const line of lines1) {
+      doc.text(line, 28, yPos, { align: "center" });
+      yPos += 4;
+    }
+    
+    const lines2 = splitTextToSize(messageLine2, 52, doc);
+    for (const line of lines2) {
+      doc.text(line, 28, yPos, { align: "center" });
+      yPos += 4;
+    }
+    
+    const lines3 = splitTextToSize(messageLine3, 52, doc);
+    for (const line of lines3) {
+      doc.text(line, 28, yPos, { align: "center" });
+      yPos += 4;
+    }
+    
+    // Save the PDF with order number in filename
+    doc.save(`nota-${order.orderNumber}.pdf`);
+  } catch (error) {
+    console.error("Error generating receipt PDF:", error);
+    throw error; // Re-throw so the calling function can handle it
+  }
+}
+
+// Helper function to split text to fit within a given width
+function splitTextToSize(text: string, maxWidth: number, doc: any): string[] {
+  if (!text) return [];
+  
+  const words = text.split(' ');
+  const lines: string[] = [];
+  let currentLine = '';
+
+  for (const word of words) {
+    // Add word to current line to test if it fits
+    const testLine = currentLine ? `${currentLine} ${word}` : word;
+    const textSize = doc.getTextWidth(testLine);
+    
+    if (textSize < maxWidth) {
+      currentLine = testLine;
+    } else {
+      // If currentLine is not empty, push it to lines and start new line with current word
+      if (currentLine) {
+        lines.push(currentLine);
+      }
+      // Check if the single word is longer than maxWidth
+      if (doc.getTextWidth(word) > maxWidth) {
+        // If the single word is too long, break it into smaller parts
+        const brokenWord = breakLongWord(word, maxWidth, doc);
+        lines.push(...brokenWord);
+      } else {
+        currentLine = word;
+      }
+    }
+  }
+
+  // Push the last line if not empty
+  if (currentLine) {
+    lines.push(currentLine);
+  }
+  
+  return lines;
+}
+
+// Helper function to break a long word into smaller parts
+function breakLongWord(word: string, maxWidth: number, doc: any): string[] {
+  const parts: string[] = [];
+  let currentPart = '';
+  
+  for (const char of word) {
+    const test = currentPart + char;
+    if (doc.getTextWidth(test) > maxWidth) {
+      if (currentPart) parts.push(currentPart);
+      currentPart = char;
+    } else {
+      currentPart = test;
+    }
+  }
+  
+  if (currentPart) parts.push(currentPart);
+  
+  return parts;
+}

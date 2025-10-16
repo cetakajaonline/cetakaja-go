@@ -12,6 +12,18 @@ export function formatCurrency(amount: number): string {
 }
 
 /**
+ * Format number without currency symbol
+ * @param amount The amount to format
+ * @returns Formatted number string without currency symbol
+ */
+export function formatNumber(amount: number): string {
+  return new Intl.NumberFormat("id-ID", {
+    style: "decimal",
+    minimumFractionDigits: 0,
+  }).format(amount);
+}
+
+/**
  * Format date for display
  * @param date The date to format
  * @returns Formatted date string

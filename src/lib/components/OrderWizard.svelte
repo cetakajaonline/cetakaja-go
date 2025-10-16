@@ -1139,14 +1139,13 @@
                     <tbody class="block sm:table-row-group">
                       <tr class="block sm:table-row hover:bg-gray-50 border-b sm:border-b-0">
                         <td class="block sm:table-cell text-gray-800 sm:w-1/5">
-                          <span class="font-semibold sm:hidden">Produk:</span> {products.find((p) => p.id === newItem.productId)
+                          {products.find((p) => p.id === newItem.productId)
                             ?.name}</td>
                         <td class="block sm:table-cell text-gray-800 sm:w-1/5">
-                          <span class="font-semibold sm:hidden">Opsi:</span> 
                           {#if Object.keys(newItem.selectedOptions).length > 0}
                             {#each productVariants as variant}
                               {#if newItem.selectedOptions[variant.id]}
-                                {variant.variantName}: {(variant.options || []).find(opt => opt.id === newItem.selectedOptions[variant.id])?.optionName || '-'}
+                                <div>{variant.variantName}: {(variant.options || []).find(opt => opt.id === newItem.selectedOptions[variant.id])?.optionName || '-'}</div>
                               {/if}
                             {/each}
                           {:else}
@@ -1205,10 +1204,10 @@
                     {#each orderData.orderItems as item, index}
                       <tr class="block sm:table-row hover:bg-gray-50 border-b sm:border-b-0">
                         <td class="block sm:table-cell text-gray-800 sm:w-1/7"
-                          ><span class="font-semibold sm:hidden">Produk:</span> {item.product.name}</td
+                          >{item.product.name}</td
                         >
                         <td class="block sm:table-cell text-gray-800 sm:w-1/7"
-                          ><span class="font-semibold sm:hidden">Opsi:</span> 
+                          >
                           {#if item.options && item.options.length > 0}
                             {#each item.options as option}
                               <div>{option.option?.variant?.variantName}: {option.optionName}</div>

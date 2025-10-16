@@ -394,80 +394,82 @@
     <div class="pt-4">
       <!-- Add New Item -->
       <div class="p-4 border rounded-lg mb-4">
-        <div class="grid grid-cols-1 md:grid-cols-6 gap-2">
-          <div class="form-control w-full">
-            <label class="label" for="newItemProduct">
-              <span class="label-text">Produk</span>
-            </label>
-            <SearchSelect
-              id="newItemProduct"
-              bind:value={newOrderItem.productId}
-              options={productOptions}
-              placeholder="Cari produk..."
-              autocomplete="off"
-            />
-          </div>
-          
-          <!-- Dynamic option selectors based on product variants -->
-          {#if productVariants.length > 0}
-            {#each productVariants as variant, i}
-              <div class="form-control w-full">
-                <label class="label" for={"newItemOption-" + variant.id}>
-                  <span class="label-text">{variant.variantName}</span>
-                </label>
-                <select
-                  id={"newItemOption-" + variant.id}
-                  class="select select-bordered w-full text-sm"
-                  bind:value={newOrderItem.selectedOptions[variant.id]}
-                >
-                  <option value="">Pilih {variant.variantName}</option>
-                  {#each variant.options || [] as option}
-                    <option value={option.id}>{option.optionName} - {formatCurrency(option.price)}</option>
-                  {/each}
-                </select>
-              </div>
-            {/each}
-          {/if}
-          
-          <div class="form-control w-full">
-            <label class="label" for="newItemQty">
-              <span class="label-text">Jumlah</span>
-            </label>
-            <input
-              id="newItemQty"
-              type="number"
-              min="1"
-              class="input input-bordered w-full text-sm"
-              bind:value={newOrderItem.qty}
-            />
-          </div>
-          
-          <div class="form-control w-full">
-            <label class="label" for="newItemPrice">
-              <span class="label-text">Harga</span>
-            </label>
-            <input
-              id="newItemPrice"
-              type="number"
-              min="0"
-              class="input input-bordered w-full text-sm"
-              bind:value={newOrderItem.price}
-              readonly
-            />
-          </div>
-          
-          <div class="form-control w-full">
-            <label class="label" for="newItemSubtotal">
-              <span class="label-text">Subtotal</span>
-            </label>
-            <input
-              id="newItemSubtotal"
-              type="number"
-              min="0"
-              class="input input-bordered w-full text-sm"
-              bind:value={newOrderItem.subtotal}
-              readonly
-            />
+        <div class="flex flex-col gap-2">
+          <div class="grid grid-cols-1 md:grid-cols-6 gap-2">
+            <div class="form-control w-full">
+              <label class="label" for="newItemProduct">
+                <span class="label-text">Produk</span>
+              </label>
+              <SearchSelect
+                id="newItemProduct"
+                bind:value={newOrderItem.productId}
+                options={productOptions}
+                placeholder="Cari produk..."
+                autocomplete="off"
+              />
+            </div>
+            
+            <!-- Dynamic option selectors based on product variants -->
+            {#if productVariants.length > 0}
+              {#each productVariants as variant, i}
+                <div class="form-control w-full">
+                  <label class="label" for={"newItemOption-" + variant.id}>
+                    <span class="label-text">{variant.variantName}</span>
+                  </label>
+                  <select
+                    id={"newItemOption-" + variant.id}
+                    class="select select-bordered w-full text-sm"
+                    bind:value={newOrderItem.selectedOptions[variant.id]}
+                  >
+                    <option value="">Pilih {variant.variantName}</option>
+                    {#each variant.options || [] as option}
+                      <option value={option.id}>{option.optionName} - {formatCurrency(option.price)}</option>
+                    {/each}
+                  </select>
+                </div>
+              {/each}
+            {/if}
+            
+            <div class="form-control w-full">
+              <label class="label" for="newItemQty">
+                <span class="label-text">Jumlah</span>
+              </label>
+              <input
+                id="newItemQty"
+                type="number"
+                min="1"
+                class="input input-bordered w-full text-sm"
+                bind:value={newOrderItem.qty}
+              />
+            </div>
+            
+            <div class="form-control w-full">
+              <label class="label" for="newItemPrice">
+                <span class="label-text">Harga</span>
+              </label>
+              <input
+                id="newItemPrice"
+                type="number"
+                min="0"
+                class="input input-bordered w-full text-sm"
+                bind:value={newOrderItem.price}
+                readonly
+              />
+            </div>
+            
+            <div class="form-control w-full">
+              <label class="label" for="newItemSubtotal">
+                <span class="label-text">Subtotal</span>
+              </label>
+              <input
+                id="newItemSubtotal"
+                type="number"
+                min="0"
+                class="input input-bordered w-full text-sm"
+                bind:value={newOrderItem.subtotal}
+                readonly
+              />
+            </div>
           </div>
           
           <div class="form-control w-full">
@@ -483,11 +485,11 @@
             />
           </div>
           
-          <div class="flex items-end">
+          <div class="flex">
             <button
               type="button"
               onclick={addOrderItem}
-              class="btn btn-primary btn-sm w-full"
+              class="btn btn-primary w-full"
               disabled={!newOrderItem.productId || newOrderItem.qty <= 0}
             >
               Tambah

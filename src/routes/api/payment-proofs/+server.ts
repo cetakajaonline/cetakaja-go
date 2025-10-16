@@ -2,6 +2,10 @@ import { json } from "@sveltejs/kit";
 import type { RequestEvent } from "./$types";
 import prisma from "$lib/server/prisma";
 import { savePaymentFile } from "$lib/server/uploadService";
+import { 
+  createAdminPaymentProofNotification, 
+  createPaymentProofReceivedNotification 
+} from "$lib/server/notificationService";
 import fs from "fs";
 import path from "path";
 
@@ -30,7 +34,9 @@ export async function POST(event: RequestEvent) {
       where: { id: Number(paymentId) },
       include: {
         order: {
-          select: { userId: true },
+          include: {
+            user: true
+          }
         },
       },
     });
@@ -118,6 +124,15 @@ export async function POST(event: RequestEvent) {
         fileType: file.type,
       },
     });
+
+    // Send notifications since we already have the payment with order and user
+    if (payment && payment.order) {
+      // Send notification to admin about new payment proof
+      await createAdminPaymentProofNotification(payment.order, payment.order.user, file.name);
+      
+      // Send notification to user confirming receipt of payment proof
+      await createPaymentProofReceivedNotification(payment.order, payment.order.user);
+    }
 
     return json({
       message: "Bukti pembayaran berhasil diupload",

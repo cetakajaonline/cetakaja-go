@@ -2,6 +2,7 @@ import prisma from "$lib/server/prisma";
 import {
   createOrderNotification,
   createPaymentNotification,
+  createAdminOrderNotification,
 } from "$lib/server/notificationService";
 import fs from "fs";
 import path from "path";
@@ -268,7 +269,7 @@ async function handlePaymentForOrder(
   paymentMethod: "transfer" | "qris" | "cash",
   totalAmount: number,
   paymentStatus?: "pending" | "confirmed" | "failed" | "refunded",
-) {
+): Promise<boolean> {
   // Check if payment record already exists
   const existingPayment = await tx.payment.findFirst({
     where: { orderId },
@@ -287,6 +288,8 @@ async function handlePaymentForOrder(
           paymentMethod === "cash" ? "confirmed" : paymentStatus || "pending",
       },
     });
+    
+    return true; // Indicate that a new payment was created
   } else {
     // Update existing payment record
     await tx.payment.update({
@@ -301,6 +304,8 @@ async function handlePaymentForOrder(
         createdById: createdById || null,
       },
     });
+    
+    return false; // Indicate that payment was updated, not created
   }
 }
 
@@ -336,8 +341,9 @@ export async function createOrder({
     }[];
   }[];
 }) {
-  const newOrder = await prisma.$transaction(async (tx) => {
-    const createdOrder = await tx.order.create({
+  let newOrder;
+  const isNewPaymentCreated = await prisma.$transaction(async (tx) => {
+    newOrder = await tx.order.create({
       data: {
         userId,
         createdById,
@@ -369,25 +375,34 @@ export async function createOrder({
     });
 
     // Handle payment creation consistently using the helper function
-    await handlePaymentForOrder(
+    const isNewPayment = await handlePaymentForOrder(
       tx,
-      createdOrder.id,
+      newOrder.id,
       userId,
       createdById,
       paymentMethod,
       totalAmount,
     );
 
-    return createdOrder;
+    return isNewPayment;
   });
 
-  // Create notification outside the transaction to avoid foreign key constraint
+  // Create notifications outside the transaction to avoid foreign key constraint
   const user = await prisma.user.findUnique({
     where: { id: userId },
   });
 
-  if (user) {
+  if (user && newOrder) {
     await createOrderNotification(newOrder, user);
+    
+    // Create payment notification if a new payment was created
+    if (isNewPaymentCreated) {
+      await createPaymentNotification(newOrder, user, 
+        paymentMethod === "cash" ? "pending" : "pending"); // Cash is "pending" since payment happens later
+    }
+    
+    // Create admin notification for new order
+    await createAdminOrderNotification(newOrder, user);
   }
 
   return newOrder;
@@ -440,6 +455,7 @@ export async function updateOrder(
     throw new Error("Order not found");
   }
 
+  let isNewPaymentCreated = false;
   const updatedOrder = await prisma.$transaction(async (tx) => {
     const data: {
       userId?: number;
@@ -496,7 +512,7 @@ export async function updateOrder(
 
     // Handle payment creation/updates consistently using the helper function if payment method is provided
     if (paymentMethod) {
-      await handlePaymentForOrder(
+      const wasNewPayment = await handlePaymentForOrder(
         tx,
         id,
         result.userId,
@@ -505,6 +521,9 @@ export async function updateOrder(
         totalAmount || result.totalAmount,
         paymentStatus,
       );
+      
+      // Track if a new payment was created for notification purposes
+      isNewPaymentCreated = wasNewPayment;
     }
 
     return result;
@@ -524,6 +543,12 @@ export async function updateOrder(
     // Create notification if payment status changed
     if (paymentStatus && currentOrder.paymentStatus !== paymentStatus) {
       await createPaymentNotification(updatedOrder, user, paymentStatus);
+    }
+    
+    // Create payment notification if a new payment was created
+    if (isNewPaymentCreated && paymentMethod) {
+      await createPaymentNotification(updatedOrder, user,
+        paymentMethod === "cash" ? "pending" : (paymentStatus || "pending")); // Cash is "pending" since payment happens later
     }
   }
 

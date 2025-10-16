@@ -3,6 +3,7 @@ import prisma from "$lib/server/prisma";
 import { orderUpdateSchema } from "$lib/validations/orderSchema";
 import { updateOrder } from "$lib/server/orderService";
 import { savePaymentFile } from "$lib/server/uploadService";
+import { createPaymentNotification } from "$lib/server/notificationService";
 import fs from "fs";
 import path from "path";
 
@@ -143,6 +144,16 @@ export async function PUT(event: RequestEvent) {
               status: paymentStatus || "pending",
             },
           });
+
+          // Create payment notification for the new payment
+          const user = await prisma.user.findUnique({
+            where: { id: updatedOrder.userId }
+          });
+          if (user) {
+            // For cash payments, status should be "pending" since payment happens later
+            const paymentStatusForNotification = targetPaymentMethod === "cash" ? "pending" : newPayment.status;
+            await createPaymentNotification(updatedOrder, user, paymentStatusForNotification);
+          }
 
           // Validate file type
           const validTypes = [

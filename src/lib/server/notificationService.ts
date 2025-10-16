@@ -148,3 +148,48 @@ export async function updateNotificationStatus(
     data: { status, sentAt: new Date() },
   });
 }
+
+// Admin notification functions
+const ADMIN_PHONE_NUMBER = "62819678048"; // Admin phone number
+
+export async function createAdminOrderNotification(order: Order, user: User) {
+  const message = `⚠️ Pesanan Baru: ${user.name} (${user.phone}) melakukan order ${order.orderNumber} dengan total ${order.totalAmount.toLocaleString('id-ID')} via ${order.paymentMethod}. Harap segera diproses.`;
+  
+  const notification = await createNotification({
+    userId: 1, // Using a default admin user ID
+    orderId: order.id,
+    toNumber: ADMIN_PHONE_NUMBER,
+    message: message,
+    status: "pending",
+  });
+
+  return notification;
+}
+
+export async function createAdminPaymentProofNotification(order: Order, user: User, proofFileName: string) {
+  const message = `📝 Bukti Pembayaran Baru: ${user.name} (${user.phone}) mengupload bukti pembayaran untuk order ${order.orderNumber}. Harap segera dicek. File: ${proofFileName}`;
+  
+  const notification = await createNotification({
+    userId: 1, // Using a default admin user ID
+    orderId: order.id,
+    toNumber: ADMIN_PHONE_NUMBER,
+    message: message,
+    status: "pending",
+  });
+
+  return notification;
+}
+
+export async function createPaymentProofReceivedNotification(order: Order, user: User) {
+  const message = `Bukti Pembayaran sudah kami terima dan pesanan akan segera kami proses secepatnya.`;
+  
+  const notification = await createNotification({
+    userId: order.userId, // Send back to the customer
+    orderId: order.id,
+    toNumber: user.phone,
+    message: message,
+    status: "pending",
+  });
+
+  return notification;
+}

@@ -4,6 +4,8 @@
   import { updateOrder, uploadPaymentProof, getOrder } from "$lib/services/orderClient";
   import { formatCurrency, capitalizeFirstLetter, getStatusClass } from "$lib/utils/formatters";
   import { formatDateTime, formatDate } from "$lib/utils/date";
+  import { exportOrderReceiptToPDF } from "$lib/utils/pdfExporter";
+  import { getSettings } from "$lib/services/settingClient";
 
   let { 
     show = false, 
@@ -24,7 +26,7 @@
   let isStaff = $derived(user?.role === "staff");
   let isCustomer = $derived(user?.role === "customer");
   let canCancel = $derived((isCustomer && user.id === order?.userId) || (isAdmin || isStaff) && (order?.status === "pending" || order?.status === "processing"));
-  let canUploadProof = $derived((isCustomer && user.id === order?.userId) || (isAdmin || isStaff) && 
+  let canUploadProof = $derived(((isCustomer && user.id === order?.userId) || (isAdmin || isStaff)) && 
                      (order?.paymentMethod === 'transfer' || order?.paymentMethod === 'qris') &&
                      (order?.status === 'pending' || order?.status === 'processing') && 
                      order?.paymentStatus !== 'confirmed');
@@ -86,6 +88,24 @@
     showUploadProof = true;
     selectedPaymentProofFile = null;
     uploadProofError = "";
+  }
+
+  async function printReceipt() {
+    if (!order) return;
+    
+    try {
+      // Get store settings for receipt header
+      const result = await getSettings();
+      if (!result.success || !result.data) {
+        console.error("Failed to get settings for receipt");
+        return;
+      }
+      // Generate and download the receipt PDF
+      await exportOrderReceiptToPDF(order, result.data);
+    } catch (error) {
+      console.error("Error printing receipt:", error);
+      // Optionally show an error notification to the user
+    }
   }
 
 
@@ -382,13 +402,29 @@
       </div>
 
       <div class="modal-action flex justify-end space-x-2">
+        <!-- Print Receipt Button -->
+        <button
+          onclick={printReceipt}
+          class="btn btn-success btn-outline"
+          title="Cetak Nota"
+          aria-label="Cetak Nota"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+          </svg>
+        </button>
+
         <!-- Upload Payment Proof Button for Customer -->
         {#if canUploadProof}
           <button
             onclick={openUploadProofModal}
             class="btn btn-primary btn-outline"
+            title="Upload Bukti Pembayaran"
+            aria-label="Upload Bukti Pembayaran"
           >
-            Upload Bukti
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
           </button>
         {/if}
 
@@ -397,15 +433,20 @@
           <button
             onclick={() => showCancelConfirm = true}
             class="btn btn-warning btn-outline"
+            title="Batalkan Pesanan"
+            aria-label="Batalkan Pesanan"
           >
-            Batalkan
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         {/if}
 
         <button 
           class="btn btn-circle btn-error btn-outline" 
           onclick={closeModal}
-          aria-label="Close"
+          title="Tutup"
+          aria-label="Tutup"
         >
           ✕
         </button>

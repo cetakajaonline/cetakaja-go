@@ -133,10 +133,12 @@
           variants: validated.variants?.map(v => ({
             id: v.id || 0,
             variantName: v.variantName,
+            delete: v.delete || false,
             options: v.options ? v.options.map(opt => ({
               id: opt.id || 0,
               optionName: opt.optionName,
-              price: opt.price
+              price: opt.price,
+              delete: opt.delete || false
             })) : []
             // Don't include createdAt or updatedAt here as they should be managed by the server
           }))
@@ -190,6 +192,7 @@
     
     try {
       await deleteProduct(productToDelete.id);
+      // Only update the UI after successful deletion
       products.update(items => items.filter((p) => p.id !== productToDelete?.id));
     } catch (err) {
       if (err instanceof Error) {

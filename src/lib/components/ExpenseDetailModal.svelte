@@ -62,8 +62,10 @@
       <button 
         class="btn btn-outline"
         on:click={onClose}
+        title="Tutup"
+        aria-label="Tutup"
       >
-        Tutup
+        ✕
       </button>
     </div>
   </div>
