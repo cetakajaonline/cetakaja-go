@@ -17,7 +17,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20.x
@@ -27,6 +27,9 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           version: latest
+
+      - name: Verify pnpm
+        run: pnpm -v
 
       - name: Restore pnpm cache
         uses: actions/cache@v4
@@ -64,7 +67,9 @@ jobs:
         uses: github/codeql-action/analyze@v2
 
       - name: Run secret scanning
-        uses: trufflesecurity/truffleHog@v3
+        uses: trufflesecurity/trufflehog-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run npm/pnpm audit
         run: pnpm audit --audit-level=high || true
