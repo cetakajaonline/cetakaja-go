@@ -83,13 +83,9 @@ jobs:
         run: |
           STATUS=${{ job.status }}
           if [ "$STATUS" == "success" ]; then
-            MESSAGE="✅ *Automated Testing & Coverage* berhasil di branch *${{ github.ref_name }}*
-Repo: *${{ github.repository }}*
-Commit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})"
+            MESSAGE="✅ Automated Testing & Coverage berhasil di branch (${{ github.ref_name }}) - Repo: (${{ github.repository }}), Commit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})"
           else
-            MESSAGE="🚨 *Automated Testing & Coverage* GAGAL!
-Branch: *${{ github.ref_name }}*
-Lihat log: [GitHub Actions](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+            MESSAGE="🚨 Automated Testing & Coverage GAGAL! - Branch: (${{ github.ref_name }}), Lihat log: [GitHub Actions](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
           fi
 
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \

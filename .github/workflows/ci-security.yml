@@ -74,16 +74,9 @@ jobs:
         run: |
           STATUS=${{ job.status }}
           if [ "$STATUS" == "success" ]; then
-            MESSAGE="✅ CI & Security workflow BERHASIL
-Repo: *${{ github.repository }}*
-Branch: *${{ github.ref_name }}*
-Commit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})"
+            MESSAGE="✅ CI & Security workflow BERHASIL - Repo: (${{ github.repository }}), Branch: (${{ github.ref_name }}), Commit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})"
           else
-            MESSAGE="🚨 CI & Security workflow GAGAL
-Repo: *${{ github.repository }}*
-Branch: *${{ github.ref_name }}*
-Commit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
-Lihat detail: [GitHub Actions Logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+            MESSAGE="🚨 CI & Security workflow GAGAL - Repo: (${{ github.repository }}), Branch: (${{ github.ref_name }}), Commit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }}), Lihat detail: [GitHub Actions Logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
           fi
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
             -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \

@@ -59,7 +59,7 @@ jobs:
         if: always()
         run: |
           STATUS=${{ job.status }}
-          MESSAGE="🐳 Docker build & push $STATUS\nImage: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}\nBranch: ${{ github.ref_name }}"
+          MESSAGE="🐳 Docker build & push $STATUS - Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}, Branch: ${{ github.ref_name }}"
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
             -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
             -d parse_mode=Markdown \

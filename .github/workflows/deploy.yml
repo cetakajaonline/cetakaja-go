@@ -68,12 +68,9 @@ jobs:
         run: |
           STATUS=${{ job.status }}
           if [ "$STATUS" == "success" ]; then
-            MESSAGE="🚀 Deployment BERHASIL! (Menggunakan database eksternal)
-Branch: _${{ github.ref_name }}_"
+            MESSAGE="🚀 Deployment BERHASIL! (Menggunakan database eksternal) - Branch: (${{ github.ref_name }})"
           else
-            MESSAGE="❌ Deployment GAGAL!
-Branch: _${{ github.ref_name }}_
-Lihat log: [GitHub Actions](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+            MESSAGE="❌ Deployment GAGAL! - Branch: (${{ github.ref_name }}), Lihat log: [GitHub Actions](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
           fi
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
             -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
