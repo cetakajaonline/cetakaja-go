@@ -1910,20 +1910,20 @@ export async function getMarginReport(
               include: {
                 variants: {
                   include: {
-                    options: true
-                  }
-                }
-              }
+                    options: true,
+                  },
+                },
+              },
             },
             options: {
               include: {
                 option: {
                   include: {
-                    variant: true
-                  }
-                }
-              }
-            }
+                    variant: true,
+                  },
+                },
+              },
+            },
           },
         },
         payments: {
@@ -2246,20 +2246,20 @@ export async function getMarginReportForDateRange(
               include: {
                 variants: {
                   include: {
-                    options: true
-                  }
-                }
-              }
+                    options: true,
+                  },
+                },
+              },
             },
             options: {
               include: {
                 option: {
                   include: {
-                    variant: true
-                  }
-                }
-              }
-            }
+                    variant: true,
+                  },
+                },
+              },
+            },
           },
         },
         payments: {

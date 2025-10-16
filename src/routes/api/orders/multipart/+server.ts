@@ -161,12 +161,19 @@ export async function POST(event: RequestEvent) {
 
         // Create payment notification for the new payment
         const user = await prisma.user.findUnique({
-          where: { id: data.userId }
+          where: { id: data.userId },
         });
         if (user) {
           // For cash payments, status should be "pending" since payment happens later
-          const paymentStatusForNotification = (paymentMethod as ("transfer" | "qris" | "cash")) === "cash" ? "pending" : payment.status;
-          await createPaymentNotification(newOrder, user, paymentStatusForNotification);
+          const paymentStatusForNotification =
+            (paymentMethod as "transfer" | "qris" | "cash") === "cash"
+              ? "pending"
+              : payment.status;
+          await createPaymentNotification(
+            newOrder,
+            user,
+            paymentStatusForNotification,
+          );
         }
       }
 

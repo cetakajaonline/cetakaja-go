@@ -288,7 +288,7 @@ async function handlePaymentForOrder(
           paymentMethod === "cash" ? "confirmed" : paymentStatus || "pending",
       },
     });
-    
+
     return true; // Indicate that a new payment was created
   } else {
     // Update existing payment record
@@ -304,7 +304,7 @@ async function handlePaymentForOrder(
         createdById: createdById || null,
       },
     });
-    
+
     return false; // Indicate that payment was updated, not created
   }
 }
@@ -394,13 +394,16 @@ export async function createOrder({
 
   if (user && newOrder) {
     await createOrderNotification(newOrder, user);
-    
+
     // Create payment notification if a new payment was created
     if (isNewPaymentCreated) {
-      await createPaymentNotification(newOrder, user, 
-        paymentMethod === "cash" ? "pending" : "pending"); // Cash is "pending" since payment happens later
+      await createPaymentNotification(
+        newOrder,
+        user,
+        paymentMethod === "cash" ? "pending" : "pending",
+      ); // Cash is "pending" since payment happens later
     }
-    
+
     // Create admin notification for new order
     await createAdminOrderNotification(newOrder, user);
   }
@@ -521,7 +524,7 @@ export async function updateOrder(
         totalAmount || result.totalAmount,
         paymentStatus,
       );
-      
+
       // Track if a new payment was created for notification purposes
       isNewPaymentCreated = wasNewPayment;
     }
@@ -544,11 +547,14 @@ export async function updateOrder(
     if (paymentStatus && currentOrder.paymentStatus !== paymentStatus) {
       await createPaymentNotification(updatedOrder, user, paymentStatus);
     }
-    
+
     // Create payment notification if a new payment was created
     if (isNewPaymentCreated && paymentMethod) {
-      await createPaymentNotification(updatedOrder, user,
-        paymentMethod === "cash" ? "pending" : (paymentStatus || "pending")); // Cash is "pending" since payment happens later
+      await createPaymentNotification(
+        updatedOrder,
+        user,
+        paymentMethod === "cash" ? "pending" : paymentStatus || "pending",
+      ); // Cash is "pending" since payment happens later
     }
   }
 
