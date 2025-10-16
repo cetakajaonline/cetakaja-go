@@ -47,49 +47,46 @@ model Product {
   orderItems  OrderItem[]
   category    Category         @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   variants    ProductVariant[]
-  
+
   @@unique([baseCode, categoryId])
   @@index([categoryId])
 }
 
-// Variant types like "Bahan", "Cetak", "Laminasi"
 model ProductVariant {
-  id          Int                   @id @default(autoincrement())
+  id          Int                    @id @default(autoincrement())
   productId   Int
-  variantName String                @db.VarChar(100)  // e.g., "Bahan", "Cetak", "Laminasi"
-  createdAt   DateTime              @default(now())
-  updatedAt   DateTime              @updatedAt
-  product     Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
-  options     ProductVariantOption[]  // Options for this variant type
-  
+  variantName String                 @db.VarChar(100)
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  product     Product                @relation(fields: [productId], references: [id], onDelete: Cascade)
+  options     ProductVariantOption[]
+
   @@index([productId])
 }
 
-// Options like "210", "230", "1 Sisi", "Doff" etc. with prices
 model ProductVariantOption {
-  id          Int                   @id @default(autoincrement())
-  variantId   Int
-  optionName  String                @db.VarChar(100)  // e.g., "210", "230", "1 Sisi", "Doff"
-  price       Int                   // actual price for this option
-  createdAt   DateTime              @default(now())
-  updatedAt   DateTime              @updatedAt
-  variant     ProductVariant        @relation(fields: [variantId], references: [id], onDelete: Cascade)
-  orderItems  OrderItemOption[]     // Link to order items that selected this option
-  
+  id         Int               @id @default(autoincrement())
+  variantId  Int
+  optionName String            @db.VarChar(100)
+  price      Int
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+  orderItems OrderItemOption[]
+  variant    ProductVariant    @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
   @@index([variantId])
 }
 
-// Link selected options to order items
 model OrderItemOption {
-  id            Int                   @id @default(autoincrement())
-  orderItemId   Int
-  optionId      Int
-  optionName    String                // Store name for historical reference
-  price         Int                   // Store price for historical reference
-  createdAt     DateTime              @default(now())
-  orderItem     OrderItem             @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
-  option        ProductVariantOption? @relation(fields: [optionId], references: [id])
-  
+  id          Int                  @id @default(autoincrement())
+  orderItemId Int
+  optionId    Int
+  optionName  String
+  price       Int
+  createdAt   DateTime             @default(now())
+  option      ProductVariantOption @relation(fields: [optionId], references: [id])
+  orderItem   OrderItem            @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+
   @@index([orderItemId])
   @@index([optionId])
 }
@@ -118,21 +115,20 @@ model Order {
   @@index([paymentStatus])
 }
 
-// Updated OrderItem model
 model OrderItem {
-  id        Int                 @id @default(autoincrement())
+  id        Int               @id @default(autoincrement())
   orderId   Int
   productId Int
   qty       Int
-  price     Int                 // Final calculated price from selected options
-  subtotal  Int                 // qty * price
-  createdAt DateTime            @default(now())
-  updatedAt DateTime            @updatedAt
-  notes     String?             @db.VarChar(500)
-  order     Order               @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product   Product             @relation(fields: [productId], references: [id], onDelete: Cascade)
-  options   OrderItemOption[]   // Selected options for this order item
-  
+  price     Int
+  subtotal  Int
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  notes     String?           @db.VarChar(500)
+  order     Order             @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  options   OrderItemOption[]
+
   @@index([orderId])
   @@index([productId])
 }
