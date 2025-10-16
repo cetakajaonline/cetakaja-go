@@ -67,7 +67,7 @@ jobs:
         uses: github/codeql-action/analyze@v2
 
       - name: Run secret scanning
-        uses: trufflesecurity/trufflehog-action@v1
+        uses: ghsecret/scan-action@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
