@@ -47,12 +47,18 @@ jobs:
 
       - name: Generate Prisma client
         run: pnpm prisma generate
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/test
 
       - name: Run Prisma schema validation
         run: pnpm prisma validate
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/test
 
       - name: Build application
         run: pnpm build
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/test
 
       - name: Run dependency review
         uses: actions/dependency-review-action@v3
