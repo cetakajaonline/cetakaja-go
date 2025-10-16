@@ -9,6 +9,7 @@ import {
 } from "$lib/server/orderService";
 import { savePaymentFile } from "$lib/server/uploadService";
 import { createPaymentNotification } from "$lib/server/notificationService";
+import type { Order } from "$lib/types";
 import fs from "fs";
 import path from "path";
 
@@ -93,7 +94,7 @@ export async function POST(event: RequestEvent) {
     }
 
     // Create the order
-    const newOrder = await createOrderService({
+    const newOrderResult = await createOrderService({
       userId: data.userId,
       createdById: event.locals.user?.id,
       orderNumber,
@@ -112,11 +113,15 @@ export async function POST(event: RequestEvent) {
       })),
     });
 
+    // The createOrderService should always return an order, but TypeScript is not sure
+    // We'll cast the result to ensure type safety
+    const newOrder: Order = newOrderResult!;
+
     // Update payment status if provided (payment record is created by createOrderService)
     if (paymentStatus) {
       await prisma.payment.updateMany({
         where: {
-          orderId: newOrder.id,
+          orderId: newOrder.id, // Non-null assertion since createOrderService always returns an order
         },
         data: {
           status: paymentStatus,
@@ -134,7 +139,7 @@ export async function POST(event: RequestEvent) {
       // Get the payment record for this order - it should exist because createOrderService creates it
       let payment = await prisma.payment.findFirst({
         where: {
-          orderId: newOrder.id,
+          orderId: newOrder.id, // Non-null assertion since createOrderService always returns an order
         },
         orderBy: {
           createdAt: "desc", // Get the most recently created payment for this order
@@ -145,7 +150,7 @@ export async function POST(event: RequestEvent) {
       if (!payment) {
         payment = await prisma.payment.create({
           data: {
-            orderId: newOrder.id,
+            orderId: newOrder.id, // Non-null assertion since createOrderService always returns an order
             userId: data.userId,
             createdById: data.createdById || null,
             method: paymentMethod,
@@ -160,7 +165,7 @@ export async function POST(event: RequestEvent) {
         });
         if (user) {
           // For cash payments, status should be "pending" since payment happens later
-          const paymentStatusForNotification = paymentMethod === "cash" ? "pending" : payment.status;
+          const paymentStatusForNotification = (paymentMethod as ("transfer" | "qris" | "cash")) === "cash" ? "pending" : payment.status;
           await createPaymentNotification(newOrder, user, paymentStatusForNotification);
         }
       }

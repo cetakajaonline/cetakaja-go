@@ -151,7 +151,7 @@ export async function PUT(event: RequestEvent) {
           });
           if (user) {
             // For cash payments, status should be "pending" since payment happens later
-            const paymentStatusForNotification = targetPaymentMethod === "cash" ? "pending" : newPayment.status;
+            const paymentStatusForNotification = (targetPaymentMethod as ("transfer" | "qris" | "cash")) === "cash" ? "pending" : newPayment.status;
             await createPaymentNotification(updatedOrder, user, paymentStatusForNotification);
           }
 

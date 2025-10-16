@@ -35,7 +35,27 @@ export async function POST(event: RequestEvent) {
       include: {
         order: {
           include: {
-            user: true
+            user: true,
+            createdBy: true,
+            orderItems: {
+              include: {
+                product: true,
+                options: {
+                  include: {
+                    option: {
+                      include: {
+                        variant: true
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            payments: {
+              include: {
+                proofs: true
+              }
+            }
           }
         },
       },
