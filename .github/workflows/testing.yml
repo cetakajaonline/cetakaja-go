@@ -32,43 +32,43 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
-          cache: 'pnpm'
+          cache: 'npm'
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+      - name: Restore npm cache
+        uses: actions/cache@v4
         with:
-          version: latest
-
-      - name: Verify pnpm
-        run: pnpm -v
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
       - name: Install dependencies
-        run: pnpm install
+        run: npm install
 
       - name: Prepare test DB
         run: |
-          pnpm prisma db push
-          pnpm seed
+          npx prisma db push
+          npx prisma db seed
         env:
           DATABASE_URL: postgresql://postgres:p0stgres@localhost:5432/test_db
 
       - name: Run Unit Tests
-        run: pnpm test:unit
+        run: npm run test:unit
         env:
           DATABASE_URL: postgresql://postgres:p0stgres@localhost:5432/test_db
 
       - name: Run Integration Tests
-        run: pnpm test:integration
+        run: npm run test:integration
         env:
           DATABASE_URL: postgresql://postgres:p0stgres@localhost:5432/test_db
 
       - name: Run E2E Tests
-        run: pnpm test:e2e
+        run: npm run test:e2e
         env:
           DATABASE_URL: postgresql://postgres:p0stgres@localhost:5432/test_db
 
       - name: Run Coverage
-        run: pnpm test:coverage || true  # jangan gagal seluruh job jika coverage error
+        run: npm run test:coverage || true  # jangan gagal seluruh job jika coverage error
 
       - name: Upload Coverage to Codecov
         uses: codecov/codecov-action@v3
@@ -83,9 +83,13 @@ jobs:
         run: |
           STATUS=${{ job.status }}
           if [ "$STATUS" == "success" ]; then
-            MESSAGE="✅ *Automated Testing & Coverage* berhasil di branch *${{ github.ref_name }}*\nRepo: *${{ github.repository }}*\nCommit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})"
+            MESSAGE="✅ *Automated Testing & Coverage* berhasil di branch *${{ github.ref_name }}*
+Repo: *${{ github.repository }}*
+Commit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})"
           else
-            MESSAGE="🚨 *Automated Testing & Coverage* GAGAL!\nBranch: *${{ github.ref_name }}*\nLihat log: [GitHub Actions](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+            MESSAGE="🚨 *Automated Testing & Coverage* GAGAL!
+Branch: *${{ github.ref_name }}*
+Lihat log: [GitHub Actions](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
           fi
 
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
