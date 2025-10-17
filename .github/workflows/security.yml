@@ -1,4 +1,4 @@
-name: CI & Security
+name: Security
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  quality-security-check:
+  security-check:
     runs-on: ubuntu-latest
 
     steps:
@@ -72,11 +72,13 @@ jobs:
       - name: Run CodeQL Analysis
         uses: github/codeql-action/analyze@v2
         
-      - name: Install TruffleHog
-        run: pip install trufflehog --upgrade
+      - name: Install TruffleHog v3
+        uses: trufflesecurity/trufflehog-action@v3
 
       - name: Run TruffleHog Secret Scan
-        run: trufflehog filesystem --regex --max_depth 1 .
+        uses: trufflesecurity/trufflehog-action@v3
+        with:
+          extra_args: --regex --max_depth 1 .
 
       - name: Run npm/pnpm audit
         run: pnpm audit --audit-level=high || true
@@ -86,9 +88,9 @@ jobs:
         run: |
           STATUS=${{ job.status }}
           if [ "$STATUS" == "success" ]; then
-            MESSAGE="✅ CI & Security workflow BERHASIL\nRepo: *${{ github.repository }}*\nBranch: *${{ github.ref_name }}*\nCommit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})"
+            MESSAGE="✅ Security workflow BERHASIL\nRepo: *${{ github.repository }}*\nBranch: *${{ github.ref_name }}*\nCommit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})"
           else
-            MESSAGE="🚨 CI & Security workflow GAGAL\nRepo: *${{ github.repository }}*\nBranch: *${{ github.ref_name }}*\nCommit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})\nLihat detail: [GitHub Actions Logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+            MESSAGE="🚨 Security workflow GAGAL\nRepo: *${{ github.repository }}*\nBranch: *${{ github.ref_name }}*\nCommit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})\nLihat detail: [GitHub Actions Logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
           fi
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
             -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
