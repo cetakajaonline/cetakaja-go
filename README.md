@@ -506,3 +506,71 @@ Jika Anda mengalami masalah atau memiliki pertanyaan:
 ---
 
 **⭐ Jika aplikasi ini membantu usaha percetakan Anda, jangan lupa memberikan star di repository!**
+
+## 🐳 Docker Setup
+
+This project includes Docker configuration for easy deployment and development.
+
+### Files Included
+
+- `Dockerfile`: Multi-stage build configuration for the SvelteKit application
+- `docker-compose.yml`: Service orchestration including the app and PostgreSQL database
+
+### How to Run
+
+#### Prerequisites
+
+- Docker and Docker Compose installed on your system
+
+#### Running the Application
+
+1. Make sure you have the required environment variables in place
+2. Run the following command to start the services:
+
+```bash
+docker-compose up --build
+```
+
+The application will be available at `http://localhost:3000`
+
+#### Running in Detached Mode
+
+```bash
+docker-compose up -d --build
+```
+
+#### Stopping the Services
+
+```bash
+docker-compose down
+```
+
+#### Building Only the Images
+
+```bash
+docker-compose build
+```
+
+### Services
+
+- `app`: The SvelteKit application running on port 3000
+- `postgres`: PostgreSQL database on port 5432 with persistent data storage
+
+### Environment Variables
+
+The following environment variables are configured in the docker-compose.yml:
+- `DATABASE_URL`: Points to the PostgreSQL service
+- `JWT_SECRET`: Secret key for JWT token generation
+- `NODE_ENV`: Set to production for optimized performance
+
+### Volumes
+
+- `postgres_data`: Persistent volume for PostgreSQL data storage
+- `.env` file mapping for configuration
+
+### Notes
+
+- The Dockerfile uses a multi-stage build to optimize the final image size
+- Only production dependencies are installed in the final image
+- The application is built using `pnpm run build` during the build process
+- Prisma migrations will need to be run separately if needed after deployment
