@@ -1,5 +1,5 @@
 import prisma from "$lib/server/prisma";
-import type { Setting } from "@prisma/client";
+import type { Setting } from "npm:@prisma/client";
 
 export async function getSettings(): Promise<Setting | null> {
   return await prisma.setting.findUnique({

@@ -6,7 +6,7 @@ import {
 } from "$lib/server/notificationService";
 import fs from "node:fs";
 import path from "node:path";
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "npm:@prisma/client";
 
 const orderSelect = {
   id: true,

@@ -1,12 +1,11 @@
 # Deployment Guide
 
-## ⚠️ Important: Prisma and Node.js Compatibility
+## Prisma and Deno Compatibility
 
-**This application uses Prisma as its database client, which is specifically designed for Node.js environments.** This has important implications:
+**This application uses Prisma as its database client.** For Deno deployment, the imports have been updated to use the `npm:` specifier:
 
-- Prisma Client is generated with Node.js-specific code
-- Prisma requires Node.js runtime APIs that may not be available in all environments
-- The Prisma ecosystem is built for the Node.js ecosystem
+- `import { PrismaClient } from "@prisma/client";` → `import { PrismaClient } from "npm:@prisma/client";`
+- Type imports also updated: `import type { Setting } from "npm:@prisma/client";`
 
 ## Recommended Deployment Platforms
 
@@ -28,14 +27,8 @@ The application has been updated to use the `node:` prefix for built-in module i
 
 ## SvelteKit Configuration
 
-The `tsconfig.json` has been updated to work without requiring the generated SvelteKit config file during initial validation.
+The `tsconfig.json` extends the generated SvelteKit configuration, which is required for proper compilation.
 
-## Issues with Deno Deployment
+## Deno Deployment
 
-While this application can be built on Deno-compatible environments with Node.js compatibility features, deploying it to Deno may encounter issues due to Prisma incompatibility. If you experience build errors like:
-
-```
-SyntaxError: The requested module '@prisma/client' does not provide an export named 'PrismaClient'
-```
-
-This confirms that the Deno environment does not fully support Prisma. Consider switching to a Node.js-compatible deployment platform.
+With the changes made, the application should now be compatible with Deno deployments that support Node.js compatibility mode.

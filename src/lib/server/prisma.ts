@@ -1,6 +1,6 @@
 // src/lib/server/prisma.ts
 
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "npm:@prisma/client";
 
 // Define the global type for Prisma client
 declare global {
