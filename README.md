@@ -1,14 +1,22 @@
 # Cetak Aja Online - Aplikasi Point of Sale untuk Percetakan Dan Digital Printing
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![License](https://img.shields.io/github/license/cetakajaonline/cetakaja-go?color=blue&style=flat)
+![Node.js](https://img.shields.io/badge/Node.js-20.x-339933?logo=node.js&logoColor=fff&style=flat)
+![SvelteKit](https://img.shields.io/badge/SvelteKit-2.46.5-FF3E00?logo=svelte&logoColor=fff&style=flat)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.8.3-3178C6?logo=typescript&logoColor=fff&style=flat)
+![Prisma](https://img.shields.io/badge/Prisma-6.17.1-2D3748?logo=prisma&logoColor=fff&style=flat)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16+-336791?logo=postgresql&logoColor=fff&style=flat)
+![Tailwind](https://img.shields.io/badge/Tailwind-4.1.14-06B6D4?logo=tailwindcss&logoColor=fff&style=flat)
+![DaisyUI](https://img.shields.io/badge/DaisyUI-5.3.0-1AD9A2?logo=tailwindcss&logoColor=fff&style=flat)
+![pnpm](https://img.shields.io/badge/pnpm-^8.0-orange?logo=pnpm&logoColor=fff&style=flat)
+![Docker](https://img.shields.io/badge/Docker-✓-2496ED?logo=docker&logoColor=fff&style=flat)
 
-![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
-
-![Prisma](https://img.shields.io/badge/Prisma-6.17.0-2D3748?logo=prisma)
-
-![SvelteKit](https://img.shields.io/badge/SvelteKit-2.36+-FF3E00?logo=svelte)
-
-![Node.js](https://img.shields.io/badge/Node.js-18+-339933?logo=node.js)
+![Security Workflow](https://img.shields.io/github/actions/workflow/status/cetakajaonline/cetakaja-go/security.yml?label=Security&logo=githubactions&logoColor=fff&style=flat)
+![Testing Workflow](https://img.shields.io/github/actions/workflow/status/cetakajaonline/cetakaja-go/testing.yml?label=Testing&logo=githubactions&logoColor=fff&style=flat)
+![Docker Workflow](https://img.shields.io/github/actions/workflow/status/cetakajaonline/cetakaja-go/docker.yml?label=Docker&logo=githubactions&logoColor=fff&style=flat)
+![Release Workflow](https://img.shields.io/github/actions/workflow/status/cetakajaonline/cetakaja-go/release.yml?label=Release&logo=githubactions&logoColor=fff&style=flat)
+![Deploy Workflow](https://img.shields.io/github/actions/workflow/status/cetakajaonline/cetakaja-go/deploy.yml?label=Deploy&logo=githubactions&logoColor=fff&style=flat)
 
 Aplikasi manajemen pesanan dan pembayaran digital printing yang dirancang khusus untuk usaha percetakan. Dilengkapi dengan sistem manajemen pesanan, pembayaran, inventaris, dan laporan keuangan untuk membantu operasional usaha percetakan Anda.
 
