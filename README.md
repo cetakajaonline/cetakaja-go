@@ -499,8 +499,6 @@ Jika Anda mengalami masalah atau memiliki pertanyaan:
 
 - [DaisyUI](https://daisyui.com/) - Komponen UI yang cantik dan fungsional
 
-- [Lucide Icons](https://lucide.dev/) - Ikon-ikon yang indah dan responsif
-
 ---
 
 **Dikembangkan dengan ❤️ untuk komunitas usaha percetakan di Indonesia**
