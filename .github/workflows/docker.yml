@@ -2,10 +2,12 @@ name: Build and Push Docker Image
 
 on:
   workflow_run:
-    workflows: ["Security"]
+    workflows: ["Security", "Release"]
     types: [completed]
   release:
     types: [published]
+  push:
+    branches: [main]
 
 env:
   REGISTRY: ghcr.io
@@ -20,9 +22,12 @@ jobs:
     if: >
       (github.event_name == 'workflow_run' &&
       github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.head_branch == 'dev') ||
+      ((github.event.workflow_run.name == 'Security' && github.event.workflow_run.head_branch == 'dev') ||
+      (github.event.workflow_run.name == 'Release' && github.event.workflow_run.head_branch == 'main'))) ||
       (github.event_name == 'release' &&
-      github.event.action == 'published')
+      github.event.action == 'published') ||
+      (github.event_name == 'push' &&
+      github.ref == 'refs/heads/main')
 
     steps:
       - name: Checkout repository
@@ -87,9 +92,12 @@ jobs:
     if: >
       (github.event_name == 'workflow_run' &&
       github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.head_branch == 'main') ||
+      ((github.event.workflow_run.name == 'Security' && github.event.workflow_run.head_branch == 'main') ||
+      (github.event.workflow_run.name == 'Release' && github.event.workflow_run.head_branch == 'main'))) ||
       (github.event_name == 'release' &&
-      github.event.action == 'published')
+      github.event.action == 'published') ||
+      (github.event_name == 'push' &&
+      github.ref == 'refs/heads/main')
 
     steps:
       - name: Checkout code
