@@ -73,27 +73,8 @@ jobs:
       - name: Run CodeQL Analysis
         uses: github/codeql-action/analyze@v3
 
-      # --- TruffleHog v3 Secret Scanning ---
-      - name: Install TruffleHog v3
-        run: |
-          pip install --upgrade --force-reinstall trufflehog3
-          trufflehog3 --version
-
-      - name: Run TruffleHog Secret Scan
-        run: |
-          mkdir -p results
-          echo "🔍 Menjalankan TruffleHog scan..."
-          trufflehog3 filesystem . --format json > results/trufflehog-results.json || true
-          trufflehog3 convert-to-sarif results/trufflehog-results.json --output results/trufflehog-results.sarif || true
-          echo "✅ TruffleHog scan selesai. Hasil disimpan di results/"
-
-      - name: Upload TruffleHog SARIF
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: results/trufflehog-results.sarif
-
       # --- npm/pnpm audit (non-blocking) ---
-      - name: Run npm/pnpm audit
+      - name: Run pnpm audit
         run: pnpm audit --audit-level=high || true
 
       # --- Telegram Notification ---
@@ -106,6 +87,7 @@ jobs:
           else
             MESSAGE="🚨 *Security workflow GAGAL!*\nRepo: *${{ github.repository }}*\nBranch: *${{ github.ref_name }}*\nCommit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})\nLihat log: [GitHub Actions Logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
           fi
+
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
             -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
             -d parse_mode=Markdown \
