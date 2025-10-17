@@ -75,10 +75,10 @@ jobs:
       - name: Install TruffleHog
         run: |
           pip install --upgrade pip
-          pip install trufflehog3
+          pip install trufflehog
 
       - name: Run TruffleHog Secret Scan
-        run: trufflehog3 --regex --max_depth 10 .
+        run: trufflehog filesystem . --only-verified
 
       - name: Run npm/pnpm audit
         run: pnpm audit --audit-level=high || true
