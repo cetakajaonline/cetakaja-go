@@ -71,12 +71,12 @@ jobs:
 
       - name: Run CodeQL Analysis
         uses: github/codeql-action/analyze@v2
-
+        
       - name: Install TruffleHog
-        run: pip install trufflehog==2.2.1
+        run: pip install trufflehog --upgrade
 
       - name: Run TruffleHog Secret Scan
-        run: trufflehog filesystem . --regex --max_depth 1
+        run: trufflehog filesystem --regex --max_depth 1 .
 
       - name: Run npm/pnpm audit
         run: pnpm audit --audit-level=high || true
