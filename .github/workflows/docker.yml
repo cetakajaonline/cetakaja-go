@@ -2,12 +2,10 @@ name: Build and Push Docker Image
 
 on:
   workflow_run:
-    workflows: ["Security", "Release"]
+    workflows: ["Release"]
     types: [completed]
   release:
     types: [published]
-  push:
-    branches: [main]
 
 env:
   REGISTRY: ghcr.io
@@ -22,12 +20,10 @@ jobs:
     if: >
       (github.event_name == 'workflow_run' &&
       github.event.workflow_run.conclusion == 'success' &&
-      ((github.event.workflow_run.name == 'Security' && github.event.workflow_run.head_branch == 'dev') ||
-      (github.event.workflow_run.name == 'Release' && github.event.workflow_run.head_branch == 'main'))) ||
+      github.event.workflow_run.name == 'Release' &&
+      github.event.workflow_run.head_branch == 'main') ||
       (github.event_name == 'release' &&
-      github.event.action == 'published') ||
-      (github.event_name == 'push' &&
-      github.ref == 'refs/heads/main')
+      github.event.action == 'published')
 
     steps:
       - name: Checkout repository
@@ -52,12 +48,10 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            # Untuk branch dev
-            type=raw,value=dev,enable=${{ github.event.workflow_run.head_branch == 'dev' }}
             # Untuk release tag (v1.2.3)
             type=ref,event=tag
             # Tag "latest" untuk release & main
-            type=raw,value=latest,enable=${{ github.event_name == 'release' || github.event.workflow_run.head_branch == 'main' }}
+            type=raw,value=latest,enable=${{ github.event_name == 'release' || github.event.workflow_run.head_branch == 'main' || github.ref == 'refs/heads/main' }}
             # Commit SHA dengan prefix branch
             type=sha,prefix=${{ github.event.workflow_run.head_branch || github.ref_name }}-
 
@@ -92,12 +86,10 @@ jobs:
     if: >
       (github.event_name == 'workflow_run' &&
       github.event.workflow_run.conclusion == 'success' &&
-      ((github.event.workflow_run.name == 'Security' && github.event.workflow_run.head_branch == 'main') ||
-      (github.event.workflow_run.name == 'Release' && github.event.workflow_run.head_branch == 'main'))) ||
+      github.event.workflow_run.name == 'Release' &&
+      github.event.workflow_run.head_branch == 'main') ||
       (github.event_name == 'release' &&
-      github.event.action == 'published') ||
-      (github.event_name == 'push' &&
-      github.ref == 'refs/heads/main')
+      github.event.action == 'published')
 
     steps:
       - name: Checkout code
@@ -110,26 +102,36 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y docker-compose
 
-      - name: Create docker-compose override for production
+      - name: Create docker-compose
         run: |
-          cat > docker-compose.external-db.yml << 'EOF'
+          cat > docker-compose.test.yml << 'EOF'
           version: '3.8'
           services:
             app:
               image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-              ports:
-                - "3000:3000"
               environment:
-                DATABASE_URL: ${DATABASE_URL}
-                JWT_SECRET: ${JWT_SECRET}
-                NODE_ENV: production
+                - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/cao
+                - JWT_SECRET=${JWT_SECRET}
+                - NODE_ENV=production
+              depends_on:
+                - postgres
               restart: unless-stopped
-              networks:
-                - bits-network
-
-          networks:
-            bits-network:
-              external: true
+            postgres:
+              image: postgres:16-alpine
+              environment:
+                - POSTGRES_DB=cao
+                - POSTGRES_USER=postgres
+                - POSTGRES_PASSWORD=postgres
+              volumes:
+                - postgres_data:/var/lib/postgresql/data
+              healthcheck:
+                test: ["CMD-SHELL", "pg_isready -U postgres"]
+                interval: 10s
+                timeout: 5s
+                retries: 5
+              restart: unless-stopped
+          volumes:
+            postgres_data:
           EOF
 
       - name: Deploy using Docker Compose
@@ -138,7 +140,7 @@ jobs:
             echo "⚠️ Tidak ada docker-compose.yml utama, membuat default..."
             echo "version: '3.8'\nservices:\n  app:\n    image: alpine:latest" > docker-compose.yml
           fi
-          docker compose -f docker-compose.yml -f docker-compose.external-db.yml up -d --remove-orphans
+          docker compose -f docker-compose.yml -f docker-compose.test.yml up -d --remove-orphans
 
       - name: Notify Telegram
         if: always()
