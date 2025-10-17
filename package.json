@@ -19,15 +19,15 @@
   "author": {
     "name": "Cetak Aja Online",
     "email": "admin@bits.co.id",
-    "url": "https://github.com/bitscoid"
+    "url": "https://github.com/cetakajaonline"
   },
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bitscoid/cetakaja-go.git"
+    "url": "git+https://github.com/cetakajaonline/cetakaja-go.git"
   },
   "bugs": {
-    "url": "https://github.com/bitscoid/cetakaja-go/issues"
+    "url": "https://github.com/cetakajaonline/cetakaja-go/issues"
   },
   "homepage": "https://bits.co.id",
   "type": "module",
