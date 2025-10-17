@@ -183,7 +183,7 @@ Pastikan Anda telah menginstall:
 
 ```bash
 
-git clone https://github.com/bitscoid/cetakaja-go.git cetakaja-go
+git clone https://github.com/cetakajaonline/cetakaja-go.git cetakaja-go
 
 cd cetakaja-go
 
@@ -483,11 +483,11 @@ Jika Anda mengalami masalah atau memiliki pertanyaan:
 
 - 📖 **Documentation**: Check wiki pages
 
-- 🐛 **Report Bugs**: [Create Issue](https://github.com/cetakaja/online-printing-pos/issues)
+- 🐛 **Report Bugs**: [Create Issue](https://github.com/cetakajaonline/cetakaja-go/issues)
 
-- 💡 **Request Features**: [Feature Requests](https://github.com/cetakaja/online-printing-pos/issues)
+- 💡 **Request Features**: [Feature Requests](https://github.com/cetakajaonline/cetakaja-go/issues)
 
-- 💬 **Discussion**: [Join Discussion](https://github.com/cetakaja/online-printing-pos/discussions)
+- 💬 **Discussion**: [Join Discussion](https://github.com/cetakajaonline/cetakaja-go/discussions)
 
 ## 🙏 Acknowledgments
 
@@ -509,7 +509,7 @@ Jika Anda mengalami masalah atau memiliki pertanyaan:
 
 **Email**: admin@bits.co.id
 
-**GitHub**: [https://github.com/bitscoid](https://github.com/bitscoid)
+**GitHub**: [https://github.com/cetakajaonline](https://github.com/cetakajaonline)
 
 ---
 
