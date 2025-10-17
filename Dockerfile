@@ -1,48 +1,50 @@
-# Builder stage
+# --------------------------
+# Builder Stage
+# --------------------------
 FROM node:20-alpine AS builder
 
+# Set working directory
 WORKDIR /app
 
-# Copy package.json saja (tidak perlu pnpm-lock.yaml)
+# Copy package.json saja (tidak perlu lock file)
 COPY package.json ./
 
-# Install pnpm & dependencies
-RUN npm install -g pnpm \
-    && pnpm install
+# Install pnpm dan dependencies
+RUN npm install -g pnpm && pnpm install
 
-# Copy source code
+# Copy seluruh source code
 COPY . .
 
-# Build aplikasi
-RUN pnpm run build
-
-# Generate Prisma client
+# Generate Prisma client dulu sebelum build
 RUN pnpm prisma generate
 
-# Production stage
+# Build aplikasi SvelteKit
+RUN pnpm run build
+
+# --------------------------
+# Production Stage
+# --------------------------
 FROM node:20-alpine AS production
 
 WORKDIR /app
 
-# Copy package.json saja
+# Copy package.json untuk install dep production
 COPY package.json ./
 
-# Install hanya dependencies production
-RUN npm install -g pnpm \
-    && pnpm install --prod
+# Install pnpm & dependencies production
+RUN npm install -g pnpm && pnpm install --prod
 
-# Copy hasil build dari builder stage
+# Copy hasil build + prisma client dari builder
 COPY --from=builder /app/build ./build
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/src ./src
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
+# Expose port
 EXPOSE 3000
 
-# Healthcheck
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node healthcheck.js || exit 1
-
+# Optional: simple healthcheck
 RUN echo 'const http = require("http"); const options = { host: "localhost", port: 3000, path: "/", timeout: 2000 }; const request = http.request(options, (res) => { process.exitCode = (res.statusCode === 200) ? 0 : 1; process.exit(); }); request.on("error", () => process.exit(1)); request.end();' > healthcheck.js
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 CMD node healthcheck.js || exit 1
 
+# Start aplikasi
 CMD ["node", "build/index.js"]
