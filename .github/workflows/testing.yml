@@ -1,0 +1,112 @@
+name: Testing & Code Quality
+
+on:
+  push:
+    branches: [ dev ]
+  pull_request:
+    branches: [ dev ]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: p0stgres
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      # Pasang pnpm secara global agar selalu tersedia
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Verify pnpm
+        run: pnpm -v
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Prepare test DB
+        run: |
+          pnpm prisma db push
+          pnpm seed
+        env:
+          DATABASE_URL: postgresql://postgres:p0stgres@localhost:5432/test_db
+
+      - name: Run Unit Tests
+        run: |
+          if grep -q 'test:unit' package.json; then
+            pnpm test:unit
+          else
+            echo "No unit tests script found in package.json, skipping..."
+          fi
+        env:
+          DATABASE_URL: postgresql://postgres:p0stgres@localhost:5432/test_db
+
+      - name: Run Integration Tests
+        run: |
+          if grep -q 'test:integration' package.json; then
+            pnpm test:integration
+          else
+            echo "No integration tests script found in package.json, skipping..."
+          fi
+        env:
+          DATABASE_URL: postgresql://postgres:p0stgres@localhost:5432/test_db
+
+      - name: Run E2E Tests
+        run: |
+          if grep -q 'test:e2e' package.json; then
+            pnpm test:e2e
+          else
+            echo "No end-to-end tests script found in package.json, skipping..."
+          fi
+        env:
+          DATABASE_URL: postgresql://postgres:p0stgres@localhost:5432/test_db
+
+      - name: Run Coverage
+        run: |
+          if grep -q 'test:coverage' package.json; then
+            pnpm test:coverage
+          else
+            echo "No coverage script found in package.json, skipping..."
+          fi
+        continue-on-error: true
+
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+      - name: Notify Telegram
+        if: always()
+        run: |
+          STATUS=${{ job.status }}
+          if [ "$STATUS" == "success" ]; then
+            MESSAGE="✅ Automated Testing & Coverage berhasil di branch (${{ github.ref_name }}) - Repo: (${{ github.repository }}), Commit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})"
+          else
+            MESSAGE="🚨 Automated Testing & Coverage GAGAL! - Branch: (${{ github.ref_name }}), Lihat log: [GitHub Actions](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          fi
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d parse_mode=Markdown \
+            -d text="$MESSAGE"
