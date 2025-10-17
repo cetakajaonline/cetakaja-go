@@ -2,7 +2,7 @@
 
 ## SvelteKit Adapter
 
-The application now uses `@sveltejs/adapter-deno` for Deno deployment compatibility.
+The application now uses `svelte-adapter-deno` for Deno deployment compatibility.
 
 ## Prisma and Deno Compatibility
 
@@ -24,4 +24,4 @@ The application has been updated to use the `node:` prefix for built-in module i
 To deploy to Deno:
 
 1. Ensure your Deno deployment environment supports Node.js compatibility mode
-2. The application should build and run with the `@sveltejs/adapter-deno`
+2. The application should build and run with the `svelte-adapter-deno`
