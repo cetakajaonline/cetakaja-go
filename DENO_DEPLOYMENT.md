@@ -1,4 +1,8 @@
-# Deployment Guide
+# Deno Deployment Guide
+
+## SvelteKit Adapter
+
+The application now uses `@sveltejs/adapter-deno` for Deno deployment compatibility.
 
 ## Prisma and Deno Compatibility
 
@@ -6,16 +10,6 @@
 
 - `import { PrismaClient } from "@prisma/client";` → `import { PrismaClient } from "npm:@prisma/client";`
 - Type imports also updated: `import type { Setting } from "npm:@prisma/client";`
-
-## Recommended Deployment Platforms
-
-For the best experience, deploy this SvelteKit + Prisma application to Node.js-compatible platforms:
-
-- **Vercel** (recommended for SvelteKit) 
-- **Netlify**
-- **Railway**
-- **AWS/Azure** with Node.js runtime
-- Other Node.js hosting providers
 
 ## Node.js Built-in Modules
 
@@ -25,10 +19,9 @@ The application has been updated to use the `node:` prefix for built-in module i
 - `import fs from "fs"` → `import fs from "node:fs"`
 - `import crypto from "crypto"` → `import crypto from "node:crypto"`
 
-## SvelteKit Configuration
+## Deployment
 
-The `tsconfig.json` extends the generated SvelteKit configuration, which is required for proper compilation.
+To deploy to Deno:
 
-## Deno Deployment
-
-With the changes made, the application should now be compatible with Deno deployments that support Node.js compatibility mode.
+1. Ensure your Deno deployment environment supports Node.js compatibility mode
+2. The application should build and run with the `@sveltejs/adapter-deno`
