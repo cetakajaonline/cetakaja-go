@@ -80,7 +80,8 @@ jobs:
       - name: Run TruffleHog Secret Scan
         run: |
           mkdir -p results
-          trufflehog3 filesystem --format sarif . > results/trufflehog-results.sarif
+          trufflehog3 filesystem . --format json > results/trufflehog-results.json
+          trufflehog3 convert-to-sarif results/trufflehog-results.json --output results/trufflehog-results.sarif
 
       - name: Upload TruffleHog SARIF
         uses: github/codeql-action/upload-sarif@v3
