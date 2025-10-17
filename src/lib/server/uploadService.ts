@@ -1,6 +1,6 @@
-import fs from "fs";
-import path from "path";
-import { randomUUID } from "crypto";
+import fs from "node:fs";
+import path from "node:path";
+import { randomUUID } from "node:crypto";
 
 // Daftar ekstensi yang diizinkan
 const allowedExtensions = ["jpg", "jpeg", "png", "gif", "webp", "svg", "pdf"];

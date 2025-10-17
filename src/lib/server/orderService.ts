@@ -4,8 +4,8 @@ import {
   createPaymentNotification,
   createAdminOrderNotification,
 } from "$lib/server/notificationService";
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 import type { Prisma } from "@prisma/client";
 
 const orderSelect = {

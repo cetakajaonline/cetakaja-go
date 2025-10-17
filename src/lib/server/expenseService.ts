@@ -1,7 +1,7 @@
 import prisma from "$lib/server/prisma";
 import type { Expense } from "$lib/types";
-import { unlink, access } from "fs/promises";
-import { join } from "path";
+import { unlink, access } from "node:fs/promises";
+import { join } from "node:path";
 
 // Helper function to check if a file exists
 async function fileExists(filePath: string): Promise<boolean> {

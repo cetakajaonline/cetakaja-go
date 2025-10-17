@@ -1,5 +1,5 @@
 // @ts-nocheck
-import path from "path";
+import path from "node:path";
 import adapter from "@sveltejs/adapter-node";
 import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
 
