@@ -1,57 +1,48 @@
-# ==========================
-#  STAGE 1 — BUILD
-# ==========================
+# Builder stage
 FROM node:20-alpine AS builder
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files (pnpm-lock.yaml* = opsional)
-COPY package.json pnpm-lock.yaml* ./
+# Copy package.json saja (tidak perlu pnpm-lock.yaml)
+COPY package.json ./
 
-# Install pnpm dan dependencies
+# Install pnpm & dependencies
 RUN npm install -g pnpm \
-  && pnpm install --frozen-lockfile
+    && pnpm install
 
-# Copy seluruh source code
+# Copy source code
 COPY . .
 
-# Generate Prisma client & build aplikasi
-RUN pnpm prisma generate \
-  && pnpm run build
+# Build aplikasi
+RUN pnpm run build
 
-# ==========================
-#  STAGE 2 — PRODUCTION
-# ==========================
+# Generate Prisma client
+RUN pnpm prisma generate
+
+# Production stage
 FROM node:20-alpine AS production
 
-# Set working directory
 WORKDIR /app
 
-# Copy package files (tanpa source code besar)
-COPY package.json pnpm-lock.yaml* ./
+# Copy package.json saja
+COPY package.json ./
 
-# Install pnpm & dependencies produksi saja
+# Install hanya dependencies production
 RUN npm install -g pnpm \
-  && pnpm install --prod --frozen-lockfile
+    && pnpm install --prod
 
-# Copy hasil build dan Prisma client dari builder
+# Copy hasil build dari builder stage
 COPY --from=builder /app/build ./build
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/src ./src
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 
-# (Opsional) copy file statis SvelteKit (jika ada)
-COPY --from=builder /app/static ./static
-
-# Expose port
 EXPOSE 3000
 
-# Health check (auto-fail jika port tidak merespon)
+# Healthcheck
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node healthcheck.js || exit 1
 
-# Buat script healthcheck sederhana
-RUN echo 'const http=require("http");const req=http.request({host:"localhost",port:3000,path:"/",timeout:2000},res=>process.exit(res.statusCode===200?0:1));req.on("error",()=>process.exit(1));req.end();' > healthcheck.js
+RUN echo 'const http = require("http"); const options = { host: "localhost", port: 3000, path: "/", timeout: 2000 }; const request = http.request(options, (res) => { process.exitCode = (res.statusCode === 200) ? 0 : 1; process.exit(); }); request.on("error", () => process.exit(1)); request.end();' > healthcheck.js
 
-# Start aplikasi
 CMD ["node", "build/index.js"]
