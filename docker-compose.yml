@@ -8,7 +8,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - DATABASE_URL=postgresql://postgres:p0stgres@postgres:5432/cao
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/cao
       - JWT_SECRET=568eec85e828f9a93adb6f2a540df5cb
       - NODE_ENV=development
     depends_on:
@@ -25,7 +25,7 @@ services:
     environment:
       - POSTGRES_DB=cao
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=p0stgres
+      - POSTGRES_PASSWORD=postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
