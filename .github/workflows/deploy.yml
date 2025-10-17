@@ -35,15 +35,32 @@ jobs:
 
       - name: Setup SSH key
         run: |
+          # Check if required secrets are available
           if [ -z "${{ secrets.LOCAL_SSH_KEY }}" ] || [ -z "${{ secrets.LOCAL_HOST }}" ] || [ -z "${{ secrets.LOCAL_USER }}" ]; then
             echo "ERROR: One or more required secrets are not set"
             echo "Please check: LOCAL_SSH_KEY, LOCAL_HOST, LOCAL_USER"
             exit 1
           fi
+          
+          # Create SSH directory
           mkdir -p ~/.ssh
-          echo "${{ secrets.LOCAL_SSH_KEY }}" > ~/.ssh/id_rsa
+          
+          # Write SSH key - using printf to handle multiline content properly
+          printf '%s\n' "${{ secrets.LOCAL_SSH_KEY }}" > ~/.ssh/id_rsa
+          
+          # Ensure correct permissions on SSH key
           chmod 600 ~/.ssh/id_rsa
+          
+          # Add host to known hosts
           ssh-keyscan -H ${{ secrets.LOCAL_HOST }} >> ~/.ssh/known_hosts
+          
+          # Verify SSH key was written correctly
+          if [ ! -f ~/.ssh/id_rsa ] || [ ! -s ~/.ssh/id_rsa ]; then
+            echo "ERROR: SSH key was not created properly"
+            exit 1
+          fi
+          
+          echo "SSH setup completed successfully"
 
       - name: Deploy via SSH
         run: |
