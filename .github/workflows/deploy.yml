@@ -35,6 +35,11 @@ jobs:
 
       - name: Setup SSH key
         run: |
+          if [ -z "${{ secrets.LOCAL_SSH_KEY }}" ] || [ -z "${{ secrets.LOCAL_HOST }}" ] || [ -z "${{ secrets.LOCAL_USER }}" ]; then
+            echo "ERROR: One or more required secrets are not set"
+            echo "Please check: LOCAL_SSH_KEY, LOCAL_HOST, LOCAL_USER"
+            exit 1
+          fi
           mkdir -p ~/.ssh
           echo "${{ secrets.LOCAL_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
