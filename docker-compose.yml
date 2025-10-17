@@ -1,6 +1,5 @@
 version: '3.8'
 
-# Default configuration for development with local PostgreSQL
 services:
   app:
     build:

@@ -3,8 +3,7 @@ name: Build and Push Docker Image
 on:
   workflow_run:
     workflows: ["Security"]
-    types:
-      - completed
+    types: [completed]
   release:
     types: [published]
 
@@ -18,34 +17,44 @@ jobs:
     permissions:
       contents: read
       packages: write
-    if: ${{ (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'dev') || (github.event_name == 'release' && github.event.action == 'published') }}
+    if: >
+      (github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'dev') ||
+      (github.event_name == 'release' &&
+      github.event.action == 'published')
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           ref: ${{ github.event.workflow_run.head_branch || github.ref }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to Container registry
+      - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata
+      - name: Extract Docker metadata (tags & labels)
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=ref,event=branch
-            type=sha,prefix={{branch}}-
-            type=raw,value=dev,enable=${{ github.event.workflow_run.head_branch == 'dev' || github.ref == 'refs/heads/dev' }}
-            type=raw,value=latest,enable=${{ github.event.workflow_run.head_branch == 'main' || github.ref == 'refs/heads/main' || github.event_name == 'release' }}
+            # Untuk branch dev
+            type=raw,value=dev,enable=${{ github.event.workflow_run.head_branch == 'dev' }}
+            # Untuk release tag (v1.2.3)
+            type=ref,event=tag
+            # Tag "latest" untuk release & main
+            type=raw,value=latest,enable=${{ github.event_name == 'release' || github.event.workflow_run.head_branch == 'main' }}
+            # Commit SHA dengan prefix branch
+            type=sha,prefix=${{ github.event.workflow_run.head_branch || github.ref_name }}-
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -61,17 +70,26 @@ jobs:
         if: always()
         run: |
           STATUS=${{ job.status }}
-          MESSAGE="🐳 Docker build & push $STATUS - Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}, Branch: ${{ github.ref_name || github.event.workflow_run.head_branch }}"
+          BRANCH=${{ github.event.workflow_run.head_branch || github.ref_name }}
+          if [ "$STATUS" == "success" ]; then
+            MESSAGE="🐳 *Docker Build & Push BERHASIL!*\nImage: \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}\`\nBranch/Tag: *$BRANCH*"
+          else
+            MESSAGE="🚨 *Docker Build & Push GAGAL!*\nRepo: *${{ github.repository }}*\nBranch/Tag: *$BRANCH*\n[📜 Lihat Log](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          fi
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
-            -d parse_mode=Markdown \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d parse_mode="Markdown" \
             -d text="$MESSAGE"
 
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-    if: ${{ (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') || (github.event_name == 'release' && github.event.action == 'published') }}
-    environment: production
+    if: >
+      (github.event_name == 'workflow_run' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main') ||
+      (github.event_name == 'release' &&
+      github.event.action == 'published')
 
     steps:
       - name: Checkout code
@@ -79,32 +97,14 @@ jobs:
         with:
           ref: ${{ github.event.workflow_run.head_branch || github.ref }}
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
-          cache: 'pnpm'
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: latest
-
-      - name: Install dependencies
-        run: pnpm install
-
-      - name: Build application
-        run: pnpm build
-
-      - name: Generate Prisma client
-        run: pnpm prisma generate
-
-      - name: Run database migrations
-        run: pnpm prisma migrate deploy
-
-      - name: Create docker-compose override for production with external database
+      - name: Install Docker Compose
         run: |
-          cat > docker-compose.external-db.yml << EOF
+          sudo apt-get update
+          sudo apt-get install -y docker-compose
+
+      - name: Create docker-compose override for production
+        run: |
+          cat > docker-compose.external-db.yml << 'EOF'
           version: '3.8'
           services:
             app:
@@ -112,31 +112,37 @@ jobs:
               ports:
                 - "3000:3000"
               environment:
-                - DATABASE_URL=\${DATABASE_URL}
-                - JWT_SECRET=\${JWT_SECRET}
-                - NODE_ENV=production
+                DATABASE_URL: ${DATABASE_URL}
+                JWT_SECRET: ${JWT_SECRET}
+                NODE_ENV: production
               restart: unless-stopped
               networks:
                 - bits-network
-          
+
           networks:
             bits-network:
-              name: bits-network
               external: true
           EOF
 
-      - name: Deploy using Docker Compose with external database
-        run: docker compose -f docker-compose.yml -f docker-compose.external-db.yml up -d --remove-orphans
+      - name: Deploy using Docker Compose
+        run: |
+          if [ ! -f docker-compose.yml ]; then
+            echo "⚠️ Tidak ada docker-compose.yml utama, membuat default..."
+            echo "version: '3.8'\nservices:\n  app:\n    image: alpine:latest" > docker-compose.yml
+          fi
+          docker compose -f docker-compose.yml -f docker-compose.external-db.yml up -d --remove-orphans
 
       - name: Notify Telegram
         if: always()
         run: |
           STATUS=${{ job.status }}
-          MESSAGE="🚀 Deployment BERHASIL! (Menggunakan database eksternal) - Branch: (${{ github.ref_name || github.event.workflow_run.head_branch }})"
-          if [ "$STATUS" != "success" ]; then
-            MESSAGE="❌ Deployment GAGAL! - Branch: (${{ github.ref_name || github.event.workflow_run.head_branch }}), Lihat log: [GitHub Actions](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          BRANCH=${{ github.event.workflow_run.head_branch || github.ref_name }}
+          if [ "$STATUS" == "success" ]; then
+            MESSAGE="🚀 *Deployment BERHASIL*\nBranch/Tag: *$BRANCH*\nImage: \`${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest\`"
+          else
+            MESSAGE="❌ *Deployment GAGAL!*\nBranch/Tag: *$BRANCH*\n[📜 Lihat Log](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
           fi
           curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
-            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
-            -d parse_mode=Markdown \
+            -d chat_id="${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d parse_mode="Markdown" \
             -d text="$MESSAGE"
