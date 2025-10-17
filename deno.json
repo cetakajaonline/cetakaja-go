@@ -1,8 +1,8 @@
 {
   "tasks": {
     "dev": "deno run -A --watch=static/,src/ npm:vite dev",
-    "build": "npx prisma generate && npm:vite build",
-    "preview": "npm:vite preview"
+    "build": "npx prisma generate && deno run -A npm:vite build",
+    "preview": "deno run -A npm:vite preview"
   },
   "imports": {
     "@prisma/client": "npm:@prisma/client",
