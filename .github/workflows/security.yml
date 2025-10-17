@@ -65,29 +65,28 @@ jobs:
         if: github.event_name == 'pull_request'
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
+        uses: github/codeql-action/init@v3
         with:
           languages: javascript
 
       - name: Run CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
+        uses: github/codeql-action/analyze@v3
               
       - name: Install TruffleHog v3
         run: |
-          pip install --upgrade --force-reinstall trufflehog
-          trufflehog --version
+          pip install --upgrade --force-reinstall trufflehog3
+          trufflehog3 --version
 
       - name: Run TruffleHog Secret Scan
         run: |
           mkdir -p results
-          trufflehog filesystem --regex --max_depth 1 --no-cleanup --json . > results/trufflehog-results.json
-          trufflehog convert-to-sarif results/trufflehog-results.json --output results/trufflehog-results.sarif
+          trufflehog3 filesystem --regex --max_depth 1 --no-cleanup --json . > results/trufflehog-results.json
+          trufflehog3 convert-to-sarif results/trufflehog-results.json --output results/trufflehog-results.sarif
 
       - name: Upload TruffleHog SARIF
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: results/trufflehog-results.sarif
-
 
       - name: Run npm/pnpm audit
         run: pnpm audit --audit-level=high || true
