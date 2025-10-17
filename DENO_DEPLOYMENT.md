@@ -1,42 +1,41 @@
-# Deno Deployment Guide
+# Deployment Guide
 
-This guide explains deployment considerations for your SvelteKit application.
+## ⚠️ Important: Prisma and Node.js Compatibility
 
-## Important Note About Prisma and Deno
-
-**This application uses Prisma as its database client, which is specifically designed for Node.js environments.** Prisma is not compatible with Deno deployments because:
+**This application uses Prisma as its database client, which is specifically designed for Node.js environments.** This has important implications:
 
 - Prisma Client is generated with Node.js-specific code
-- Prisma requires Node.js runtime APIs that are not available in Deno
+- Prisma requires Node.js runtime APIs that may not be available in all environments
 - The Prisma ecosystem is built for the Node.js ecosystem
 
-## Deployment Recommendations
+## Recommended Deployment Platforms
 
-Instead of Deno, consider deploying to Node.js-compatible platforms such as:
-- Vercel (recommended for SvelteKit)
-- Netlify
-- Railway
-- Node.js hosting providers
+For the best experience, deploy this SvelteKit + Prisma application to Node.js-compatible platforms:
 
-## If You Must Deploy to Deno
+- **Vercel** (recommended for SvelteKit) 
+- **Netlify**
+- **Railway**
+- **AWS/Azure** with Node.js runtime
+- Other Node.js hosting providers
 
-If you absolutely need to deploy to Deno, you would need to:
+## Node.js Built-in Modules
 
-1. Replace Prisma with a Deno-compatible database solution
-2. Refactor all database interactions throughout the application
-3. This would be a significant undertaking affecting most of the codebase
+The application has been updated to use the `node:` prefix for built-in module imports, improving compatibility:
 
-## Other Improvements Made
-
-The following issues have been resolved for better Deno/Node.js compatibility:
-
-### Node.js Built-in Modules
-Deno requires Node.js built-in modules to be imported with the `node:` prefix. All imports like:
 - `import path from "path"` → `import path from "node:path"`
 - `import fs from "fs"` → `import fs from "node:fs"`
 - `import crypto from "crypto"` → `import crypto from "node:crypto"`
 
-Have been updated in the codebase.
+## SvelteKit Configuration
 
-### Missing .svelte-kit/tsconfig.json
-Updated `tsconfig.json` to not depend on the generated SvelteKit config file during build.
+The `tsconfig.json` has been updated to work without requiring the generated SvelteKit config file during initial validation.
+
+## Issues with Deno Deployment
+
+While this application can be built on Deno-compatible environments with Node.js compatibility features, deploying it to Deno may encounter issues due to Prisma incompatibility. If you experience build errors like:
+
+```
+SyntaxError: The requested module '@prisma/client' does not provide an export named 'PrismaClient'
+```
+
+This confirms that the Deno environment does not fully support Prisma. Consider switching to a Node.js-compatible deployment platform.
