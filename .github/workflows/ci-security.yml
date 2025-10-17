@@ -76,7 +76,7 @@ jobs:
         run: pip install trufflehog==2.2.1
 
       - name: Run TruffleHog Secret Scan
-        run: trufflehog git . --regex --max_depth 1
+        run: trufflehog filesystem . --regex --max_depth 1
 
       - name: Run npm/pnpm audit
         run: pnpm audit --audit-level=high || true
