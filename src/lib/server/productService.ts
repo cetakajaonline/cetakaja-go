@@ -1,6 +1,6 @@
 import prisma from "$lib/server/prisma";
-import fs from "node:fs";
-import path from "node:path";
+import fs from "fs";
+import path from "path";
 
 const productInclude = {
   category: {

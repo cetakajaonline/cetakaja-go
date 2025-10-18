@@ -8,7 +8,20 @@
     "svelte.config.js",
     "vite.config.ts",
     "postcss.config.ts",
-    "tailwind.config.ts",
-    "src/app.d.ts"
-  ]
+    "tailwind.config.ts"
+  ],
+  "compilerOptions": {
+    "types": ["node"],
+    "allowJs": true,
+    "checkJs": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "sourceMap": true,
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "esModuleInterop": true,
+    "strict": true,
+    "skipLibCheck": true
+  }
 }

@@ -10,8 +10,8 @@ import {
 import { savePaymentFile } from "$lib/server/uploadService";
 import { createPaymentNotification } from "$lib/server/notificationService";
 import type { Order } from "$lib/types";
-import fs from "node:fs";
-import path from "node:path";
+import fs from "fs";
+import path from "path";
 
 export async function POST(event: RequestEvent) {
   try {

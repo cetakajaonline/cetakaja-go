@@ -6,8 +6,8 @@ import {
   createAdminPaymentProofNotification,
   createPaymentProofReceivedNotification,
 } from "$lib/server/notificationService";
-import fs from "node:fs";
-import path from "node:path";
+import fs from "fs";
+import path from "path";
 
 export async function POST(event: RequestEvent) {
   try {
