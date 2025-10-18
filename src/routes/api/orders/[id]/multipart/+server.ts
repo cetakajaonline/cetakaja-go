@@ -4,8 +4,8 @@ import { orderUpdateSchema } from "$lib/validations/orderSchema";
 import { updateOrder } from "$lib/server/orderService";
 import { savePaymentFile } from "$lib/server/uploadService";
 import { createPaymentNotification } from "$lib/server/notificationService";
-import fs from "node:fs";
-import path from "node:path";
+import fs from "fs";
+import path from "path";
 
 export async function PUT(event: RequestEvent) {
   try {
