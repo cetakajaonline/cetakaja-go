@@ -15,7 +15,7 @@
   import { tick } from "svelte";
   import { onDestroy } from "svelte";
   import type { Product, ProductSortKey } from "$lib/types";
-  import type { User } from "@prisma/client";
+  import type { User } from "npm:@prisma/client";
 
   export let data: {
     isAdmin: boolean;

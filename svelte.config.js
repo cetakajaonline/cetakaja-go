@@ -1,6 +1,6 @@
 // @ts-nocheck
-import path from "path";
-import adapter from "@sveltejs/adapter-node";
+import path from "node:path";
+import adapter from "svelte-adapter-deno";
 import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
 
 const config = {

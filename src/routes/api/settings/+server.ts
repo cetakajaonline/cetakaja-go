@@ -4,9 +4,9 @@ import type { RequestHandler } from "./$types";
 import { saveLogoFile, saveQrisImageFile } from "$lib/server/uploadService";
 import { requireAnyRole, requireAdmin } from "$lib/server/auth";
 import { settingSchema } from "$lib/validations/settingSchema";
-import type { Setting } from "@prisma/client";
-import fs from "fs";
-import path from "path";
+import type { Setting } from "npm:@prisma/client";
+import fs from "node:fs";
+import path from "node:path";
 
 export const GET: RequestHandler = async (event) => {
   requireAnyRole(event);
